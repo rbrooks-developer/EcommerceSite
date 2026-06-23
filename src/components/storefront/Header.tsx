@@ -44,7 +44,7 @@ export function Header({ siteTitle, logoUrl, navConfig }: HeaderProps) {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/account" className="p-2 text-gray-600 hover:text-gray-900" aria-label="My account">
+            <Link href="/account" prefetch={false} className="p-2 text-gray-600 hover:text-gray-900" aria-label="My account">
               <User className="h-5 w-5" />
             </Link>
             <Link href="/cart" className="relative p-2 text-gray-600 hover:text-gray-900">
@@ -85,6 +85,7 @@ export function Header({ siteTitle, logoUrl, navConfig }: HeaderProps) {
           ))}
           <Link
             href="/account"
+            prefetch={false}
             onClick={() => setMenuOpen(false)}
             className="py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
