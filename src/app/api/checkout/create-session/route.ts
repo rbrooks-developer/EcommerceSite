@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { stripe } from "@/lib/stripe/client";
+import { getStripeClient } from "@/lib/stripe/client";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
 import type { Product } from "@/types";
@@ -195,6 +195,7 @@ export async function POST(request: NextRequest) {
   };
 
   try {
+    const stripe = getStripeClient();
     const session = await stripe.checkout.sessions.create(sessionParams);
 
     // Save stripe_session_id on the order

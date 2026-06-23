@@ -1,4 +1,4 @@
-import { resend, FROM_EMAIL } from "@/lib/resend/client";
+import { getResendClient, FROM_EMAIL } from "@/lib/resend/client";
 
 export async function sendWelcomeEmail(to: string, siteTitle: string, siteUrl: string) {
   const html = `
@@ -27,7 +27,7 @@ export async function sendWelcomeEmail(to: string, siteTitle: string, siteUrl: s
 </body>
 </html>`;
 
-  return resend.emails.send({
+  return getResendClient().emails.send({
     from: FROM_EMAIL,
     to,
     subject: `Welcome to ${siteTitle}`,

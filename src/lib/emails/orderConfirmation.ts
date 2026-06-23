@@ -1,4 +1,4 @@
-import { resend, FROM_EMAIL } from "@/lib/resend/client";
+import { getResendClient, FROM_EMAIL } from "@/lib/resend/client";
 
 interface OrderItem {
   name: string;
@@ -84,7 +84,7 @@ export async function sendOrderConfirmation(opts: SendOrderConfirmationOptions) 
 </body>
 </html>`;
 
-  return resend.emails.send({
+  return getResendClient().emails.send({
     from: FROM_EMAIL,
     to: opts.to,
     subject: `Order Confirmed – #${opts.orderNumber}`,

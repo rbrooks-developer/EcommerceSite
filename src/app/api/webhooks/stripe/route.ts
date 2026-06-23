@@ -1,5 +1,5 @@
 import { NextRequest } from "next/server";
-import { stripe } from "@/lib/stripe/client";
+import { getStripeClient } from "@/lib/stripe/client";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendOrderConfirmation } from "@/lib/emails/orderConfirmation";
 import { getSettings } from "@/lib/data/settings";
@@ -15,6 +15,7 @@ export async function POST(request: NextRequest) {
     return Response.json({ error: "Missing signature" }, { status: 400 });
   }
 
+  const stripe = getStripeClient();
   let event: ReturnType<typeof stripe.webhooks.constructEvent>;
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);

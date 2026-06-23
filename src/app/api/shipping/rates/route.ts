@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
-import { easypost } from "@/lib/easypost/client";
+import { getEasyPostClient } from "@/lib/easypost/client";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
 import type { Product, StoreAddress } from "@/types";
@@ -65,7 +65,7 @@ export async function POST(request: NextRequest) {
   }
 
   try {
-    const shipment = await (easypost as any).Shipment.create({
+    const shipment = await (getEasyPostClient() as any).Shipment.create({
       to_address: {
         name: address.name,
         street1: address.address_line1,
