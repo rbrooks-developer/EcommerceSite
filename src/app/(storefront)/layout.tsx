@@ -2,10 +2,12 @@ import { Header } from "@/components/storefront/Header";
 import { Footer } from "@/components/storefront/Footer";
 import { CartProvider } from "@/lib/cart/store";
 import { getSettings } from "@/lib/data/settings";
+import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo } from "@/types";
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
-  const settings = await getSettings();
+  const [settings, supabase] = await Promise.all([getSettings(), createClient()]);
+  const { data: { user } } = await supabase.auth.getUser();
 
   return (
     <CartProvider>
@@ -13,6 +15,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         siteTitle={settings?.site_title ?? "My Store"}
         logoUrl={settings?.logo_url ?? null}
         navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
+        isLoggedIn={!!user}
       />
       <main className="flex-1">{children}</main>
       <Footer

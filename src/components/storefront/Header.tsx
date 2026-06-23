@@ -11,9 +11,10 @@ interface HeaderProps {
   siteTitle: string;
   logoUrl: string | null;
   navConfig: NavConfig;
+  isLoggedIn: boolean;
 }
 
-export function Header({ siteTitle, logoUrl, navConfig }: HeaderProps) {
+export function Header({ siteTitle, logoUrl, navConfig, isLoggedIn }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { itemCount } = useCart();
   const navItems = navConfig?.items ?? [];
@@ -44,7 +45,7 @@ export function Header({ siteTitle, logoUrl, navConfig }: HeaderProps) {
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href="/account" prefetch={false} className="p-2 text-gray-600 hover:text-gray-900" aria-label="My account">
+            <Link href={isLoggedIn ? "/account" : "/login"} className="p-2 text-gray-600 hover:text-gray-900" aria-label={isLoggedIn ? "My account" : "Sign in"}>
               <User className="h-5 w-5" />
             </Link>
             <Link href="/cart" className="relative p-2 text-gray-600 hover:text-gray-900">
@@ -84,12 +85,11 @@ export function Header({ siteTitle, logoUrl, navConfig }: HeaderProps) {
             </Link>
           ))}
           <Link
-            href="/account"
-            prefetch={false}
+            href={isLoggedIn ? "/account" : "/login"}
             onClick={() => setMenuOpen(false)}
             className="py-2.5 text-sm font-medium text-gray-700 hover:text-gray-900"
           >
-            My Account
+            {isLoggedIn ? "My Account" : "Sign in"}
           </Link>
         </nav>
       </div>
