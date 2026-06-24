@@ -17,25 +17,30 @@ export default async function AccountLayout({ children }: { children: React.Reac
         .data as { role: string } | null)?.role === "admin"
     : false;
 
+  const bgColor = (settings as any)?.bg_color ?? "#ffffff";
+  const fontColor = (settings as any)?.font_color ?? "#111827";
+
   return (
     <CartProvider>
-      <Header
-        siteTitle={settings?.site_title ?? "My Store"}
-        logoUrl={settings?.logo_url ?? null}
-        navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
-        isLoggedIn={!!user}
-        isAdmin={isAdmin}
-      />
-      <main className="flex-1">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
-          {children}
-        </div>
-      </main>
-      <Footer
-        siteTitle={settings?.site_title ?? "My Store"}
-        footerConfig={(settings?.footer_config as FooterConfig) ?? { links: [], social: [], copyright_text: "" }}
-        contactInfo={(settings?.contact_info as ContactInfo) ?? { email: null, phone: null, address: null }}
-      />
+      <div style={{ backgroundColor: bgColor, color: fontColor }} className="flex flex-col min-h-full">
+        <Header
+          siteTitle={settings?.site_title ?? "My Store"}
+          logoUrl={settings?.logo_url ?? null}
+          navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
+          isLoggedIn={!!user}
+          isAdmin={isAdmin}
+        />
+        <main className="flex-1">
+          <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
+            {children}
+          </div>
+        </main>
+        <Footer
+          siteTitle={settings?.site_title ?? "My Store"}
+          footerConfig={(settings?.footer_config as FooterConfig) ?? { links: [], social: [], copyright_text: "" }}
+          contactInfo={(settings?.contact_info as ContactInfo) ?? { email: null, phone: null, address: null }}
+        />
+      </div>
     </CartProvider>
   );
 }

@@ -17,23 +17,28 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         .data as { role: string } | null)?.role === "admin"
     : false;
 
+  const bgColor = (settings as any)?.bg_color ?? "#ffffff";
+  const fontColor = (settings as any)?.font_color ?? "#111827";
+
   return (
     <CartProvider>
-      <Header
-        siteTitle={settings?.site_title ?? "My Store"}
-        logoUrl={settings?.logo_url ?? null}
-        navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
-        isLoggedIn={!!user}
-        isAdmin={isAdmin}
-      />
-      <main className="flex-1 flex items-center justify-center px-4 py-12 bg-gray-50">
-        <div className="w-full max-w-md">{children}</div>
-      </main>
-      <Footer
-        siteTitle={settings?.site_title ?? "My Store"}
-        footerConfig={(settings?.footer_config as FooterConfig) ?? { links: [], social: [], copyright_text: "" }}
-        contactInfo={(settings?.contact_info as ContactInfo) ?? { email: null, phone: null, address: null }}
-      />
+      <div style={{ backgroundColor: bgColor, color: fontColor }} className="flex flex-col min-h-full">
+        <Header
+          siteTitle={settings?.site_title ?? "My Store"}
+          logoUrl={settings?.logo_url ?? null}
+          navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
+          isLoggedIn={!!user}
+          isAdmin={isAdmin}
+        />
+        <main className="flex-1 flex items-center justify-center px-4 py-12">
+          <div className="w-full max-w-md">{children}</div>
+        </main>
+        <Footer
+          siteTitle={settings?.site_title ?? "My Store"}
+          footerConfig={(settings?.footer_config as FooterConfig) ?? { links: [], social: [], copyright_text: "" }}
+          contactInfo={(settings?.contact_info as ContactInfo) ?? { email: null, phone: null, address: null }}
+        />
+      </div>
     </CartProvider>
   );
 }
