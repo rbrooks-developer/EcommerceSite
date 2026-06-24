@@ -1,3 +1,4 @@
+import React from "react";
 import Link from "next/link";
 import type { FooterConfig, ContactInfo } from "@/types";
 
@@ -93,8 +94,8 @@ export function Footer({
               <nav aria-label="Social media links" className="mt-1">
                 <ul className="flex items-center gap-4 list-none m-0 p-0">
                   {activeSocial.map((s, i) => (
-                    <>
-                      <li key={s.url}>
+                    <React.Fragment key={s.url}>
+                      <li>
                         <a
                           href={s.url}
                           target="_blank"
@@ -109,7 +110,7 @@ export function Footer({
                       {i < activeSocial.length - 1 && (
                         <li aria-hidden="true" className="text-sm select-none" style={{ color: fontColor, opacity: 0.3 }}>|</li>
                       )}
-                    </>
+                    </React.Fragment>
                   ))}
                   {social_handle && (
                     <>
