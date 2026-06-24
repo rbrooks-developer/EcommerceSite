@@ -14,6 +14,7 @@ import {
   Menu,
   X,
   LogOut,
+  ArrowLeft,
 } from "lucide-react";
 
 const navItems = [
@@ -62,7 +63,14 @@ function SidebarContent({ onClose }: { onClose?: () => void }) {
           <NavLink key={item.href} item={item} onClick={onClose} />
         ))}
       </nav>
-      <div className="border-t p-4">
+      <div className="border-t p-4 space-y-1">
+        <Link
+          href="/"
+          className="flex w-full items-center gap-3 rounded-md px-3 py-2.5 text-sm font-medium text-gray-600 hover:bg-gray-100 hover:text-gray-900 transition-colors"
+        >
+          <ArrowLeft className="h-4 w-4 shrink-0" />
+          Back to Website
+        </Link>
         <form action={logout}>
           <button
             type="submit"
