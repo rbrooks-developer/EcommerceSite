@@ -15,6 +15,8 @@ const addressSchema = z.object({
   zip: z.string().min(1, "Postal code is required"),
   country: z.string().min(2).default("US"),
   phone: z.string().optional(),
+  is_default_shipping: z.boolean().default(false),
+  is_default_billing: z.boolean().default(false),
 });
 
 export async function saveAddress(_prev: unknown, formData: FormData) {
@@ -35,21 +37,33 @@ export async function saveAddress(_prev: unknown, formData: FormData) {
     zip: formData.get("zip"),
     country: formData.get("country") || "US",
     phone: formData.get("phone") || undefined,
+    is_default_shipping: formData.get("is_default_shipping") === "on",
+    is_default_billing: formData.get("is_default_billing") === "on",
   });
 
   if (!parsed.success) return { error: parsed.error.flatten().fieldErrors };
 
+  const { is_default_shipping, is_default_billing, ...addressData } = parsed.data;
+
+  // Clear existing defaults before setting new ones
+  if (is_default_shipping) {
+    await supabase.from("user_addresses").update({ is_default_shipping: false } as any).eq("user_id", user.id);
+  }
+  if (is_default_billing) {
+    await supabase.from("user_addresses").update({ is_default_billing: false } as any).eq("user_id", user.id);
+  }
+
   if (addressId) {
     const { error } = await supabase
       .from("user_addresses")
-      .update(parsed.data as any)
+      .update({ ...addressData, is_default_shipping, is_default_billing } as any)
       .eq("id", addressId)
       .eq("user_id", user.id);
     if (error) return { error: { _form: [error.message] } };
   } else {
     const { error } = await supabase
       .from("user_addresses")
-      .insert({ ...parsed.data, user_id: user.id } as any);
+      .insert({ ...addressData, is_default_shipping, is_default_billing, user_id: user.id } as any);
     if (error) return { error: { _form: [error.message] } };
   }
 

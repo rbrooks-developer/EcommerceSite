@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Package, CreditCard } from "lucide-react";
 import { SUBDIVISIONS, getSubdivisionLabel } from "@/lib/data/countries";
 import type { Country } from "@/lib/data/countries";
 import type { UserAddress } from "@/types";
@@ -148,6 +149,32 @@ export function AddressForm({ address, allowedCountries, onClose, onSuccess }: A
           <Label htmlFor="phone">Phone (optional)</Label>
           <Input id="phone" name="phone" type="tel" placeholder="(555) 123-4567"
             autoComplete="tel" defaultValue={address?.phone ?? ""} />
+        </div>
+
+        <div className="space-y-2 pt-1">
+          <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">Set as default</p>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              name="is_default_shipping"
+              defaultChecked={address?.is_default_shipping ?? false}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <span className="flex items-center gap-1.5 text-gray-700">
+              <Package className="h-3.5 w-3.5 text-blue-500" /> Default shipping address
+            </span>
+          </label>
+          <label className="flex items-center gap-2 text-sm cursor-pointer">
+            <input
+              type="checkbox"
+              name="is_default_billing"
+              defaultChecked={address?.is_default_billing ?? false}
+              className="h-4 w-4 rounded border-gray-300"
+            />
+            <span className="flex items-center gap-1.5 text-gray-700">
+              <CreditCard className="h-3.5 w-3.5 text-purple-500" /> Default billing address
+            </span>
+          </label>
         </div>
 
         <div className="flex gap-3 pt-1">
