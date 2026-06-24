@@ -6,6 +6,7 @@ import { cn } from "@/lib/utils";
 
 export function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
+  const [zoomed, setZoomed] = useState(false);
 
   if (images.length === 0) {
     return (
@@ -19,15 +20,29 @@ export function ProductImages({ images, name }: { images: string[]; name: string
 
   return (
     <div className="space-y-3">
-      <div className="relative aspect-square overflow-hidden rounded-lg bg-gray-100">
-        <Image
-          src={images[selected]}
-          alt={`${name} - image ${selected + 1}`}
-          fill
-          className="object-cover"
-          sizes="(max-width: 1024px) 100vw, 50vw"
-          priority
-        />
+      <div
+        className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 cursor-zoom-in"
+        onMouseEnter={() => setZoomed(true)}
+        onMouseLeave={() => setZoomed(false)}
+        onTouchStart={() => setZoomed(true)}
+        onTouchEnd={() => setZoomed(false)}
+      >
+        <div
+          className="absolute inset-0"
+          style={{
+            transform: zoomed ? "scale(1.12)" : "scale(1)",
+            transition: "transform 400ms ease-in-out",
+          }}
+        >
+          <Image
+            src={images[selected]}
+            alt={`${name} - image ${selected + 1}`}
+            fill
+            className="object-cover"
+            sizes="(max-width: 1024px) 100vw, 50vw"
+            priority
+          />
+        </div>
       </div>
 
       {images.length > 1 && (
