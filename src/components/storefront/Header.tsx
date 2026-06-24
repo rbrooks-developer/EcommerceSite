@@ -48,7 +48,7 @@ export function Header({ siteTitle, logoUrl, navConfig, isLoggedIn, isAdmin = fa
               <Link
                 key={item.link}
                 href={resolveNavHref(item.link)}
-                className="text-sm font-medium transition-opacity hover:opacity-70"
+                className="text-base font-bold transition-opacity hover:opacity-70"
                 style={{ color: fontColor }}
               >
                 {item.label}
