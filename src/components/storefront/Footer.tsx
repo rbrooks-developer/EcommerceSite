@@ -61,7 +61,7 @@ export function Footer({
 
             {/* Phone + Email */}
             {(contactInfo?.phone || contactInfo?.email) && (
-              <div className="flex flex-col gap-1 mt-3">
+              <div className="flex flex-col gap-0 mt-3">
                 {contactInfo.phone && (
                   <a
                     href={`tel:${contactInfo.phone.replace(/\D/g, "")}`}
