@@ -43,7 +43,7 @@ function CategoryNode({
   // Auto-expand if any descendant is active
   const isDescendantActive = (n: Node): boolean =>
     n.cat.slug === activeSlug || n.children.some(isDescendantActive);
-  const [open, setOpen] = useState(() => isDescendantActive(node));
+  const [open, setOpen] = useState(true);
 
   const isActive = node.cat.slug === activeSlug;
 
