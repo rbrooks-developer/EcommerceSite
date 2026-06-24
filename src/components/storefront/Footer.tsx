@@ -117,7 +117,7 @@ export function Footer({
                       <li aria-hidden="true" className="text-sm select-none" style={{ color: fontColor, opacity: 0.3 }}>|</li>
                       <li>
                         <span className="text-xs tracking-[0.15em]" style={{ color: fontColor, opacity: 0.6 }}>
-                          {social_handle}
+                          {social_handle.toUpperCase()}
                         </span>
                       </li>
                     </>
