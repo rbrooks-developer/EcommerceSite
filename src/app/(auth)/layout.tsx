@@ -17,6 +17,9 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         .data as { role: string } | null)?.role === "admin"
     : false;
 
+  const bgColor = (settings as any)?.bg_color ?? "#ffffff";
+  const fontColor = (settings as any)?.font_color ?? "#111827";
+
   return (
     <CartProvider>
       <Header
@@ -25,6 +28,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
         isLoggedIn={!!user}
         isAdmin={isAdmin}
+        bgColor={bgColor}
+        fontColor={fontColor}
       />
       <main className="flex-1 flex items-center justify-center px-4 py-12">
         <div className="w-full max-w-md">{children}</div>
@@ -33,6 +38,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         siteTitle={settings?.site_title ?? "My Store"}
         footerConfig={(settings?.footer_config as FooterConfig) ?? { links: [], social: [], copyright_text: "" }}
         contactInfo={(settings?.contact_info as ContactInfo) ?? { email: null, phone: null, address: null }}
+        bgColor={bgColor}
+        fontColor={fontColor}
       />
     </CartProvider>
   );

@@ -17,6 +17,9 @@ export default async function AccountLayout({ children }: { children: React.Reac
         .data as { role: string } | null)?.role === "admin"
     : false;
 
+  const bgColor = (settings as any)?.bg_color ?? "#ffffff";
+  const fontColor = (settings as any)?.font_color ?? "#111827";
+
   return (
     <CartProvider>
       <Header
@@ -25,6 +28,8 @@ export default async function AccountLayout({ children }: { children: React.Reac
         navConfig={(settings?.nav_config as NavConfig) ?? { items: [] }}
         isLoggedIn={!!user}
         isAdmin={isAdmin}
+        bgColor={bgColor}
+        fontColor={fontColor}
       />
       <main className="flex-1">
         <div className="mx-auto max-w-3xl px-4 sm:px-6 lg:px-8 py-8">
@@ -35,6 +40,8 @@ export default async function AccountLayout({ children }: { children: React.Reac
         siteTitle={settings?.site_title ?? "My Store"}
         footerConfig={(settings?.footer_config as FooterConfig) ?? { links: [], social: [], copyright_text: "" }}
         contactInfo={(settings?.contact_info as ContactInfo) ?? { email: null, phone: null, address: null }}
+        bgColor={bgColor}
+        fontColor={fontColor}
       />
     </CartProvider>
   );

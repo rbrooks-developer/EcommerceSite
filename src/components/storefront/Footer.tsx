@@ -5,34 +5,39 @@ interface FooterProps {
   siteTitle: string;
   footerConfig: FooterConfig;
   contactInfo: ContactInfo;
+  bgColor?: string;
+  fontColor?: string;
 }
 
-export function Footer({ siteTitle, footerConfig, contactInfo }: FooterProps) {
+export function Footer({ siteTitle, footerConfig, contactInfo, bgColor = "#ffffff", fontColor = "#111827" }: FooterProps) {
   const { links, social, copyright_text } = footerConfig ?? {};
 
   return (
-    <footer className="border-t border-gray-200 bg-white mt-auto">
+    <footer
+      className="border-t border-black/10 mt-auto"
+      style={{ backgroundColor: bgColor, color: fontColor }}
+    >
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-10">
         <div className="grid grid-cols-1 gap-8 md:grid-cols-3">
           {/* Brand */}
           <div>
-            <p className="font-bold text-gray-900">{siteTitle}</p>
+            <p className="font-bold" style={{ color: fontColor }}>{siteTitle}</p>
             {contactInfo?.email && (
-              <p className="mt-2 text-sm text-gray-500">{contactInfo.email}</p>
+              <p className="mt-2 text-sm opacity-60">{contactInfo.email}</p>
             )}
             {contactInfo?.phone && (
-              <p className="text-sm text-gray-500">{contactInfo.phone}</p>
+              <p className="text-sm opacity-60">{contactInfo.phone}</p>
             )}
           </div>
 
           {/* Links */}
           {(links ?? []).length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Links</h3>
+              <h3 className="text-sm font-semibold" style={{ color: fontColor }}>Links</h3>
               <ul className="mt-3 space-y-2">
                 {links.map((link) => (
                   <li key={link.link}>
-                    <Link href={link.link} className="text-sm text-gray-500 hover:text-gray-900">
+                    <Link href={link.link} className="text-sm opacity-60 hover:opacity-100 transition-opacity" style={{ color: fontColor }}>
                       {link.label}
                     </Link>
                   </li>
@@ -44,11 +49,11 @@ export function Footer({ siteTitle, footerConfig, contactInfo }: FooterProps) {
           {/* Social */}
           {(social ?? []).length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-900">Follow us</h3>
+              <h3 className="text-sm font-semibold" style={{ color: fontColor }}>Follow us</h3>
               <ul className="mt-3 space-y-2">
                 {social.map((s) => (
                   <li key={s.url}>
-                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-sm text-gray-500 hover:text-gray-900">
+                    <a href={s.url} target="_blank" rel="noopener noreferrer" className="text-sm opacity-60 hover:opacity-100 transition-opacity" style={{ color: fontColor }}>
                       {s.platform}
                     </a>
                   </li>
@@ -58,8 +63,8 @@ export function Footer({ siteTitle, footerConfig, contactInfo }: FooterProps) {
           )}
         </div>
 
-        <div className="mt-8 border-t border-gray-100 pt-6 text-center">
-          <p className="text-xs text-gray-400">
+        <div className="mt-8 border-t border-black/10 pt-6 text-center">
+          <p className="text-xs opacity-50">
             {copyright_text || `© ${new Date().getFullYear()} ${siteTitle}`}
           </p>
         </div>

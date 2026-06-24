@@ -37,10 +37,13 @@ export default async function HomePage() {
   const featuredProducts = productsRes.data as Pick<Product, "id" | "slug" | "name" | "price" | "images">[];
   const featuredCategories = categoriesRes.data as Pick<Category, "id" | "slug" | "name">[];
 
+  const bgColor = (settings as any)?.bg_color ?? "#ffffff";
+  const fontColor = (settings as any)?.font_color ?? "#111827";
+
   return (
     <div>
       {/* Hero */}
-      <section className="relative bg-gray-900 text-white">
+      <section className="relative" style={{ backgroundColor: bgColor, color: fontColor }}>
         {homepage?.hero_image_url && (
           <Image
             src={homepage.hero_image_url}
@@ -56,13 +59,14 @@ export default async function HomePage() {
             {homepage?.hero_heading ?? "Welcome to Our Store"}
           </h1>
           {homepage?.hero_subtext && (
-            <p className="mt-4 text-lg text-gray-300 max-w-xl mx-auto">
+            <p className="mt-4 text-lg opacity-70 max-w-xl mx-auto">
               {homepage.hero_subtext}
             </p>
           )}
           <Link
             href={homepage?.hero_cta_link ?? "/products"}
-            className="mt-8 inline-block rounded-md bg-white px-8 py-3 text-sm font-semibold text-gray-900 hover:bg-gray-100 transition-colors"
+            className="mt-8 inline-block rounded-md px-8 py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+            style={{ backgroundColor: fontColor, color: bgColor }}
           >
             {homepage?.hero_cta_text ?? "Shop Now"}
           </Link>
@@ -72,15 +76,16 @@ export default async function HomePage() {
       {/* Featured Categories */}
       {featuredCategories.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
-          <h2 className="text-xl font-bold text-gray-900 mb-6">Shop by Category</h2>
+          <h2 className="text-xl font-bold mb-6" style={{ color: fontColor }}>Shop by Category</h2>
           <div className="grid grid-cols-2 gap-3 md:grid-cols-3 lg:grid-cols-4">
             {featuredCategories.map((cat) => (
               <Link
                 key={cat.id}
                 href={`/category/${cat.slug}`}
-                className="rounded-lg border border-gray-200 bg-gray-50 p-4 text-center hover:bg-gray-100 transition-colors"
+                className="rounded-lg border border-black/10 p-4 text-center transition-opacity hover:opacity-70"
+                style={{ color: fontColor }}
               >
-                <span className="text-sm font-medium text-gray-800">{cat.name}</span>
+                <span className="text-sm font-medium">{cat.name}</span>
               </Link>
             ))}
           </div>
@@ -91,8 +96,8 @@ export default async function HomePage() {
       {featuredProducts.length > 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-12">
           <div className="flex items-center justify-between mb-6">
-            <h2 className="text-xl font-bold text-gray-900">Featured Products</h2>
-            <Link href="/products" className="text-sm text-gray-500 hover:text-gray-900 underline underline-offset-2">
+            <h2 className="text-xl font-bold" style={{ color: fontColor }}>Featured Products</h2>
+            <Link href="/products" className="text-sm opacity-60 hover:opacity-100 underline underline-offset-2 transition-opacity" style={{ color: fontColor }}>
               View all
             </Link>
           </div>
@@ -107,8 +112,12 @@ export default async function HomePage() {
       {/* Fallback CTA if no featured content configured */}
       {featuredProducts.length === 0 && featuredCategories.length === 0 && (
         <section className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-20 text-center">
-          <h2 className="text-2xl font-bold text-gray-900">Browse our products</h2>
-          <Link href="/products" className="mt-6 inline-block rounded-md bg-gray-900 px-8 py-3 text-sm font-semibold text-white hover:bg-gray-700 transition-colors">
+          <h2 className="text-2xl font-bold" style={{ color: fontColor }}>Browse our products</h2>
+          <Link
+            href="/products"
+            className="mt-6 inline-block rounded-md px-8 py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+            style={{ backgroundColor: fontColor, color: bgColor }}
+          >
             Shop Now
           </Link>
         </section>
