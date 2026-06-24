@@ -141,15 +141,6 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [fontColor, setFontColor] = useState((defaultValues as any)?.font_color ?? "#111827");
   const [fontFamily, setFontFamily] = useState((defaultValues as any)?.font_family ?? "default");
 
-  useEffect(() => {
-    document.getElementById("admin-font-preview-link")?.remove();
-    if (!fontFamily || fontFamily === "default") return;
-    const link = document.createElement("link");
-    link.id = "admin-font-preview-link";
-    link.rel = "stylesheet";
-    link.href = `https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}&display=swap`;
-    document.head.appendChild(link);
-  }, [fontFamily]);
   const [taxMode, setTaxMode] = useState(defaultValues?.tax_mode ?? "none");
 
   const homepage = defaultValues?.homepage_config as HomepageConfig | null;
@@ -231,6 +222,14 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   };
 
   return (
+    <>
+      {fontFamily && fontFamily !== "default" && (
+        <link
+          key={fontFamily}
+          rel="stylesheet"
+          href={`https://fonts.googleapis.com/css2?family=${encodeURIComponent(fontFamily)}&display=swap`}
+        />
+      )}
     <form onSubmit={handleSubmit} className="space-y-5 max-w-3xl pb-10">
       {message && (
         <div className={`rounded-md p-3 text-sm ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
@@ -461,5 +460,6 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
 
       <Button type="submit" size="lg" loading={saving}>Save All Settings</Button>
     </form>
+    </>
   );
 }
