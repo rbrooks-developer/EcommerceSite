@@ -21,7 +21,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
 
   return (
     <CartProvider>
-      <div {...(fontGradient ? { "data-text-gradient": "true" } : {})} className="min-h-full flex flex-col">
+      <div {...(fontGradient ? { "data-text-gradient": "true" } : {})} className="min-h-screen flex flex-col">
       <Header
         siteTitle={settings?.site_title ?? "My Store"}
         logoUrl={settings?.logo_url ?? null}
