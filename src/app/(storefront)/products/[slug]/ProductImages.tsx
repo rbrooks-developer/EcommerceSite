@@ -1,12 +1,40 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 export function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
-  const [zoomed, setZoomed] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null);
+
+  function getPos(clientX: number, clientY: number) {
+    const rect = containerRef.current?.getBoundingClientRect();
+    if (!rect) return { x: 50, y: 50 };
+    return {
+      x: Math.max(0, Math.min(100, ((clientX - rect.left) / rect.width) * 100)),
+      y: Math.max(0, Math.min(100, ((clientY - rect.top) / rect.height) * 100)),
+    };
+  }
+
+  function zoomIn(clientX: number, clientY: number) {
+    if (!wrapperRef.current) return;
+    const { x, y } = getPos(clientX, clientY);
+    wrapperRef.current.style.transformOrigin = `${x}% ${y}%`;
+    wrapperRef.current.style.transform = "scale(2.5)";
+  }
+
+  function pan(clientX: number, clientY: number) {
+    if (!wrapperRef.current) return;
+    const { x, y } = getPos(clientX, clientY);
+    wrapperRef.current.style.transformOrigin = `${x}% ${y}%`;
+  }
+
+  function zoomOut() {
+    if (!wrapperRef.current) return;
+    wrapperRef.current.style.transform = "scale(1)";
+  }
 
   if (images.length === 0) {
     return (
@@ -21,18 +49,19 @@ export function ProductImages({ images, name }: { images: string[]; name: string
   return (
     <div className="space-y-3">
       <div
-        className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 cursor-zoom-in"
-        onMouseEnter={() => setZoomed(true)}
-        onMouseLeave={() => setZoomed(false)}
-        onTouchStart={() => setZoomed(true)}
-        onTouchEnd={() => setZoomed(false)}
+        ref={containerRef}
+        className="relative aspect-square overflow-hidden rounded-lg bg-gray-100 cursor-crosshair"
+        onMouseEnter={(e) => zoomIn(e.clientX, e.clientY)}
+        onMouseMove={(e) => pan(e.clientX, e.clientY)}
+        onMouseLeave={zoomOut}
+        onTouchStart={(e) => { const t = e.touches[0]; zoomIn(t.clientX, t.clientY); }}
+        onTouchMove={(e) => { const t = e.touches[0]; pan(t.clientX, t.clientY); }}
+        onTouchEnd={zoomOut}
       >
         <div
+          ref={wrapperRef}
           className="absolute inset-0"
-          style={{
-            transform: zoomed ? "scale(1.12)" : "scale(1)",
-            transition: "transform 400ms ease-in-out",
-          }}
+          style={{ transition: "transform 200ms ease-out", transformOrigin: "50% 50%" }}
         >
           <Image
             src={images[selected]}
