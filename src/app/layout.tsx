@@ -40,6 +40,7 @@ export default async function RootLayout({
   const bgColor = (settings as any)?.bg_color ?? "#ffffff";
   const fontColor = (settings as any)?.font_color ?? "#111827";
   const fontFamily = (settings as any)?.font_family ?? "default";
+  const faviconUrl = settings?.favicon_url ?? null;
 
   const isGoogleFont = GOOGLE_FONT_FAMILIES.includes(fontFamily);
   const googleFontUrl = isGoogleFont
@@ -53,6 +54,7 @@ export default async function RootLayout({
   return (
     <html lang="en" className={`${geistSans.variable} h-full antialiased`}>
       <head>
+        {faviconUrl && <link rel="icon" href={faviconUrl} />}
         {googleFontUrl && (
           <>
             <link rel="preconnect" href="https://fonts.googleapis.com" />
