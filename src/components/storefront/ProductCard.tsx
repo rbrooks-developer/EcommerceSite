@@ -1,41 +1,25 @@
-"use client";
-
 import Link from "next/link";
 import Image from "next/image";
-import { useState } from "react";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
 export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" | "name" | "price" | "images"> }) {
   const image = (product.images as string[])[0];
-  const [zoomed, setZoomed] = useState(false);
 
   return (
     <Link href={`/products/${product.slug}`} className="group block" style={{ color: "inherit" }}>
       <div
-        className="aspect-square overflow-hidden rounded-lg relative cursor-zoom-in"
+        className="aspect-square overflow-hidden rounded-lg relative"
         style={{ backgroundColor: "rgba(128,128,128,0.12)" }}
-        onMouseEnter={() => setZoomed(true)}
-        onMouseLeave={() => setZoomed(false)}
-        onTouchStart={() => setZoomed(true)}
-        onTouchEnd={() => setZoomed(false)}
       >
         {image ? (
-          <div
-            className="absolute inset-0"
-            style={{
-              transform: zoomed ? "scale(1.12)" : "scale(1)",
-              transition: "transform 400ms ease-in-out",
-            }}
-          >
-            <Image
-              src={image}
-              alt={product.name}
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            />
-          </div>
+          <Image
+            src={image}
+            alt={product.name}
+            fill
+            className="object-cover"
+            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+          />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.25 }}>
             <svg className="h-12 w-12" fill="none" viewBox="0 0 24 24" stroke="currentColor">
