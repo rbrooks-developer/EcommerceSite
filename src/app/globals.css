@@ -72,9 +72,9 @@ body {
 [data-text-gradient] [class*="bg-indigo"],
 [data-text-gradient] [class*="bg-emerald"] {
   background-image: none;
-  -webkit-text-fill-color: unset;
-  background-clip: unset;
-  -webkit-background-clip: unset;
+  -webkit-text-fill-color: initial;
+  background-clip: initial;
+  -webkit-background-clip: initial;
 }
 
 /* Ensure form controls and buttons meet 44px minimum touch target */

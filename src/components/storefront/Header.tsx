@@ -87,7 +87,7 @@ export function Header({ siteTitle, logoUrl, navConfig, isLoggedIn, isAdmin = fa
             <Link href="/cart" className="relative p-2 transition-opacity hover:opacity-70" style={{ color: fontColor }}>
               <ShoppingCart className="h-10 w-10" />
               {itemCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 text-[10px] font-bold text-white">
+                <span className="absolute -top-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full bg-gray-900 text-[10px] font-bold" style={{ color: "white", WebkitTextFillColor: "white" }}>
                   {itemCount > 9 ? "9+" : itemCount}
                 </span>
               )}
