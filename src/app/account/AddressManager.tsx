@@ -70,22 +70,24 @@ function AddressSection({
                 >
                   <Pencil className="h-3.5 w-3.5" />
                 </button>
-                {confirmDeleteId === addr.id ? (
-                  <span className="flex items-center gap-1">
-                    <button onClick={() => { onDelete(addr.id); setConfirmDeleteId(null); }} disabled={isPending}
-                      className="text-xs font-medium text-red-600 hover:text-red-700 px-1">
-                      {isPending ? "…" : "Delete?"}
+                {!addr[defaultField] && (
+                  confirmDeleteId === addr.id ? (
+                    <span className="flex items-center gap-1">
+                      <button onClick={() => { onDelete(addr.id); setConfirmDeleteId(null); }} disabled={isPending}
+                        className="text-xs font-medium text-red-600 hover:text-red-700 px-1">
+                        {isPending ? "…" : "Delete?"}
+                      </button>
+                      <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">
+                        Cancel
+                      </button>
+                    </span>
+                  ) : (
+                    <button onClick={() => setConfirmDeleteId(addr.id)}
+                      className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
+                      aria-label="Delete address">
+                      <Trash2 className="h-3.5 w-3.5" />
                     </button>
-                    <button onClick={() => setConfirmDeleteId(null)} className="text-xs text-gray-400 hover:text-gray-600 px-1">
-                      Cancel
-                    </button>
-                  </span>
-                ) : (
-                  <button onClick={() => setConfirmDeleteId(addr.id)}
-                    className="p-1.5 rounded text-gray-400 hover:text-red-600 hover:bg-red-50 transition-colors"
-                    aria-label="Delete address">
-                    <Trash2 className="h-3.5 w-3.5" />
-                  </button>
+                  )
                 )}
               </div>
             </div>
