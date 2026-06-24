@@ -17,9 +17,11 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const homepage = settings?.homepage_config as HomepageConfig | null;
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const fontColor = homepage?.font_color ?? "#111827";
+  const fontGradient = homepage?.font_gradient_enabled ?? false;
 
   return (
     <CartProvider>
+      <div {...(fontGradient ? { "data-text-gradient": "true" } : {})} className="min-h-full flex flex-col">
       <Header
         siteTitle={settings?.site_title ?? "My Store"}
         logoUrl={settings?.logo_url ?? null}
@@ -38,6 +40,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         bgColor={bgColor}
         fontColor={fontColor}
       />
+      </div>
     </CartProvider>
   );
 }

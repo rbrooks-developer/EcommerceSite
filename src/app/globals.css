@@ -46,14 +46,14 @@ body {
 /* Gradient text — applied to text elements when admin enables the gradient toggle.
    Uses background-image (not background shorthand) to avoid clobbering background-color.
    -webkit-text-fill-color: transparent overrides inline color styles in all modern browsers. */
-body[data-text-gradient] :is(h1, h2, h3, h4, h5, h6, p, li, label) {
+[data-text-gradient] :is(h1, h2, h3, h4, h5, h6, p, li, label) {
   background-image: var(--site-fg-gradient);
   -webkit-background-clip: text;
   background-clip: text;
   -webkit-text-fill-color: transparent;
 }
 
-body[data-text-gradient] a:not(.btn-hero):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-red"]) {
+[data-text-gradient] a:not(.btn-hero):not([class*="text-indigo"]):not([class*="text-emerald"]):not([class*="text-red"]) {
   background-image: var(--site-fg-gradient);
   -webkit-background-clip: text;
   background-clip: text;
@@ -61,16 +61,16 @@ body[data-text-gradient] a:not(.btn-hero):not([class*="text-indigo"]):not([class
 }
 
 /* Reset gradient for interactive controls and elements with their own background fills */
-body[data-text-gradient] button,
-body[data-text-gradient] input,
-body[data-text-gradient] select,
-body[data-text-gradient] textarea,
-body[data-text-gradient] .btn-hero,
-body[data-text-gradient] [class*="bg-gray"],
-body[data-text-gradient] [class*="bg-green"],
-body[data-text-gradient] [class*="bg-red"],
-body[data-text-gradient] [class*="bg-indigo"],
-body[data-text-gradient] [class*="bg-emerald"] {
+[data-text-gradient] button,
+[data-text-gradient] input,
+[data-text-gradient] select,
+[data-text-gradient] textarea,
+[data-text-gradient] .btn-hero,
+[data-text-gradient] [class*="bg-gray"],
+[data-text-gradient] [class*="bg-green"],
+[data-text-gradient] [class*="bg-red"],
+[data-text-gradient] [class*="bg-indigo"],
+[data-text-gradient] [class*="bg-emerald"] {
   background-image: none;
   -webkit-text-fill-color: unset;
   background-clip: unset;

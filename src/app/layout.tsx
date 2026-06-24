@@ -68,7 +68,6 @@ export default async function RootLayout({
       {heroFontUrl   && <link rel="stylesheet" href={heroFontUrl} />}
       <body
         className="min-h-full flex flex-col"
-        data-text-gradient={fontGradient ? "true" : undefined}
         style={{
           backgroundColor: bgColor,
           color: fontColor,
