@@ -8,13 +8,13 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
 
   return (
     <Link href={`/products/${product.slug}`} className="group block" style={{ color: "inherit" }}>
-      <div className="aspect-square overflow-hidden rounded-lg relative" style={{ backgroundColor: "rgba(128,128,128,0.12)" }}>
+      <div className="aspect-square overflow-hidden rounded-lg relative cursor-zoom-in" style={{ backgroundColor: "rgba(128,128,128,0.12)" }}>
         {image ? (
           <Image
             src={image}
             alt={product.name}
             fill
-            className="object-cover transition-transform duration-300 group-hover:scale-105"
+            className="object-cover transition-transform duration-500 ease-in-out group-hover:scale-110 group-active:scale-110"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
           />
         ) : (
