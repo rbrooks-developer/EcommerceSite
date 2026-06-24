@@ -108,7 +108,7 @@ export default async function HomePage() {
           {tagline && (
             <p
               className="text-sm md:text-base tracking-[0.25em] uppercase"
-              style={{ color: fontColor, opacity: 0.5 }}
+              style={{ color: "#9ca3af", WebkitTextFillColor: "#9ca3af" }}
             >
               {tagline}
             </p>
