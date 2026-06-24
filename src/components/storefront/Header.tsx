@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Menu, X, ShoppingCart, User } from "lucide-react";
+import { Menu, X, ShoppingCart, CircleUser, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/lib/cart/store";
 import type { NavConfig } from "@/types";
@@ -57,8 +57,28 @@ export function Header({ siteTitle, logoUrl, navConfig, isLoggedIn, isAdmin = fa
           </nav>
 
           <div className="flex items-center gap-3">
-            <Link href={isLoggedIn ? "/account" : "/login"} className="p-2 transition-opacity hover:opacity-70" style={{ color: fontColor }} aria-label={isLoggedIn ? "My account" : "Sign in"}>
-              <User className="h-5 w-5" />
+            <Link
+              href={isLoggedIn ? "/account" : "/login"}
+              className="p-1 transition-opacity hover:opacity-75"
+              style={{ color: fontColor }}
+              aria-label={isLoggedIn ? "My account" : "Sign in"}
+            >
+              {isLoggedIn ? (
+                <span className="relative inline-flex">
+                  <span
+                    className="flex h-7 w-7 items-center justify-center rounded-full"
+                    style={{ backgroundColor: fontColor }}
+                  >
+                    <UserRound className="h-4 w-4" style={{ color: bgColor }} />
+                  </span>
+                  <span
+                    className="absolute -bottom-0.5 -right-0.5 h-2.5 w-2.5 rounded-full bg-emerald-500"
+                    style={{ boxShadow: `0 0 0 2px ${bgColor}` }}
+                  />
+                </span>
+              ) : (
+                <CircleUser className="h-6 w-6" strokeWidth={1.5} />
+              )}
             </Link>
             <Link href="/cart" className="relative p-2 transition-opacity hover:opacity-70" style={{ color: fontColor }}>
               <ShoppingCart className="h-5 w-5" />
