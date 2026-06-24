@@ -63,13 +63,23 @@ export async function register(_prevState: unknown, formData: FormData) {
 
   if (error) return { error: { _form: [error.message] } };
 
-  // Use service client to bypass RLS — no active session yet when email confirmation is on
+  // Upsert profile data via service client (bypasses RLS, handles both
+  // "trigger already created the row" and "row not yet created" cases)
   if (signUpData.user) {
     const serviceClient = await createServiceClient();
-    await serviceClient
+    const { error: profileError } = await serviceClient
       .from("profiles")
-      .update({ first_name, last_name, phone: phone ?? null, updated_at: new Date().toISOString() } as any)
-      .eq("id", signUpData.user.id);
+      .upsert({
+        id: signUpData.user.id,
+        email,
+        first_name,
+        last_name,
+        phone: phone ?? null,
+        updated_at: new Date().toISOString(),
+      } as any);
+    if (profileError) {
+      console.error("[register] profile upsert failed:", profileError.message);
+    }
   }
 
   sendWelcomeEmail(
