@@ -248,8 +248,9 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
 
   return (
     <form onSubmit={handleSubmit} className="flex gap-8 items-start pb-10">
-      {/* Sticky save button — left column */}
-      <div className="hidden lg:flex flex-col gap-3 w-44 shrink-0 sticky top-0">
+      {/* Sticky left column — title + save button */}
+      <div className="hidden lg:flex flex-col gap-3 w-48 shrink-0 sticky top-0">
+        <h1 className="text-2xl font-bold text-gray-900">Site Settings</h1>
         <Button type="submit" size="lg" className="w-full" loading={saving}>Save Settings</Button>
         {message && (
           <div className={`rounded-md p-3 text-sm ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>

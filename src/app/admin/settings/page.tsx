@@ -15,8 +15,7 @@ export default async function SettingsPage() {
     .order("name");
 
   return (
-    <div className="space-y-5">
-      <h1 className="text-2xl font-bold text-gray-900">Site Settings</h1>
+    <div>
       <SettingsForm
         defaultValues={settings}
         products={products ?? []}
