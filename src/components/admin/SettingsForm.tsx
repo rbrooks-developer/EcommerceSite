@@ -400,7 +400,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         />
       </Section>
 
-      <Section title="Cart / Checkout">
+      <Section title="Cart / Checkout / Account">
         <p className="text-sm text-gray-500">Colors for the cart, checkout, and account pages.</p>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <ColorPicker id="checkout_section_color" label="Section Color" value={checkoutSectionColor} onChange={setCheckoutSectionColor} />
