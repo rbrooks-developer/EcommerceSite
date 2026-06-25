@@ -33,7 +33,15 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
         fontColor={fontColor}
       />
       <main className="flex-1 flex items-center justify-center px-4 py-12">
-        <div className="w-full max-w-md">{children}</div>
+        <div
+          className="w-full max-w-md"
+          style={{
+            "--input-bg": "var(--checkout-input-bg, color-mix(in srgb, var(--site-fg) 8%, var(--site-bg)))",
+            "--input-text": "var(--site-fg, #111827)",
+          } as React.CSSProperties}
+        >
+          {children}
+        </div>
       </main>
       <Footer
         siteTitle={settings?.site_title ?? "My Store"}
