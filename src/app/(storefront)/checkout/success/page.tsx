@@ -2,6 +2,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
 import { CheckCircle } from "lucide-react";
+import { ClearCart } from "./ClearCart";
 import type { Order, OrderItem, Product } from "@/types";
 
 export default async function CheckoutSuccessPage({
@@ -43,6 +44,7 @@ export default async function CheckoutSuccessPage({
 
   return (
     <div className="mx-auto max-w-2xl px-4 py-16">
+      <ClearCart />
       <div className="text-center mb-8">
         <CheckCircle className="mx-auto h-14 w-14 text-green-500 mb-4" />
         <h1 className="text-2xl font-bold mb-2">Payment Successful!</h1>

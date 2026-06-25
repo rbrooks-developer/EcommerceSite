@@ -124,7 +124,6 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to start checkout");
-      clearCart();
       window.location.href = data.url;
     } catch (err: any) {
       setError(err.message);
