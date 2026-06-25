@@ -46,7 +46,7 @@ export function AddressForm({ address, addressType, allowedCountries, onClose, o
   const selectStyle = (hasError?: boolean): React.CSSProperties => ({
     backgroundColor: "var(--input-bg, var(--checkout-input-bg, white))",
     color: "var(--input-text, var(--site-fg, #111827))",
-    borderColor: hasError ? undefined : "color-mix(in srgb, var(--site-fg, #111827) 30%, transparent)",
+    borderColor: hasError ? undefined : "var(--input-border, #d1d5db)",
   });
 
   const typeLabel = addressType === "shipping" ? "Shipping" : "Billing";

@@ -38,6 +38,7 @@ export default async function AccountLayout({ children }: { children: React.Reac
           style={{
             "--input-bg": "var(--checkout-input-bg, color-mix(in srgb, var(--site-fg) 8%, var(--site-bg)))",
             "--input-text": "var(--site-fg, #111827)",
+            "--input-border": "color-mix(in srgb, var(--site-fg) 30%, transparent)",
           } as React.CSSProperties}
         >
           {children}

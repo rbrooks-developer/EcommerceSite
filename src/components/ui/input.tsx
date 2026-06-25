@@ -19,7 +19,7 @@ const Input = forwardRef<HTMLInputElement, InputProps>(
           style={{
             backgroundColor: "var(--input-bg, white)",
             color: "var(--input-text, #111827)",
-            borderColor: error ? undefined : "color-mix(in srgb, var(--site-fg, #111827) 30%, transparent)",
+            borderColor: error ? undefined : "var(--input-border, #d1d5db)",
             ...(props.style ?? {}),
           }}
           {...props}
