@@ -409,6 +409,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         <p className="text-xs text-gray-400">Section Color = background of panels/cards. Textbox Color = background of input fields and dropdowns.</p>
       </Section>
 
+      {/* Homepage section hidden — not currently in use
       <Section title="Homepage">
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <div><Label htmlFor="hero_heading">Hero Heading</Label><Input id="hero_heading" name="hero_heading" defaultValue={homepage?.hero_heading ?? ""} /></div>
@@ -431,6 +432,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           </select>
         </div>
       </Section>
+      */}
 
       <Section title="Navigation">
         <div className="space-y-2">
