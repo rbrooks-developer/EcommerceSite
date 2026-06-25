@@ -6,6 +6,7 @@ import { redirect } from "next/navigation";
 import { formatPrice, formatDate } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/ui/badge";
 import { logout } from "@/lib/actions/auth";
+import { Button } from "@/components/ui/button";
 import { AddressManager } from "./AddressManager";
 import { ProfileForm } from "./ProfileForm";
 import { PasswordForm } from "./PasswordForm";
@@ -68,9 +69,7 @@ export default async function AccountPage() {
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-2xl font-bold">My Account</h1>
         <form action={logout}>
-          <button type="submit" className="text-sm opacity-70 hover:opacity-100 transition-opacity whitespace-nowrap">
-            Sign out
-          </button>
+          <Button type="submit" size="sm">Sign Out</Button>
         </form>
       </div>
 
