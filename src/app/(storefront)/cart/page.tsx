@@ -125,11 +125,8 @@ export default function CartPage() {
 
             <Link
               href="/products"
-              className="block w-full rounded-md py-3 text-center text-sm font-medium transition-opacity hover:opacity-80"
-              style={{
-                border: "1px solid color-mix(in srgb, var(--site-fg) 40%, transparent)",
-                color: "var(--site-fg)",
-              }}
+              className="block w-full rounded-md py-3.5 text-center text-sm font-semibold transition-opacity hover:opacity-80"
+              style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)" }}
             >
               Continue Shopping
             </Link>
