@@ -118,7 +118,7 @@ export default function CartPage() {
             <Link
               href="/checkout"
               className="block w-full rounded-md py-3.5 text-center text-sm font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)" }}
+              style={{ background: "var(--site-fg)", backgroundClip: "border-box", WebkitBackgroundClip: "border-box", color: "var(--site-bg)", WebkitTextFillColor: "var(--site-bg)" }}
             >
               Proceed to Checkout
             </Link>
@@ -126,7 +126,7 @@ export default function CartPage() {
             <Link
               href="/products"
               className="block w-full rounded-md py-3.5 text-center text-sm font-semibold transition-opacity hover:opacity-80"
-              style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)" }}
+              style={{ background: "var(--site-fg)", backgroundClip: "border-box", WebkitBackgroundClip: "border-box", color: "var(--site-bg)", WebkitTextFillColor: "var(--site-bg)" }}
             >
               Continue Shopping
             </Link>
