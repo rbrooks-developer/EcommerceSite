@@ -98,9 +98,12 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
       });
       const data = await res.json();
       if (!res.ok) throw new Error(data.error ?? "Failed to fetch shipping rates");
-      setRates(data.rates);
-      setSelectedRate(data.rates[0] ?? null);
-      setStep("shipping");
+      const sorted = [...(data.rates as EasyPostRate[])].sort(
+        (a, b) => parseFloat(a.rate) - parseFloat(b.rate)
+      );
+      setRates(sorted);
+      setSelectedRate(sorted[0] ?? null);
+      setStep("review");
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -148,11 +151,14 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
 
       {/* Step breadcrumb */}
       <div className="flex items-center gap-2 text-sm mb-8">
-        {(["address", "shipping", "review"] as Step[]).map((s, i) => (
+        {(["address", "review"] as const).map((s, i) => (
           <span key={s} className="flex items-center gap-2">
             {i > 0 && <span style={{ opacity: 0.3 }}>›</span>}
-            <span className={step === s ? "font-semibold" : "capitalize"} style={step !== s ? { opacity: 0.4 } : {}}>
-              {s === "address" ? "Address" : s === "shipping" ? "Shipping" : "Review"}
+            <span
+              className={step === s || (s === "review" && step === "shipping") ? "font-semibold" : ""}
+              style={step === s || (s === "review" && step === "shipping") ? {} : { opacity: 0.4 }}
+            >
+              {s === "address" ? "Address" : "Review"}
             </span>
           </span>
         ))}
@@ -247,12 +253,12 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
             </div>
           )}
 
-          {/* Step 2: Shipping rates */}
+          {/* Step 2: Shipping rates (only shown when user clicks Edit on shipping method) */}
           {step === "shipping" && (
             <div className="rounded-lg p-6 space-y-4" style={panelStyle}>
               <div className="flex items-center justify-between">
-                <h2 className="font-semibold">Select Shipping</h2>
-                <button onClick={() => setStep("address")} className="text-xs transition-opacity hover:opacity-60" style={{ opacity: 0.45 }}>← Edit address</button>
+                <h2 className="font-semibold">Change Shipping Method</h2>
+                <button onClick={() => setStep("review")} className="text-xs transition-opacity hover:opacity-60" style={{ opacity: 0.45 }}>← Back to review</button>
               </div>
               <p className="text-sm" style={{ opacity: 0.55 }}>{address.name} · {addressSummary}</p>
               {rates.length === 0 ? (
@@ -335,15 +341,7 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
         <div className="lg:w-72 shrink-0">
           <div className="rounded-lg p-5 sticky top-24 space-y-3" style={panelStyle}>
             <h3 className="font-semibold text-sm">Order Summary</h3>
-            <ul className="space-y-2">
-              {items.map((item) => (
-                <li key={item.productId} className="flex justify-between text-xs" style={{ opacity: 0.7 }}>
-                  <span className="truncate pr-2">{item.name} × {item.quantity}</span>
-                  <span className="shrink-0">{formatPrice(item.price * item.quantity * 100)}</span>
-                </li>
-              ))}
-            </ul>
-            <div className="pt-3 space-y-1.5 text-sm" style={dividerStyle}>
+            <div className="space-y-1.5 text-sm">
               <div className="flex justify-between" style={{ opacity: 0.7 }}><span>Subtotal</span><span>{formatPrice(subtotal * 100)}</span></div>
               {selectedRate && (
                 <div className="flex justify-between" style={{ opacity: 0.7 }}>
@@ -355,6 +353,7 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
