@@ -249,7 +249,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   return (
     <form onSubmit={handleSubmit} className="flex gap-8 items-start pb-10">
       {/* Sticky left column — title + save button */}
-      <div className="hidden lg:flex flex-col gap-3 w-48 shrink-0 sticky top-0">
+      <div className="hidden lg:flex flex-col gap-3 w-48 shrink-0 sticky top-0 -mt-4 md:-mt-6 lg:-mt-8 pt-4 md:pt-6 lg:pt-8">
         <h1 className="text-2xl font-bold text-gray-900">Site Settings</h1>
         <Button type="submit" size="lg" className="w-full" loading={saving}>Save Settings</Button>
         {message && (
