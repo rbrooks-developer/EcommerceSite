@@ -2,6 +2,8 @@ import { createServiceClient } from "@/lib/supabase/server";
 import { OfferActions } from "./OfferActions";
 import { formatPrice } from "@/lib/utils";
 
+type ProfileData = { first_name: string | null; last_name: string | null; email: string };
+
 type OfferRow = {
   id: string;
   user_id: string;
@@ -12,7 +14,7 @@ type OfferRow = {
   expires_at: string | null;
   created_at: string;
   products: { id: string; name: string; price: number; images: string[] } | null;
-  profiles: { first_name: string | null; last_name: string | null; email: string } | null;
+  profile: ProfileData | null;
 };
 
 export default async function AdminOffersPage() {
@@ -25,12 +27,30 @@ export default async function AdminOffersPage() {
     .eq("status", "approved")
     .lt("expires_at", new Date().toISOString());
 
-  const { data } = await sb
+  // product_offers.user_id → auth.users (not profiles), so we can't join profiles directly
+  const { data: offersRaw, error } = await sb
     .from("product_offers")
-    .select("id, user_id, quantity, offer_price, status, decline_reason, expires_at, created_at, products(id, name, price, images), profiles(first_name, last_name, email)")
+    .select("id, user_id, quantity, offer_price, status, decline_reason, expires_at, created_at, products(id, name, price, images)")
     .order("created_at", { ascending: false });
 
-  const offers = (data ?? []) as OfferRow[];
+  if (error) console.error("AdminOffersPage:", error.message);
+
+  const rawOffers = (offersRaw ?? []) as Omit<OfferRow, "profile">[];
+
+  // Fetch profiles separately
+  const userIds = [...new Set(rawOffers.map(o => o.user_id))];
+  const profileMap: Record<string, ProfileData> = {};
+  if (userIds.length > 0) {
+    const { data: profilesRaw } = await sb
+      .from("profiles")
+      .select("id, first_name, last_name, email")
+      .in("id", userIds);
+    for (const p of (profilesRaw ?? []) as (ProfileData & { id: string })[]) {
+      profileMap[p.id] = p;
+    }
+  }
+
+  const offers: OfferRow[] = rawOffers.map(o => ({ ...o, profile: profileMap[o.user_id] ?? null }));
   const pending = offers.filter(o => o.status === "pending");
   const history = offers.filter(o => o.status !== "pending");
 
@@ -41,9 +61,9 @@ export default async function AdminOffersPage() {
         {rows.map(offer => {
           const listPrice = Number(offer.products?.price ?? 0);
           const pctOff = listPrice > 0 ? Math.round((1 - offer.offer_price / listPrice) * 100) : 0;
-          const name  = offer.profiles?.first_name && offer.profiles?.last_name
-            ? `${offer.profiles.first_name} ${offer.profiles.last_name}`
-            : offer.profiles?.email ?? "Unknown";
+          const name = offer.profile?.first_name && offer.profile?.last_name
+            ? `${offer.profile.first_name} ${offer.profile.last_name}`
+            : offer.profile?.email ?? "Unknown";
           return (
             <div key={offer.id} className="rounded-lg border border-gray-200 bg-white p-4">
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -55,7 +75,7 @@ export default async function AdminOffersPage() {
                 {/* Details */}
                 <div className="flex-1 min-w-0">
                   <p className="font-medium text-sm text-gray-900">{offer.products?.name ?? "—"}</p>
-                  <p className="text-xs text-gray-500 mt-0.5">{name} · {offer.profiles?.email}</p>
+                  <p className="text-xs text-gray-500 mt-0.5">{name} · {offer.profile?.email}</p>
                   <div className="flex flex-wrap gap-x-4 gap-y-1 mt-1.5 text-xs text-gray-600">
                     <span>Qty: <strong>{offer.quantity}</strong></span>
                     <span>Offer: <strong>{formatPrice(offer.offer_price * 100)}/ea</strong></span>
