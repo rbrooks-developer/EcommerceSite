@@ -13,10 +13,11 @@ interface Props {
   productId: string;
   listPrice: number;
   maxQuantity: number;
-  existingStatus: string | null; // pending or approved offer already exists
+  existingStatus: string | null;
+  existingDeclineReason: string | null;
 }
 
-export function MakeOfferForm({ productId, listPrice, maxQuantity, existingStatus }: Props) {
+export function MakeOfferForm({ productId, listPrice, maxQuantity, existingStatus, existingDeclineReason }: Props) {
   const [open, setOpen] = useState(false);
   const [offerPrice, setOfferPrice] = useState("");
   const [quantity, setQuantity] = useState(1);
@@ -26,15 +27,15 @@ export function MakeOfferForm({ productId, listPrice, maxQuantity, existingStatu
   if (existingStatus === "pending") {
     return (
       <p className="text-sm rounded-md px-4 py-3" style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 20%, transparent)", opacity: 0.75 }}>
-        You have a pending offer on this product. Check <a href="/account" className="underline">My Offers</a> for updates.
+        Your offer is pending review. Check <a href="/account" className="underline">My Offers</a> for updates.
       </p>
     );
   }
 
   if (existingStatus === "approved") {
     return (
-      <p className="text-sm rounded-md px-4 py-3" style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 20%, transparent)", opacity: 0.75 }}>
-        Your offer was approved! Go to <a href="/account" className="underline">My Offers</a> to purchase.
+      <p className="text-sm rounded-md px-4 py-3" style={{ backgroundColor: "color-mix(in srgb, #22c55e 10%, var(--site-bg))", border: "1px solid #86efac" }}>
+        Your offer was approved! Go to <a href="/account" className="underline font-semibold">My Offers</a> to purchase.
       </p>
     );
   }
@@ -61,7 +62,17 @@ export function MakeOfferForm({ productId, listPrice, maxQuantity, existingStatu
   }
 
   return (
-    <div>
+    <div className="space-y-3">
+      {existingStatus === "declined" && (
+        <div className="text-sm rounded-md px-4 py-3 space-y-1" style={{ backgroundColor: "color-mix(in srgb, #ef4444 10%, var(--site-bg))", border: "1px solid #fca5a5" }}>
+          <p className="font-semibold">Your previous offer was declined.</p>
+          {existingDeclineReason && (
+            <p style={{ opacity: 0.8 }}>Reason: {existingDeclineReason}</p>
+          )}
+          <p style={{ opacity: 0.7 }}>You're welcome to submit a new offer below.</p>
+        </div>
+      )}
+
       {!open && !result && (
         <button
           onClick={() => setOpen(true)}

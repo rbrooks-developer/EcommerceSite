@@ -50,17 +50,22 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const product = data as ProductWithCategory;
   const images = product.images as string[];
 
-  // Check if user has an active offer on this product
+  // Check if user has a recent offer on this product (pending/approved blocks new offer; declined shows notice but allows retry)
   let existingOfferStatus: string | null = null;
+  let existingDeclineReason: string | null = null;
   if (user && product.inventory > 0) {
     const { data: existingOffer } = await supabase
       .from("product_offers")
-      .select("status")
+      .select("status, decline_reason")
       .eq("user_id", user.id)
       .eq("product_id", product.id)
-      .in("status", ["pending", "approved"])
+      .in("status", ["pending", "approved", "declined"])
+      .order("updated_at", { ascending: false })
+      .limit(1)
       .maybeSingle();
-    existingOfferStatus = (existingOffer as { status: string } | null)?.status ?? null;
+    const offer = existingOffer as { status: string; decline_reason: string | null } | null;
+    existingOfferStatus = offer?.status ?? null;
+    existingDeclineReason = offer?.decline_reason ?? null;
   }
 
   const jsonLd = {
@@ -107,6 +112,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 listPrice={Number(product.price)}
                 maxQuantity={product.inventory}
                 existingStatus={existingOfferStatus}
+                existingDeclineReason={existingDeclineReason}
               />
             )}
           </div>
