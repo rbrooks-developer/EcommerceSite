@@ -50,22 +50,36 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const product = data as ProductWithCategory;
   const images = product.images as string[];
 
-  // Check if user has a recent offer on this product (pending/approved blocks new offer; declined shows notice but allows retry)
+  // Two separate queries: blocking statuses (pending/approved) take priority; then check for declined notice
   let existingOfferStatus: string | null = null;
   let existingDeclineReason: string | null = null;
   if (user && product.inventory > 0) {
-    const { data: existingOffer } = await supabase
+    const { data: blocking } = await supabase
       .from("product_offers")
-      .select("status, decline_reason")
+      .select("status")
       .eq("user_id", user.id)
       .eq("product_id", product.id)
-      .in("status", ["pending", "approved", "declined"])
-      .order("updated_at", { ascending: false })
-      .limit(1)
+      .in("status", ["pending", "approved"])
       .maybeSingle();
-    const offer = existingOffer as { status: string; decline_reason: string | null } | null;
-    existingOfferStatus = offer?.status ?? null;
-    existingDeclineReason = offer?.decline_reason ?? null;
+
+    if (blocking) {
+      existingOfferStatus = (blocking as { status: string }).status;
+    } else {
+      // No blocking offer — check for most recent decline to show notice
+      const { data: declined } = await supabase
+        .from("product_offers")
+        .select("status, decline_reason")
+        .eq("user_id", user.id)
+        .eq("product_id", product.id)
+        .eq("status", "declined")
+        .order("created_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+      if (declined) {
+        existingOfferStatus = "declined";
+        existingDeclineReason = (declined as { decline_reason: string | null }).decline_reason;
+      }
+    }
   }
 
   const jsonLd = {
