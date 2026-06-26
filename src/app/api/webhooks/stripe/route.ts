@@ -8,8 +8,10 @@ import type { Order, OrderItem } from "@/types";
 export const dynamic = "force-dynamic";
 
 export async function POST(request: NextRequest) {
+  console.log("[webhook] POST received at", new Date().toISOString());
   const body = await request.text();
   const sig = request.headers.get("stripe-signature");
+  console.log("[webhook] stripe-signature present:", !!sig);
 
   if (!sig) {
     return Response.json({ error: "Missing signature" }, { status: 400 });
@@ -20,10 +22,11 @@ export async function POST(request: NextRequest) {
   try {
     event = stripe.webhooks.constructEvent(body, sig, process.env.STRIPE_WEBHOOK_SECRET!);
   } catch (err: any) {
-    console.error("Webhook signature verification failed:", err.message);
+    console.error("[webhook] signature verification failed:", err.message);
     return Response.json({ error: "Invalid signature" }, { status: 400 });
   }
 
+  console.log("[webhook] event type:", event.type);
   const supabase = createServiceClient();
 
   switch (event.type) {
