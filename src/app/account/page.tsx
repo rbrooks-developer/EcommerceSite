@@ -152,7 +152,7 @@ export default async function AccountPage() {
       </section>
 
       {/* ── My Offers ───────────────────────────────── */}
-      <section id="offers">
+      <section id="offers" className="scroll-mt-24">
         <SectionHeading title="My Offers" description="Offers you've submitted on products." />
         <div className="rounded-lg p-5" style={panelStyle}>
           <MyOffers offers={offers} />
@@ -160,7 +160,7 @@ export default async function AccountPage() {
       </section>
 
       {/* ── Order History ───────────────────────────── */}
-      <section id="orders">
+      <section id="orders" className="scroll-mt-24">
         <SectionHeading title="Order History" />
 
         {orders.length === 0 ? (
