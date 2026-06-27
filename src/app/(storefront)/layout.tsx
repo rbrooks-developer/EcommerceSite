@@ -4,9 +4,11 @@ import { CartProvider } from "@/lib/cart/store";
 import { getSettings } from "@/lib/data/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
+import { checkSitePassword } from "@/lib/sitePasswordGate";
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const [settings, supabase] = await Promise.all([getSettings(), createClient()]);
+  await checkSitePassword(settings);
   const { data: { user } } = await supabase.auth.getUser();
 
   const [profileResult, approvedOffersResult] = await Promise.all([

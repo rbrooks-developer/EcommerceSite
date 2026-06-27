@@ -135,6 +135,7 @@ interface Props {
 export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+  const [showSitePassword, setShowSitePassword] = useState(false);
   const [logoUrl, setLogoUrl] = useState<string[]>(defaultValues?.logo_url ? [defaultValues.logo_url] : []);
   const [faviconUrl, setFaviconUrl] = useState<string[]>(defaultValues?.favicon_url ? [defaultValues.favicon_url] : []);
 
@@ -200,6 +201,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
     const g = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value ?? "";
 
     const result = await updateSettings({
+      site_password: g("site_password") || null,
       site_title: g("site_title"),
       meta_title: g("meta_title") || undefined,
       meta_description: g("meta_description") || undefined,
@@ -290,6 +292,26 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
 
       <Section title="General">
         <div><Label htmlFor="site_title" required>Site Title</Label><Input id="site_title" name="site_title" defaultValue={defaultValues?.site_title ?? ""} required /></div>
+        <div>
+          <Label htmlFor="site_password">Site Password <span className="text-gray-400 font-normal">(leave blank to disable — visitors must enter this to access the site)</span></Label>
+          <div className="relative mt-1">
+            <Input
+              id="site_password"
+              name="site_password"
+              type={showSitePassword ? "text" : "password"}
+              defaultValue={(defaultValues as any)?.site_password ?? ""}
+              placeholder="Leave blank for no password"
+              className="pr-20"
+            />
+            <button
+              type="button"
+              onClick={() => setShowSitePassword((v) => !v)}
+              className="absolute right-3 top-1/2 -translate-y-1/2 text-xs text-gray-500 hover:text-gray-800"
+            >
+              {showSitePassword ? "Hide" : "Show"}
+            </button>
+          </div>
+        </div>
         <div><Label htmlFor="meta_title">Meta Title <span className="text-gray-400 font-normal">(max 60 chars)</span></Label><Input id="meta_title" name="meta_title" maxLength={60} defaultValue={defaultValues?.meta_title ?? ""} /></div>
         <div><Label htmlFor="meta_description">Meta Description <span className="text-gray-400 font-normal">(max 160 chars)</span></Label><Textarea id="meta_description" name="meta_description" maxLength={160} rows={2} defaultValue={defaultValues?.meta_description ?? ""} /></div>
         <div><Label>Logo</Label><ImageUpload value={logoUrl} onChange={setLogoUrl} max={1} /></div>
