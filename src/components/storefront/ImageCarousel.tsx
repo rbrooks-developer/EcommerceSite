@@ -9,7 +9,7 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
   const trackRef = useRef<HTMLDivElement>(null);
   const {
     images, speed, direction, height, gap,
-    image_fit = "contain", image_padding = 0,
+    image_fit = "contain", image_padding = 0, border_radius = 8,
     pause_on_hover, fade_edges,
   } = config;
 
@@ -20,10 +20,8 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
   const pause  = () => { if (pause_on_hover && trackRef.current) trackRef.current.style.animationPlayState = "paused"; };
   const resume = () => { if (pause_on_hover && trackRef.current) trackRef.current.style.animationPlayState = "running"; };
 
-  // Cover mode: fixed 4:3 frame that fills and may crop
-  // Contain mode: natural-width image — no letterboxing, gap is always exactly `gap`px
   const isCover = image_fit === "cover";
-  const itemWidth = Math.round(height * (4 / 3)); // only used in cover mode
+  const itemWidth = Math.round(height * (4 / 3)); // cover mode only
 
   return (
     <section
@@ -59,14 +57,14 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
           const isFirst = i < images.length;
 
           if (isCover) {
-            // Fixed-width container — image fills frame, may crop top/bottom
-            const containerStyle: React.CSSProperties = {
+            const tileStyle: React.CSSProperties = {
               width: `${itemWidth}px`,
               height: `${height}px`,
               marginRight: `${gap}px`,
               flexShrink: 0,
               position: "relative",
               overflow: "hidden",
+              borderRadius: `${border_radius}px`,
               backgroundColor: bgColor,
               padding: image_padding > 0 ? `${image_padding}px` : undefined,
             };
@@ -79,41 +77,44 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
               />
             );
             return item.link ? (
-              <Link key={i} href={item.link} style={containerStyle} tabIndex={isFirst ? 0 : -1} aria-hidden={!isFirst}>
+              <Link key={i} href={item.link} className="carousel-tile" style={tileStyle}
+                tabIndex={isFirst ? 0 : -1} aria-hidden={!isFirst}>
                 {imgEl}
               </Link>
             ) : (
-              <div key={i} style={containerStyle} aria-hidden="true">{imgEl}</div>
+              <div key={i} className="carousel-tile" style={tileStyle} aria-hidden="true">{imgEl}</div>
             );
           }
 
-          // Contain mode — natural aspect ratio, zero letterboxing
-          // Using <img> so width is driven by the image's own proportions at the given height.
-          const pad = image_padding;
-          const wrapStyle: React.CSSProperties = {
-            height: "100%",
+          // Contain mode — natural aspect ratio, no letterboxing
+          const tileStyle: React.CSSProperties = {
+            height: `${height}px`,
             marginRight: `${gap}px`,
             flexShrink: 0,
-            padding: pad > 0 ? `${pad}px` : undefined,
-            boxSizing: "border-box",
+            overflow: "hidden",
+            borderRadius: `${border_radius}px`,
             display: "flex",
             alignItems: "center",
+            padding: image_padding > 0 ? `${image_padding}px` : undefined,
+            boxSizing: "border-box",
           };
+          const innerRadius = image_padding > 0 ? Math.max(0, border_radius - image_padding) : undefined;
           const imgEl = (
             // eslint-disable-next-line @next/next/no-img-element
             <img
               src={item.url}
               alt=""
-              style={{ height: "100%", width: "auto", display: "block" }}
+              style={{ height: "100%", width: "auto", display: "block", borderRadius: innerRadius ? `${innerRadius}px` : undefined }}
               aria-hidden="true"
             />
           );
           return item.link ? (
-            <a key={i} href={item.link} style={wrapStyle} tabIndex={isFirst ? 0 : -1} aria-hidden={!isFirst}>
+            <a key={i} href={item.link} className="carousel-tile" style={tileStyle}
+              tabIndex={isFirst ? 0 : -1} aria-hidden={!isFirst}>
               {imgEl}
             </a>
           ) : (
-            <div key={i} style={wrapStyle} aria-hidden="true">{imgEl}</div>
+            <div key={i} className="carousel-tile" style={tileStyle} aria-hidden="true">{imgEl}</div>
           );
         })}
       </div>

@@ -103,6 +103,7 @@ export type CarouselConfig = {
   gap: number;
   image_fit: "contain" | "cover";
   image_padding: number;
+  border_radius: number;
   pause_on_hover: boolean;
   fade_edges: boolean;
 };

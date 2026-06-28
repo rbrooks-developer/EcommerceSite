@@ -196,7 +196,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [serviceImages, setServiceImages] = useState<string[]>(homepage?.service_images ?? []);
   const [ogImageUrl, setOgImageUrl] = useState<string[]>(homepage?.og_image_url ? [homepage.og_image_url] : []);
   const [carouselConfig, setCarouselConfig] = useState<CarouselConfig>(
-    homepage?.carousel ?? { images: [], speed: 40, direction: "left", height: 280, gap: 16, image_fit: "contain", image_padding: 0, pause_on_hover: true, fade_edges: true }
+    homepage?.carousel ?? { images: [], speed: 40, direction: "left", height: 280, gap: 16, image_fit: "contain", image_padding: 0, border_radius: 8, pause_on_hover: true, fade_edges: true }
   );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {

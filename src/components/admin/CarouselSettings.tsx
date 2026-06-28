@@ -18,6 +18,7 @@ const DEFAULTS: CarouselConfig = {
   gap: 16,
   image_fit: "contain",
   image_padding: 0,
+  border_radius: 8,
   pause_on_hover: true,
   fade_edges: true,
 };
@@ -391,6 +392,24 @@ export function CarouselSettings({
         <div className="flex justify-between text-xs text-gray-400 mt-0.5">
           <span>0px (edge to edge)</span>
           <span>32px (padded)</span>
+        </div>
+      </div>
+
+      {/* ── Border Radius ── */}
+      <div>
+        <Label>Corner Roundness: {config.border_radius}px</Label>
+        <input
+          type="range"
+          min="0"
+          max="50"
+          step="2"
+          value={config.border_radius}
+          onChange={(e) => update({ border_radius: Number(e.target.value) })}
+          className="mt-1 w-full accent-gray-900"
+        />
+        <div className="flex justify-between text-xs text-gray-400 mt-0.5">
+          <span>0px (sharp)</span>
+          <span>50px (pill)</span>
         </div>
       </div>
 

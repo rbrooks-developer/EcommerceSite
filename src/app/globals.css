@@ -97,6 +97,20 @@ body {
   .carousel-track { animation-play-state: paused !important; }
 }
 
+/* Per-tile hover: zoom + brightness lift + deeper shadow */
+.carousel-tile {
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+  transition: transform 0.35s ease, filter 0.35s ease, box-shadow 0.35s ease;
+}
+@media (hover: hover) {
+  .carousel-tile:hover {
+    transform: scale(1.05);
+    filter: brightness(1.08);
+    box-shadow: 0 10px 32px rgba(0, 0, 0, 0.28);
+    z-index: 1;
+  }
+}
+
 /* Ensure form controls and buttons meet 44px minimum touch target */
 button,
 [role="button"],
