@@ -41,7 +41,9 @@ export function ImageUpload({ value, onChange, max = 10, bucket = "product-image
         continue;
       }
 
-      const ext = file.name.split(".").pop();
+      const ALLOWED_EXTS = ["jpg", "jpeg", "png", "gif", "webp", "avif"];
+      const rawExt = file.name.split(".").pop()?.toLowerCase() ?? "";
+      const ext = ALLOWED_EXTS.includes(rawExt) ? rawExt : "bin";
       const path = `${pathPrefix}/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;
 
       const { error: uploadError } = await supabase.storage

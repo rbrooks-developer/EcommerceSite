@@ -1,3 +1,4 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
 import { ProductCard } from "@/components/storefront/ProductCard";
@@ -8,19 +9,26 @@ import type { Category, Product, HomepageConfig } from "@/types";
 
 type CategoryRow = Pick<Category, "id" | "slug" | "name"> & { parent_id: string | null };
 
-/** Collects a category's ID plus all descendant IDs (recursive). */
 function collectIds(rootId: string, all: CategoryRow[]): string[] {
   const children = all.filter((c) => c.parent_id === rootId);
   return [rootId, ...children.flatMap((c) => collectIds(c.id, all))];
 }
 
+// Cached so generateMetadata and the page component share one DB round-trip
+const getCategoryBySlug = cache(async (slug: string): Promise<CategoryRow | null> => {
+  const supabase = await createClient();
+  const { data } = await supabase
+    .from("categories")
+    .select("id, slug, name, parent_id")
+    .eq("slug", slug)
+    .maybeSingle();
+  return data as CategoryRow | null;
+});
+
 export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data } = await supabase.from("categories").select("name").eq("slug", slug).maybeSingle();
-  if (!data) return {};
-  const settings = await getSettings();
-  const category = data as Pick<Category, "name">;
+  const [category, settings] = await Promise.all([getCategoryBySlug(slug), getSettings()]);
+  if (!category) return {};
   const siteTitle = settings?.site_title ?? "Store";
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   return {
@@ -34,14 +42,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const supabase = await createClient();
 
-  const [{ data }, allCatsRes, settings] = await Promise.all([
-    supabase.from("categories").select("id, slug, name, parent_id").eq("slug", slug).maybeSingle(),
+  const [category, allCatsRes, settings] = await Promise.all([
+    getCategoryBySlug(slug),
     supabase.from("categories").select("id, slug, name, parent_id"),
     getSettings(),
   ]);
 
-  if (!data) notFound();
-  const category = data as CategoryRow;
+  if (!category) notFound();
   const allCategories = (allCatsRes.data ?? []) as CategoryRow[];
 
   // Include products from all descendant categories

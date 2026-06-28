@@ -7,7 +7,9 @@ import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
 import { checkSitePassword } from "@/lib/sitePasswordGate";
 
-export const metadata: Metadata = {};
+export const metadata: Metadata = {
+  robots: { index: false, follow: false },
+};
 
 export default async function AuthLayout({ children }: { children: React.ReactNode }) {
   const [settings, supabase] = await Promise.all([getSettings(), createClient()]);

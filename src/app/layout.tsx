@@ -15,7 +15,12 @@ export async function generateMetadata(): Promise<Metadata> {
   return {
     title: { default: settings?.site_title ?? "My Store", template: `%s | ${settings?.site_title ?? "My Store"}` },
     description: settings?.meta_description ?? undefined,
-    openGraph: ogImage ? { images: [ogImage] } : {},
+    openGraph: {
+      type: "website",
+      siteName: settings?.site_title ?? "My Store",
+      url: process.env.NEXT_PUBLIC_APP_URL ?? "",
+      ...(ogImage ? { images: [ogImage] } : {}),
+    },
   };
 }
 

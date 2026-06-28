@@ -3,6 +3,9 @@ import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
 import type { Product } from "@/types";
 
+// 1×1 gray GIF — blurred by next/image to fill the container while the real image loads
+const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
+
 export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory"> }) {
   const image = (product.images as string[])[0];
   const outOfStock = product.inventory <= 0;
@@ -20,6 +23,8 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
             fill
             className="object-contain p-2"
             sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            placeholder="blur"
+            blurDataURL={BLUR_URL}
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.25 }}>

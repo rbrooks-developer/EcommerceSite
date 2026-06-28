@@ -4,6 +4,8 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
+const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
+
 export function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -74,6 +76,8 @@ export function ProductImages({ images, name }: { images: string[]; name: string
             className="object-contain p-4"
             sizes="(max-width: 1024px) 100vw, 50vw"
             priority
+            placeholder="blur"
+            blurDataURL={BLUR_URL}
           />
         </div>
       </div>
@@ -89,7 +93,15 @@ export function ProductImages({ images, name }: { images: string[]; name: string
                 i === selected ? "border-current" : "border-transparent opacity-50"
               )}
             >
-              <Image src={src} alt={`Thumbnail ${i + 1}`} fill className="object-cover" sizes="64px" />
+              <Image
+                src={src}
+                alt={`Thumbnail ${i + 1}`}
+                fill
+                className="object-cover"
+                sizes="64px"
+                placeholder="blur"
+                blurDataURL={BLUR_URL}
+              />
             </button>
           ))}
         </div>

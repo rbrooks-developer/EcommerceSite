@@ -42,47 +42,50 @@ export default async function AccountPage() {
   const allowedCodes = ((settings as any)?.shipping_countries as string[] | null) ?? ["US"];
   const allowedCountries = COUNTRIES.filter((c) => allowedCodes.includes(c.code));
 
-  // Mark expired approved offers
-  await supabase
-    .from("product_offers")
-    .update({ status: "expired" })
-    .eq("user_id", user.id)
-    .eq("status", "approved")
-    .lt("expires_at", new Date().toISOString());
+  // Run expiry sweep and stock check concurrently — both update offer statuses before main fetch
+  await Promise.all([
+    supabase
+      .from("product_offers")
+      .update({ status: "expired" })
+      .eq("user_id", user.id)
+      .eq("status", "approved")
+      .lt("expires_at", new Date().toISOString()),
 
-  // Check remaining approved offers: mark out_of_stock if product gone or inventory insufficient.
-  const { data: approvedOffers, error: approvedErr } = await supabase
-    .from("product_offers")
-    .select("id, product_id, quantity")
-    .eq("user_id", user.id)
-    .eq("status", "approved");
-
-  if (approvedOffers && approvedOffers.length > 0) {
-    const productIds = [...new Set(approvedOffers.map((o: any) => o.product_id as string))];
-    const { data: products } = await supabase
-      .from("products")
-      .select("id, inventory, is_published")
-      .in("id", productIds);
-
-    const productMap = Object.fromEntries(
-      ((products ?? []) as { id: string; inventory: number; is_published: boolean }[]).map(p => [p.id, p])
-    );
-
-    const outOfStockIds = (approvedOffers as { id: string; product_id: string; quantity: number }[])
-      .filter(o => {
-        const p = productMap[o.product_id];
-        return !p || !p.is_published || p.inventory < o.quantity;
-      })
-      .map(o => o.id);
-
-    if (outOfStockIds.length > 0) {
-      const sb = createServiceClient();
-      await sb
+    (async () => {
+      const { data: approvedOffers } = await supabase
         .from("product_offers")
-        .update({ status: "out_of_stock", updated_at: new Date().toISOString() })
-        .in("id", outOfStockIds);
-    }
-  }
+        .select("id, product_id, quantity")
+        .eq("user_id", user.id)
+        .eq("status", "approved");
+
+      if (!approvedOffers || approvedOffers.length === 0) return;
+
+      const productIds = [...new Set(approvedOffers.map((o: any) => o.product_id as string))];
+      const { data: products } = await supabase
+        .from("products")
+        .select("id, inventory, is_published")
+        .in("id", productIds);
+
+      const productMap = Object.fromEntries(
+        ((products ?? []) as { id: string; inventory: number; is_published: boolean }[]).map(p => [p.id, p])
+      );
+
+      const outOfStockIds = (approvedOffers as { id: string; product_id: string; quantity: number }[])
+        .filter(o => {
+          const p = productMap[o.product_id];
+          return !p || !p.is_published || p.inventory < o.quantity;
+        })
+        .map(o => o.id);
+
+      if (outOfStockIds.length > 0) {
+        const sb = createServiceClient();
+        await sb
+          .from("product_offers")
+          .update({ status: "out_of_stock", updated_at: new Date().toISOString() })
+          .in("id", outOfStockIds);
+      }
+    })(),
+  ]);
 
   const [{ data: profileRaw, error: profileError }, { data: addressesRaw }, { data: ordersRaw }, { data: offersRaw }] = await Promise.all([
     supabase.from("profiles").select("first_name, last_name, phone").eq("id", user.id).maybeSingle(),

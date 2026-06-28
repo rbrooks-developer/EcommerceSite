@@ -30,6 +30,8 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     description: product.seo_description ?? undefined,
     alternates: { canonical: `${appUrl}/products/${slug}` },
     openGraph: {
+      type: "website",
+      url: `${appUrl}/products/${slug}`,
       title: product.seo_title ?? product.name,
       description: product.seo_description ?? undefined,
       images: (product.images as string[]).slice(0, 1),
