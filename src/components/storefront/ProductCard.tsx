@@ -14,7 +14,6 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
     <Link href={`/products/${product.slug}`} className="group block" style={{ color: "inherit" }}>
       <div
         className="aspect-square overflow-hidden rounded-lg relative"
-        style={{ backgroundColor: "var(--site-bg)" }}
       >
         {image ? (
           <Image
