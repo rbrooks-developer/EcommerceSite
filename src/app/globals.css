@@ -84,6 +84,19 @@ body {
   transition: transform 200ms ease-out;
 }
 
+/* Infinite-scroll carousel */
+@keyframes carousel-scroll-left {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+@keyframes carousel-scroll-right {
+  from { transform: translateX(-50%); }
+  to   { transform: translateX(0); }
+}
+@media (prefers-reduced-motion: reduce) {
+  .carousel-track { animation-play-state: paused !important; }
+}
+
 /* Ensure form controls and buttons meet 44px minimum touch target */
 button,
 [role="button"],

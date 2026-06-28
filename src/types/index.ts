@@ -87,6 +87,22 @@ export type HomepageConfig = {
   striation_opacity?: number;
   striation_blend_mode?: string;
   striation_position?: string;
+  carousel?: CarouselConfig;
+};
+
+export type CarouselImage = {
+  url: string;
+  link?: string;
+};
+
+export type CarouselConfig = {
+  images: CarouselImage[];
+  speed: number;
+  direction: "left" | "right";
+  height: number;
+  gap: number;
+  pause_on_hover: boolean;
+  fade_edges: boolean;
 };
 
 export type NavConfig = {

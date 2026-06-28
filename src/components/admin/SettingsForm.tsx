@@ -7,11 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { ImageUpload } from "./ImageUpload";
+import { CarouselSettings } from "./CarouselSettings";
 import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig } from "@/types";
+
+const MAX_CAROUSEL_IMAGES = 25;
 
 function ColorPicker({ id, label, value, onChange }: { id: string; label: string; value: string; onChange: (v: string) => void }) {
   const [text, setText] = useState(value);
@@ -192,6 +195,9 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [featuredCategories, setFeaturedCategories] = useState<string[]>(homepage?.featured_category_ids ?? []);
   const [serviceImages, setServiceImages] = useState<string[]>(homepage?.service_images ?? []);
   const [ogImageUrl, setOgImageUrl] = useState<string[]>(homepage?.og_image_url ? [homepage.og_image_url] : []);
+  const [carouselConfig, setCarouselConfig] = useState<CarouselConfig>(
+    homepage?.carousel ?? { images: [], speed: 40, direction: "left", height: 280, gap: 16, pause_on_hover: true, fade_edges: true }
+  );
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -233,6 +239,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         striation_opacity: striationOpacity,
         striation_blend_mode: striationBlendMode,
         striation_position: striationPosition,
+        carousel: carouselConfig,
       },
       nav_config: { items: navItems.filter((i) => i.label && i.link) },
       footer_config: {
@@ -500,6 +507,13 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           bucket="site-assets"
           pathPrefix="services"
         />
+      </Section>
+
+      <Section title="Carousel">
+        <p className="text-sm text-gray-500">
+          A scrolling strip of images that appears between the hero and your content sections. Supports up to {MAX_CAROUSEL_IMAGES} images. Leave empty to hide.
+        </p>
+        <CarouselSettings value={carouselConfig} onChange={setCarouselConfig} />
       </Section>
 
       <Section title="Cart / Checkout / Account">

@@ -3,7 +3,8 @@ import Image from "next/image";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
 import { ProductCard } from "@/components/storefront/ProductCard";
-import type { HomepageConfig, FooterConfig, Product, Category } from "@/types";
+import { ImageCarousel } from "@/components/storefront/ImageCarousel";
+import type { HomepageConfig, FooterConfig, Product, Category, CarouselConfig } from "@/types";
 import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -42,6 +43,7 @@ export default async function HomePage() {
   const serviceImages       = homepage?.service_images         ?? [];
   const featuredProductIds  = homepage?.featured_product_ids  ?? [];
   const featuredCategoryIds = homepage?.featured_category_ids ?? [];
+  const carousel            = homepage?.carousel              ?? null;
 
   const [productsRes, categoriesRes] = await Promise.all([
     featuredProductIds.length
@@ -137,6 +139,11 @@ export default async function HomePage() {
           aria-hidden="true"
         />
       </section>
+
+      {/* Carousel — only rendered when images are configured */}
+      {carousel && carousel.images.length > 0 && (
+        <ImageCarousel config={carousel as CarouselConfig} bgColor={bgColor} />
+      )}
 
       {/* Featured Categories */}
       {featuredCategories.length > 0 && (
