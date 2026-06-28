@@ -1,7 +1,40 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
+const RATE_WINDOW_MS = 60_000;
+const RATE_MAX = 10;
+const rateMap = new Map<string, { count: number; resetAt: number }>();
+
+const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
+
 export async function proxy(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // Rate limit POST submissions to auth pages
+  if (request.method === "POST" && AUTH_PATHS.includes(pathname)) {
+    const ip = (
+      request.headers.get("x-forwarded-for")?.split(",")[0] ??
+      request.headers.get("x-real-ip") ??
+      "unknown"
+    ).trim();
+    const key = `${ip}:${pathname}`;
+    const now = Date.now();
+    if (rateMap.size > 5000) {
+      for (const [k, v] of rateMap) if (now > v.resetAt) rateMap.delete(k);
+    }
+    const rec = rateMap.get(key);
+    if (!rec || now > rec.resetAt) {
+      rateMap.set(key, { count: 1, resetAt: now + RATE_WINDOW_MS });
+    } else if (rec.count >= RATE_MAX) {
+      return new NextResponse("Too many requests. Please try again in a minute.", {
+        status: 429,
+        headers: { "Retry-After": "60", "Content-Type": "text/plain" },
+      });
+    } else {
+      rec.count++;
+    }
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -28,8 +61,6 @@ export async function proxy(request: NextRequest) {
   const {
     data: { user },
   } = await supabase.auth.getUser();
-
-  const { pathname } = request.nextUrl;
 
   // Protect admin routes — must be logged in AND have admin role
   if (pathname.startsWith("/admin")) {
