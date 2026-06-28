@@ -5,8 +5,6 @@ import Image from "next/image";
 import Link from "next/link";
 import type { CarouselConfig } from "@/types";
 
-const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
-
 export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgColor: string }) {
   const trackRef = useRef<HTMLDivElement>(null);
   const {
@@ -17,13 +15,15 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
 
   if (!images || images.length === 0) return null;
 
-  // 4:3 container width — object-contain shows the full image; object-cover fills and may crop
-  const itemWidth = Math.round(height * (4 / 3));
-
   const track = [...images, ...images];
 
   const pause  = () => { if (pause_on_hover && trackRef.current) trackRef.current.style.animationPlayState = "paused"; };
   const resume = () => { if (pause_on_hover && trackRef.current) trackRef.current.style.animationPlayState = "running"; };
+
+  // Cover mode: fixed 4:3 frame that fills and may crop
+  // Contain mode: natural-width image — no letterboxing, gap is always exactly `gap`px
+  const isCover = image_fit === "cover";
+  const itemWidth = Math.round(height * (4 / 3)); // only used in cover mode
 
   return (
     <section
@@ -42,7 +42,7 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
 
       <div
         ref={trackRef}
-        className="carousel-track flex h-full"
+        className="carousel-track flex h-full items-center"
         style={{
           width: "max-content",
           animationName: direction === "left" ? "carousel-scroll-left" : "carousel-scroll-right",
@@ -56,44 +56,64 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
         onTouchEnd={resume}
       >
         {track.map((item, i) => {
-          const containerStyle: React.CSSProperties = {
-            width: `${itemWidth}px`,
-            height: `${height}px`,
+          const isFirst = i < images.length;
+
+          if (isCover) {
+            // Fixed-width container — image fills frame, may crop top/bottom
+            const containerStyle: React.CSSProperties = {
+              width: `${itemWidth}px`,
+              height: `${height}px`,
+              marginRight: `${gap}px`,
+              flexShrink: 0,
+              position: "relative",
+              overflow: "hidden",
+              backgroundColor: bgColor,
+              padding: image_padding > 0 ? `${image_padding}px` : undefined,
+            };
+            const imgEl = (
+              <Image
+                src={item.url} alt="" fill
+                className="object-cover"
+                sizes={`${itemWidth}px`}
+                aria-hidden="true"
+              />
+            );
+            return item.link ? (
+              <Link key={i} href={item.link} style={containerStyle} tabIndex={isFirst ? 0 : -1} aria-hidden={!isFirst}>
+                {imgEl}
+              </Link>
+            ) : (
+              <div key={i} style={containerStyle} aria-hidden="true">{imgEl}</div>
+            );
+          }
+
+          // Contain mode — natural aspect ratio, zero letterboxing
+          // Using <img> so width is driven by the image's own proportions at the given height.
+          const pad = image_padding;
+          const wrapStyle: React.CSSProperties = {
+            height: "100%",
             marginRight: `${gap}px`,
             flexShrink: 0,
-            position: "relative",
-            overflow: "hidden",
-            backgroundColor: bgColor,
-            padding: image_padding > 0 ? `${image_padding}px` : undefined,
+            padding: pad > 0 ? `${pad}px` : undefined,
+            boxSizing: "border-box",
+            display: "flex",
+            alignItems: "center",
           };
-
           const imgEl = (
-            <Image
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
               src={item.url}
               alt=""
-              fill
-              className={image_fit === "cover" ? "object-cover" : "object-contain"}
-              sizes={`${itemWidth}px`}
-              placeholder="blur"
-              blurDataURL={BLUR_URL}
+              style={{ height: "100%", width: "auto", display: "block" }}
               aria-hidden="true"
             />
           );
-
           return item.link ? (
-            <Link
-              key={i}
-              href={item.link}
-              style={containerStyle}
-              tabIndex={i < images.length ? 0 : -1}
-              aria-hidden={i >= images.length}
-            >
+            <a key={i} href={item.link} style={wrapStyle} tabIndex={isFirst ? 0 : -1} aria-hidden={!isFirst}>
               {imgEl}
-            </Link>
+            </a>
           ) : (
-            <div key={i} style={containerStyle} aria-hidden="true">
-              {imgEl}
-            </div>
+            <div key={i} style={wrapStyle} aria-hidden="true">{imgEl}</div>
           );
         })}
       </div>
