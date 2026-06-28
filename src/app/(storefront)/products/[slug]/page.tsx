@@ -5,6 +5,7 @@ import { formatPrice } from "@/lib/utils";
 import { ProductImages } from "./ProductImages";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
 import { MakeOfferForm } from "./MakeOfferForm";
+import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
 import type { Metadata } from "next";
 import type { Product } from "@/types";
 
@@ -127,6 +128,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
 
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
+        <Breadcrumbs crumbs={[
+          { label: "Home", href: "/" },
+          { label: "Products", href: "/products" },
+          ...(product.categories ? [{ label: product.categories.name, href: `/category/${product.categories.slug}` }] : []),
+          { label: product.name },
+        ]} />
         <div className="flex flex-col gap-8 lg:flex-row">
           <div className="lg:w-1/2">
             <ProductImages images={images} name={product.name} />
