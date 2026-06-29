@@ -36,7 +36,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
           style={{
             position: "fixed",
             inset: 0,
-            zIndex: 1,
+            zIndex: 45,
             pointerEvents: "none",
             backgroundImage: `url(${striationImageUrl})`,
             backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "tile" ? "auto" : "auto 100%",
