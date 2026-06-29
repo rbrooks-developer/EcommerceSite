@@ -54,9 +54,8 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
       }
     }
 
-    // ── Fetch active eBay listings (capped at 20 for testing) ───────────────
-    const allListings = await fetchAllActiveListings(config);
-    const listings = allListings.slice(0, 20);
+    // ── Fetch all active eBay listings ───────────────────────────────────────
+    const listings = await fetchAllActiveListings(config);
 
     // ── Upsert loop ──────────────────────────────────────────────────────────
     let inserted = 0;
