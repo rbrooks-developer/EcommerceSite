@@ -141,29 +141,15 @@ export async function POST(_request: NextRequest): Promise<Response> {
             })
             .eq("id", existing.id);
 
-          const debug = {
-            brand:          listing.brand,
-            specifics:      listing.specifics,
-            parentCategory: matchedCat.name,
-            childCategory:  resolvedChild,
-          };
-
           if (error) {
             errors.push({ listingId: listing.listingId, title: listing.title, reason: error.message });
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message, ...debug });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message });
           } else {
             updated++;
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "updated", ...debug });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "updated" });
           }
         } else {
           const slug = `${slugify(listing.title).slice(0, 200)}-${listing.listingId.slice(-6)}`;
-
-          const debug = {
-            brand:          listing.brand,
-            specifics:      listing.specifics,
-            parentCategory: matchedCat.name,
-            childCategory:  resolvedChild,
-          };
 
           const { error } = await supabase
             .from("products")
@@ -186,10 +172,10 @@ export async function POST(_request: NextRequest): Promise<Response> {
 
           if (error) {
             errors.push({ listingId: listing.listingId, title: listing.title, reason: error.message });
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message, ...debug });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message });
           } else {
             inserted++;
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "inserted", ...debug });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "inserted" });
           }
         }
       }
