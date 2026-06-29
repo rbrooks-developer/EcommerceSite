@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import {
   getEbayConfig,
   saveEbayConfig,
@@ -15,25 +14,27 @@ export async function GET(request: NextRequest) {
   const state     = searchParams.get("state");
   const ebayError = searchParams.get("error");
 
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+  const redirect = (params: string) =>
+    NextResponse.redirect(new URL(`/admin/ebay?${params}`, request.url));
 
-  if (ebayError) {
-    return NextResponse.redirect(`${appUrl}/admin/ebay?error=access_denied`);
-  }
-
-  const cookieStore = await cookies();
-  const storedState = cookieStore.get("ebay_oauth_state")?.value;
-  cookieStore.delete("ebay_oauth_state");
-
-  if (!code || !state || state !== storedState) {
-    return NextResponse.redirect(`${appUrl}/admin/ebay?error=invalid_state`);
-  }
+  if (ebayError) return redirect("error=access_denied");
 
   try {
     const config = await getEbayConfig();
     if (!config?.app_id || !config?.cert_id || !config?.ru_name) {
-      return NextResponse.redirect(`${appUrl}/admin/ebay?error=missing_credentials`);
+      return redirect("error=missing_credentials");
     }
+
+    const storedState  = config.oauth_state;
+    const stateExpiry  = config.oauth_state_expires_at;
+    const stateExpired = stateExpiry ? new Date(stateExpiry) < new Date() : true;
+
+    if (!code || !state || state !== storedState || stateExpired) {
+      return redirect("error=invalid_state");
+    }
+
+    // Clear the one-time state immediately
+    await saveEbayConfig({ oauth_state: null, oauth_state_expires_at: null });
 
     const tokens   = await exchangeCodeForTokens(config, code);
     const identity = await getEbayIdentity(tokens.access_token);
@@ -46,9 +47,9 @@ export async function GET(request: NextRequest) {
       ebay_username:    identity.username || null,
     });
 
-    return NextResponse.redirect(`${appUrl}/admin/ebay?success=connected`);
+    return redirect("success=connected");
   } catch (err) {
-    console.error("[ebay/callback] token exchange failed:", err);
-    return NextResponse.redirect(`${appUrl}/admin/ebay?error=token_exchange_failed`);
+    console.error("[ebay/callback]", err);
+    return redirect("error=token_exchange_failed");
   }
 }

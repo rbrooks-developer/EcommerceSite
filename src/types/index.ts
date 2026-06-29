@@ -126,6 +126,8 @@ export type EbayConfig = {
   ebay_username?: string | null;
   categories_synced_at?: string | null;
   categories_count?: number | null;
+  oauth_state?: string | null;
+  oauth_state_expires_at?: string | null;
 };
 
 export type CategoryWithEbay = Category & {
