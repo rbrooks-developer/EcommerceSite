@@ -10,6 +10,7 @@ export const EBAY_SCOPES = [
   "https://api.ebay.com/oauth/api_scope/sell.inventory.readonly",
   "https://api.ebay.com/oauth/api_scope/sell.account.readonly",
   "https://api.ebay.com/oauth/api_scope/sell.fulfillment.readonly",
+  "https://api.ebay.com/oauth/api_scope/commerce.identity.readonly",
 ].join(" ");
 
 function basicAuth(appId: string, certId: string): string {

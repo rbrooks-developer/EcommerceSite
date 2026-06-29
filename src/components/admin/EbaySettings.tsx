@@ -26,7 +26,7 @@ function errorMessage(code: string | null) {
 }
 
 export function EbaySettings({ config, successParam, errorParam }: Props) {
-  const isConnected = !!(config?.access_token && config?.ebay_user_id);
+  const isConnected = !!config?.access_token;
 
   const [credState, credAction, credPending] = useActionState(saveEbayCredentials, null) as [
     { error?: string; success?: true } | null,
