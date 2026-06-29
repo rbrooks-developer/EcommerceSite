@@ -62,11 +62,29 @@ export function OrdersTable({ orders }: Props) {
     });
   }
 
-  function handlePrintLabels() {
+  const [printPending, setPrintPending] = useState(false);
+
+  async function handlePrintLabels() {
     const urls = [...selected]
       .map((id) => orders.find((o) => o.id === id)?.shipping_label_url)
       .filter((url): url is string => !!url);
-    urls.forEach((url) => window.open(url, "_blank", "noopener"));
+    if (urls.length === 0) return;
+    setPrintPending(true);
+    try {
+      const res = await fetch("/api/admin/labels/merge", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ urls }),
+      });
+      if (!res.ok) throw new Error(await res.text());
+      const blob = await res.blob();
+      const objectUrl = URL.createObjectURL(blob);
+      window.open(objectUrl, "_blank", "noopener");
+    } catch (err: any) {
+      alert("Failed to merge labels: " + err.message);
+    } finally {
+      setPrintPending(false);
+    }
   }
 
   const selectedCount = selected.size;
@@ -87,9 +105,11 @@ export function OrdersTable({ orders }: Props) {
             {selectedWithLabels > 0 && (
               <button
                 onClick={handlePrintLabels}
-                className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+                disabled={printPending}
+                className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-60 transition-colors"
               >
-                Print {selectedWithLabels} Label{selectedWithLabels !== 1 ? "s" : ""}
+                {printPending && <Spinner className="h-3 w-3 text-gray-900" />}
+                {printPending ? "Merging…" : `Print ${selectedWithLabels} Label${selectedWithLabels !== 1 ? "s" : ""}`}
               </button>
             )}
             {selectedPaid > 0 && (
