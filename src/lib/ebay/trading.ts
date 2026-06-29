@@ -13,6 +13,7 @@ export interface TradingItem {
   images:         string[];
   ebayCategoryId: string;
   brand:          string | null;
+  specifics:      Record<string, string>; // all item specifics, normalized lowercase keys
   weightOz:       number;
   lengthIn:       number;
   widthIn:        number;
@@ -60,13 +61,22 @@ function parseItem(raw: any): TradingItem | null {
   // eBay primary category
   const ebayCategoryId = String(raw.PrimaryCategory?.CategoryID ?? "").trim();
 
-  // Brand from ItemSpecifics
-  const nameValueList: { Name: string; Value: string }[] =
+  // Item specifics — Value can be a string or array (multiple values)
+  const nameValueList: { Name: unknown; Value: unknown }[] =
     raw.ItemSpecifics?.NameValueList ?? [];
-  const brandEntry = nameValueList.find(
-    (nv) => String(nv.Name).toLowerCase() === "brand"
-  );
-  const brand = brandEntry?.Value ? String(brandEntry.Value).trim() : null;
+
+  // Build a normalized map: lowercase name → first value string
+  const specifics: Record<string, string> = {};
+  for (const nv of nameValueList) {
+    const key = String(nv.Name ?? "").toLowerCase().trim();
+    const val = Array.isArray(nv.Value)
+      ? String(nv.Value[0] ?? "").trim()
+      : String(nv.Value ?? "").trim();
+    if (key && val) specifics[key] = val;
+  }
+
+  // Comics use "Publisher" instead of "Brand" — check both
+  const brand = specifics["brand"] ?? specifics["publisher"] ?? null;
 
   // Weight: WeightMajor = lbs, WeightMinor = oz
   const weightLbs = parseFloat(String(raw.ShippingPackageDetails?.WeightMajor ?? 0));
@@ -80,7 +90,7 @@ function parseItem(raw: any): TradingItem | null {
 
   return {
     listingId, title, price, inventory, description, images,
-    ebayCategoryId, brand, weightOz, lengthIn, widthIn, heightIn,
+    ebayCategoryId, brand, specifics, weightOz, lengthIn, widthIn, heightIn,
   };
 }
 

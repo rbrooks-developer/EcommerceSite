@@ -98,6 +98,13 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
               if (msg.status === "inserted") inserted++;
               if (msg.status === "updated")  updated++;
               if (msg.status === "skipped")  errors.push({ listingId: "", title: msg.title, reason: msg.reason });
+              // Log debug info to console so category routing is visible
+              console.log(`[eBay sync] ${msg.status.toUpperCase()} "${msg.title}"`, {
+                brand: msg.brand,
+                specifics: msg.specifics,
+                parentCategory: msg.parentCategory,
+                childCategory: msg.childCategory ?? "(none — stayed in parent)",
+              });
               setListingSyncState({ status: "syncing", current: msg.current, total, inserted, updated, lastTitle: msg.title });
             } else if (msg.type === "done") {
               setListingSyncState({ status: "done", inserted: msg.inserted, updated: msg.updated, errors: msg.errors ?? [] });

@@ -80,12 +80,13 @@ export async function POST(_request: NextRequest): Promise<Response> {
         }
 
         // Brand → child category routing
-        let categoryId = matchedCat.id;
-        const children = childrenMap.get(matchedCat.id) ?? [];
+        let categoryId    = matchedCat.id;
+        let resolvedChild: string | null = null;
+        const children    = childrenMap.get(matchedCat.id) ?? [];
         if (children.length > 0 && listing.brand) {
           const brandLower = listing.brand.toLowerCase();
           const brandChild = children.find((c) => c.name.toLowerCase() === brandLower);
-          if (brandChild) categoryId = brandChild.id;
+          if (brandChild) { categoryId = brandChild.id; resolvedChild = brandChild.name; }
         }
 
         // Check for existing product
@@ -117,15 +118,29 @@ export async function POST(_request: NextRequest): Promise<Response> {
             })
             .eq("id", existing.id);
 
+          const debug = {
+            brand:          listing.brand,
+            specifics:      listing.specifics,
+            parentCategory: matchedCat.name,
+            childCategory:  resolvedChild,
+          };
+
           if (error) {
             errors.push({ listingId: listing.listingId, title: listing.title, reason: error.message });
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message, ...debug });
           } else {
             updated++;
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "updated" });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "updated", ...debug });
           }
         } else {
           const slug = `${slugify(listing.title).slice(0, 200)}-${listing.listingId.slice(-6)}`;
+
+          const debug = {
+            brand:          listing.brand,
+            specifics:      listing.specifics,
+            parentCategory: matchedCat.name,
+            childCategory:  resolvedChild,
+          };
 
           const { error } = await supabase
             .from("products")
@@ -148,10 +163,10 @@ export async function POST(_request: NextRequest): Promise<Response> {
 
           if (error) {
             errors.push({ listingId: listing.listingId, title: listing.title, reason: error.message });
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "skipped", reason: error.message, ...debug });
           } else {
             inserted++;
-            await send({ type: "item", current: i + 1, total, title: listing.title, status: "inserted" });
+            await send({ type: "item", current: i + 1, total, title: listing.title, status: "inserted", ...debug });
           }
         }
       }
