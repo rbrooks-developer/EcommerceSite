@@ -22,18 +22,21 @@ export function OrdersTable({ orders }: Props) {
   const [isPending, startTransition] = useTransition();
   const [results, setResults] = useState<{ id: string; error?: string }[]>([]);
 
-  const allIds = orders.filter((o) => o.status === "paid").map((o) => o.id);
-  const allSelected = allIds.length > 0 && allIds.every((id) => selected.has(id));
+  // Selectable: paid orders (generate labels) OR any order with an existing label (print)
+  const selectableIds = orders
+    .filter((o) => o.status === "paid" || !!o.shipping_label_url)
+    .map((o) => o.id);
+  const allSelected = selectableIds.length > 0 && selectableIds.every((id) => selected.has(id));
 
   function toggleAll() {
     if (allSelected) {
       setSelected((s) => {
         const next = new Set(s);
-        allIds.forEach((id) => next.delete(id));
+        selectableIds.forEach((id) => next.delete(id));
         return next;
       });
     } else {
-      setSelected((s) => new Set([...s, ...allIds]));
+      setSelected((s) => new Set([...s, ...selectableIds]));
     }
   }
 
@@ -47,7 +50,10 @@ export function OrdersTable({ orders }: Props) {
   }
 
   function handleGenerateLabels() {
-    const ids = [...selected];
+    const ids = [...selected].filter((id) => {
+      const o = orders.find((o) => o.id === id);
+      return o?.status === "paid";
+    });
     if (ids.length === 0) return;
     startTransition(async () => {
       const res = await generateLabels(ids);
@@ -56,7 +62,20 @@ export function OrdersTable({ orders }: Props) {
     });
   }
 
+  function handlePrintLabels() {
+    const urls = [...selected]
+      .map((id) => orders.find((o) => o.id === id)?.shipping_label_url)
+      .filter((url): url is string => !!url);
+    urls.forEach((url) => window.open(url, "_blank", "noopener"));
+  }
+
   const selectedCount = selected.size;
+  const selectedWithLabels = [...selected].filter((id) =>
+    orders.find((o) => o.id === id)?.shipping_label_url
+  ).length;
+  const selectedPaid = [...selected].filter((id) =>
+    orders.find((o) => o.id === id)?.status === "paid"
+  ).length;
 
   return (
     <div className="space-y-4">
@@ -64,14 +83,26 @@ export function OrdersTable({ orders }: Props) {
       {selectedCount > 0 && (
         <div className="flex items-center gap-3 rounded-md bg-gray-900 px-4 py-3 text-white text-sm">
           <span>{selectedCount} order{selectedCount !== 1 ? "s" : ""} selected</span>
-          <button
-            onClick={handleGenerateLabels}
-            disabled={isPending}
-            className="ml-auto flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-60 transition-colors"
-          >
-            {isPending && <Spinner className="h-3 w-3 text-gray-900" />}
-            Generate Labels
-          </button>
+          <div className="ml-auto flex items-center gap-2">
+            {selectedWithLabels > 0 && (
+              <button
+                onClick={handlePrintLabels}
+                className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-100 transition-colors"
+              >
+                Print {selectedWithLabels} Label{selectedWithLabels !== 1 ? "s" : ""}
+              </button>
+            )}
+            {selectedPaid > 0 && (
+              <button
+                onClick={handleGenerateLabels}
+                disabled={isPending}
+                className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60 transition-colors"
+              >
+                {isPending && <Spinner className="h-3 w-3 text-white" />}
+                Generate {selectedPaid} Label{selectedPaid !== 1 ? "s" : ""}
+              </button>
+            )}
+          </div>
           <button onClick={() => setSelected(new Set())} className="text-gray-400 hover:text-white text-xs">
             Clear
           </button>
@@ -117,7 +148,7 @@ export function OrdersTable({ orders }: Props) {
             <div className="flex items-center gap-3 pt-1 border-t border-gray-100">
               <Link href={`/admin/orders/${order.id}`} className="text-sm text-blue-600 hover:underline">View</Link>
               <OrderRowActions order={order} />
-              {order.status === "paid" && (
+              {(order.status === "paid" || !!order.shipping_label_url) && (
                 <label className="ml-auto flex items-center gap-1.5 text-xs text-gray-500 cursor-pointer">
                   <input
                     type="checkbox"
@@ -166,7 +197,7 @@ export function OrdersTable({ orders }: Props) {
               {orders.map((order) => (
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-4 py-3">
-                    {order.status === "paid" && (
+                    {(order.status === "paid" || !!order.shipping_label_url) && (
                       <input
                         type="checkbox"
                         checked={selected.has(order.id)}
