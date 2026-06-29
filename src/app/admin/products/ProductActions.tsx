@@ -10,7 +10,11 @@ export function DeleteProductButton({ id }: { id: string }) {
   const handleDelete = async () => {
     if (!confirm("Delete this product? This cannot be undone.")) return;
     setLoading(true);
-    await deleteProduct(id);
+    try {
+      await deleteProduct(id);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -32,7 +36,11 @@ export function DeleteAllProductsButton() {
     if (!confirm("Delete ALL products? This will permanently remove every product and cannot be undone.")) return;
     if (!confirm("Are you sure? This cannot be reversed.")) return;
     setLoading(true);
-    await deleteAllProducts();
+    try {
+      await deleteAllProducts();
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
