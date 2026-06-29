@@ -297,11 +297,6 @@ function OrderRowActions({ order }: { order: OrderRow }) {
           Label
         </button>
       )}
-      {order.status === "shipped" && (
-        <button onClick={() => handleStatus("fulfilled")} className="text-green-600 hover:underline">
-          Mark Fulfilled
-        </button>
-      )}
       {(order.status === "paid" || order.status === "shipped") && (
         <button onClick={handleCancel} className="text-red-500 hover:underline">
           Cancel

@@ -85,15 +85,6 @@ export function OrderDetailActions({ order }: { order: Order }) {
           </button>
         )}
 
-        {canMarkFulfilled && !isPending && (
-          <button
-            onClick={() => handleStatus("fulfilled")}
-            className="rounded-md bg-green-600 px-4 py-2 text-sm font-medium text-white hover:bg-green-700 transition-colors"
-          >
-            Mark as Fulfilled
-          </button>
-        )}
-
         {canCancel && !isPending && (
           <button
             onClick={handleCancel}
