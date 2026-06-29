@@ -1,7 +1,8 @@
 import { createClient } from "@/lib/supabase/server";
-import { markNotificationRead, markAllNotificationsRead } from "@/lib/admin/notifications";
+import { markNotificationRead, markAllNotificationsRead, deleteNotification, createTestNotification } from "@/lib/admin/notifications";
 import { formatDate } from "@/lib/utils";
 import Link from "next/link";
+import { Trash2 } from "lucide-react";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = { title: "Notifications" };
@@ -49,16 +50,26 @@ export default async function NotificationsPage() {
             <p className="text-sm text-gray-500 mt-0.5">{unreadCount} unread</p>
           )}
         </div>
-        {unreadCount > 0 && (
-          <form action={markAllNotificationsRead}>
+        <div className="flex items-center gap-3">
+          <form action={createTestNotification}>
             <button
               type="submit"
               className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
             >
-              Mark all as read
+              Send test notification
             </button>
           </form>
-        )}
+          {unreadCount > 0 && (
+            <form action={markAllNotificationsRead}>
+              <button
+                type="submit"
+                className="text-sm text-gray-500 hover:text-gray-700 underline underline-offset-2"
+              >
+                Mark all as read
+              </button>
+            </form>
+          )}
+        </div>
       </div>
 
       {notifications.length === 0 && (
@@ -93,16 +104,27 @@ export default async function NotificationsPage() {
                     </span>
                     <span className="text-xs text-gray-400">{formatDate(n.created_at)}</span>
                   </div>
-                  {!isRead && (
-                    <form action={markNotificationRead.bind(null, n.id)}>
+                  <div className="flex items-center gap-2 shrink-0">
+                    {!isRead && (
+                      <form action={markNotificationRead.bind(null, n.id)}>
+                        <button
+                          type="submit"
+                          className="text-xs text-gray-400 hover:text-gray-600"
+                        >
+                          Mark read
+                        </button>
+                      </form>
+                    )}
+                    <form action={deleteNotification.bind(null, n.id)}>
                       <button
                         type="submit"
-                        className="text-xs text-gray-400 hover:text-gray-600 shrink-0"
+                        title="Delete notification"
+                        className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 transition-colors"
                       >
-                        Mark read
+                        <Trash2 className="h-3.5 w-3.5" />
                       </button>
                     </form>
-                  )}
+                  </div>
                 </div>
 
                 {/* Title + body */}
