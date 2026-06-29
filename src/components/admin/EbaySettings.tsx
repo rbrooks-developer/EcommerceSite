@@ -60,7 +60,7 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
   type ListingSyncState =
     | { status: "idle" }
     | { status: "fetching" }
-    | { status: "enriching"; count: number }
+    | { status: "enriching"; current: number; count: number }
     | { status: "syncing"; current: number; total: number; inserted: number; updated: number; lastTitle: string }
     | { status: "done"; inserted: number; updated: number; errors: SyncError[] }
     | { status: "error"; message: string };
@@ -93,7 +93,7 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
             if (msg.type === "fetching") {
               setListingSyncState({ status: "fetching" });
             } else if (msg.type === "enriching") {
-              setListingSyncState({ status: "enriching", count: msg.count });
+              setListingSyncState({ status: "enriching", current: msg.current ?? 0, count: msg.count });
             } else if (msg.type === "total") {
               total = msg.count;
               setListingSyncState({ status: "syncing", current: 0, total, inserted: 0, updated: 0, lastTitle: "" });
@@ -283,10 +283,25 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
                 Fetching active listings from eBay…
               </div>
             ) : listingSyncState.status === "enriching" ? (
-              <div className="flex items-center gap-2 text-sm text-blue-700">
-                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
-                Fetching item specifics for {listingSyncState.count} listings (GetItem)…
-              </div>
+              <>
+                <div className="flex items-center justify-between text-sm text-blue-800">
+                  <span className="flex items-center gap-2">
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                    Fetching item specifics {listingSyncState.current} of {listingSyncState.count}
+                  </span>
+                  <span className="font-medium tabular-nums">
+                    {listingSyncState.count > 0
+                      ? Math.round((listingSyncState.current / listingSyncState.count) * 100)
+                      : 0}%
+                  </span>
+                </div>
+                <div className="h-1.5 w-full rounded-full bg-blue-200 overflow-hidden">
+                  <div
+                    className="h-full rounded-full bg-blue-500 transition-all duration-150"
+                    style={{ width: listingSyncState.count > 0 ? `${(listingSyncState.current / listingSyncState.count) * 100}%` : "0%" }}
+                  />
+                </div>
+              </>
             ) : (
               <>
                 <div className="flex items-center justify-between text-sm text-blue-800">

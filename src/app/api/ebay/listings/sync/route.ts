@@ -72,15 +72,18 @@ export async function POST(_request: NextRequest): Promise<Response> {
       // GetItem to fetch ItemSpecifics (Publisher/Brand) for items in parent categories.
       // Many listings have no ItemSpecifics set in eBay, so title keyword matching
       // is used as a fallback (checked during the main loop below).
-      await send({ type: "enriching", count: needsSpecifics.length });
-      for (const listing of needsSpecifics) {
+      const enrichTotal = needsSpecifics.length;
+      await send({ type: "enriching", current: 0, count: enrichTotal });
+      for (let ei = 0; ei < needsSpecifics.length; ei++) {
+        const listing = needsSpecifics[ei];
         try {
           const { specifics } = await fetchItemSpecifics(listing.listingId, config);
           listing.specifics = specifics;
           listing.brand     = specifics["brand"] ?? specifics["publisher"] ?? null;
         } catch {
-          // Ignore — title matching will still run
+          // Ignore — brand stays null
         }
+        await send({ type: "enriching", current: ei + 1, count: enrichTotal });
       }
 
       const total = listings.length;
