@@ -179,7 +179,7 @@ export async function fetchItemSpecifics(
     <eBayAuthToken>${config.access_token}</eBayAuthToken>
   </RequesterCredentials>
   <ItemID>${listingId}</ItemID>
-  <DetailLevel>ReturnAll</DetailLevel>
+  <OutputSelector>ItemSpecifics</OutputSelector>
 </GetItemRequest>`;
 
   const res = await fetch(TRADING_URL, {
@@ -192,10 +192,13 @@ export async function fetchItemSpecifics(
       "Content-Type":                   "text/xml",
     },
     body,
-    signal: AbortSignal.timeout(20_000),
+    signal: AbortSignal.timeout(30_000),
   });
 
-  if (!res.ok) throw new Error(`GetItem HTTP ${res.status}`);
+  if (!res.ok) {
+    const text = await res.text().catch(() => "");
+    throw new Error(`GetItem HTTP ${res.status}: ${text.slice(0, 300)}`);
+  }
 
   const xml    = await res.text();
   const parser = new XMLParser({
@@ -204,9 +207,16 @@ export async function fetchItemSpecifics(
     parseTagValue:    true,
   });
 
-  const doc          = parser.parse(xml);
+  const doc      = parser.parse(xml);
+  const response = doc.GetItemResponse;
+  if (response?.Ack === "Failure") {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const errs = Array.isArray(response.Errors) ? response.Errors : [response.Errors];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    throw new Error(errs.map((e: any) => e?.LongMessage ?? e?.ShortMessage ?? "eBay error").join("; "));
+  }
   const nameValueList: { Name: unknown; Value: unknown }[] =
-    doc.GetItemResponse?.Item?.ItemSpecifics?.NameValueList ?? [];
+    response?.Item?.ItemSpecifics?.NameValueList ?? [];
 
   const specifics: Record<string, string> = {};
   for (const nv of nameValueList) {
