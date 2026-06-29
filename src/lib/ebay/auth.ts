@@ -45,10 +45,13 @@ export async function getEbayConfig(): Promise<EbayConfig | null> {
     token_expires_at:        db.token_expires_at        ?? null,
     ebay_user_id:            db.ebay_user_id            ?? null,
     ebay_username:           db.ebay_username           ?? null,
-    categories_synced_at:    db.categories_synced_at    ?? null,
-    categories_count:        db.categories_count        ?? null,
-    oauth_state:             db.oauth_state             ?? null,
-    oauth_state_expires_at:  db.oauth_state_expires_at  ?? null,
+    categories_synced_at:             db.categories_synced_at             ?? null,
+    categories_count:                 db.categories_count                 ?? null,
+    oauth_state:                      db.oauth_state                      ?? null,
+    oauth_state_expires_at:           db.oauth_state_expires_at           ?? null,
+    inventory_sync_enabled:           db.inventory_sync_enabled           ?? false,
+    inventory_sync_interval_minutes:  db.inventory_sync_interval_minutes  ?? 60,
+    inventory_sync_last_run:          db.inventory_sync_last_run          ?? null,
   };
 }
 

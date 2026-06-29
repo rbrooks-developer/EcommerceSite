@@ -130,6 +130,9 @@ export type EbayConfig = {
   listings_count?: number | null;
   oauth_state?: string | null;
   oauth_state_expires_at?: string | null;
+  inventory_sync_enabled?: boolean | null;
+  inventory_sync_interval_minutes?: number | null;
+  inventory_sync_last_run?: string | null;
 };
 
 export type CategoryWithEbay = Category & {

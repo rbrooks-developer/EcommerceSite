@@ -42,3 +42,21 @@ export async function saveEbayCategoryMapping(
   revalidatePath("/admin/categories");
   return { success: true as const };
 }
+
+export async function saveEbayInventorySyncSettings(
+  enabled: boolean,
+  intervalMinutes: number,
+): Promise<{ error?: string; success?: true }> {
+  const auth = await requireAdmin();
+  if (auth.error) return { error: auth.error };
+  try {
+    await saveEbayConfig({
+      inventory_sync_enabled:          enabled,
+      inventory_sync_interval_minutes: Math.max(5, Math.round(intervalMinutes)),
+    });
+    revalidatePath("/admin/ebay");
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}

@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/cron/ebay-inventory-sync",
+      "schedule": "* * * * *"
+    }
+  ]
+}
