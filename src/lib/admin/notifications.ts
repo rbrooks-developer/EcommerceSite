@@ -1,3 +1,5 @@
+"use server";
+
 import { createServiceClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
 
@@ -37,7 +39,6 @@ export async function createAdminNotification(payload: {
 }
 
 export async function markNotificationRead(id: string): Promise<void> {
-  "use server";
   const supabase = createServiceClient();
   await supabase
     .from("admin_notifications")
@@ -47,7 +48,6 @@ export async function markNotificationRead(id: string): Promise<void> {
 }
 
 export async function markAllNotificationsRead(): Promise<void> {
-  "use server";
   const supabase = createServiceClient();
   await supabase
     .from("admin_notifications")
@@ -57,14 +57,12 @@ export async function markAllNotificationsRead(): Promise<void> {
 }
 
 export async function deleteNotification(id: string): Promise<void> {
-  "use server";
   const supabase = createServiceClient();
   await supabase.from("admin_notifications").delete().eq("id", id);
   revalidatePath("/admin/notifications");
 }
 
 export async function createTestNotification(): Promise<void> {
-  "use server";
   await createAdminNotification({
     type: "ebay_inventory_sync_error",
     severity: "error",
