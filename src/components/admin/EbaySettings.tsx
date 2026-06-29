@@ -56,12 +56,19 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
   }
 
   type SyncError = { listingId: string; title: string; reason: string };
+  type DebugItem = {
+    title: string;
+    brand: string | null;
+    specificsKeys: string;
+    parentCategory: string;
+    childCategory: string | null;
+  };
 
   type ListingSyncState =
     | { status: "idle" }
     | { status: "fetching" }
     | { status: "syncing"; current: number; total: number; inserted: number; updated: number; lastTitle: string }
-    | { status: "done"; inserted: number; updated: number; errors: SyncError[] }
+    | { status: "done"; inserted: number; updated: number; errors: SyncError[]; debugItems: DebugItem[] }
     | { status: "error"; message: string };
 
   const [listingSyncState, setListingSyncState] = useState<ListingSyncState>({ status: "idle" });
@@ -77,6 +84,7 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
       let   buffer  = "";
       let   inserted = 0, updated = 0, total = 0;
       const errors: SyncError[] = [];
+      const debugItems: DebugItem[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -98,16 +106,16 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
               if (msg.status === "inserted") inserted++;
               if (msg.status === "updated")  updated++;
               if (msg.status === "skipped")  errors.push({ listingId: "", title: msg.title, reason: msg.reason });
-              // Log debug info to console so category routing is visible
-              console.log(`[eBay sync] ${msg.status.toUpperCase()} "${msg.title}"`, {
-                brand: msg.brand,
-                specifics: msg.specifics,
-                parentCategory: msg.parentCategory,
-                childCategory: msg.childCategory ?? "(none — stayed in parent)",
+              debugItems.push({
+                title:          msg.title,
+                brand:          msg.brand ?? null,
+                specificsKeys:  msg.specifics ? Object.keys(msg.specifics).join(", ") : "",
+                parentCategory: msg.parentCategory ?? "",
+                childCategory:  msg.childCategory ?? null,
               });
               setListingSyncState({ status: "syncing", current: msg.current, total, inserted, updated, lastTitle: msg.title });
             } else if (msg.type === "done") {
-              setListingSyncState({ status: "done", inserted: msg.inserted, updated: msg.updated, errors: msg.errors ?? [] });
+              setListingSyncState({ status: "done", inserted: msg.inserted, updated: msg.updated, errors: msg.errors ?? [], debugItems });
             } else if (msg.type === "fatal") {
               setListingSyncState({ status: "error", message: msg.message });
             }
@@ -392,6 +400,39 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
                   ))}
                 </div>
               </div>
+            )}
+
+            {/* Category routing debug table */}
+            {listingSyncState.debugItems.length > 0 && (
+              <details className="rounded-lg border border-gray-200 bg-gray-50">
+                <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900">
+                  Category routing debug ({listingSyncState.debugItems.length} items)
+                </summary>
+                <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                  <table className="w-full text-xs">
+                    <thead className="sticky top-0 bg-gray-100">
+                      <tr>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600 min-w-[180px]">Title</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600">Detected Brand</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600">Specifics Keys</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600">Parent</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600">Child</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {listingSyncState.debugItems.map((d, i) => (
+                        <tr key={i} className={`border-t border-gray-200 ${!d.childCategory && d.parentCategory ? "bg-amber-50" : ""}`}>
+                          <td className="px-2 py-1 text-gray-700 max-w-[220px] truncate" title={d.title}>{d.title}</td>
+                          <td className="px-2 py-1 font-mono text-gray-900">{d.brand ?? <span className="text-red-500">null</span>}</td>
+                          <td className="px-2 py-1 text-gray-500 max-w-[160px] truncate" title={d.specificsKeys}>{d.specificsKeys || <span className="text-red-500">empty</span>}</td>
+                          <td className="px-2 py-1 text-gray-700">{d.parentCategory}</td>
+                          <td className="px-2 py-1 font-medium text-gray-900">{d.childCategory ?? <span className="text-amber-600">—</span>}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </details>
             )}
           </div>
         )}
