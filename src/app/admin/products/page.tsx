@@ -10,6 +10,19 @@ import Image from "next/image";
 import type { Product } from "@/types";
 
 type ProductRow = Product & { categories: { name: string } | null };
+type CategoryRow = { id: string; name: string; parent_id: string | null };
+
+function getDescendantIds(rootId: string, allCats: CategoryRow[]): Set<string> {
+  const ids = new Set<string>([rootId]);
+  for (const cat of allCats) {
+    if (cat.parent_id && ids.has(cat.parent_id)) ids.add(cat.id);
+  }
+  // Second pass in case of deeper nesting
+  for (const cat of allCats) {
+    if (cat.parent_id && ids.has(cat.parent_id)) ids.add(cat.id);
+  }
+  return ids;
+}
 
 export default async function ProductsPage({
   searchParams,
@@ -21,7 +34,7 @@ export default async function ProductsPage({
 
   const [{ data: raw }, { data: cats }] = await Promise.all([
     supabase.from("products").select("*, categories(name)"),
-    supabase.from("categories").select("id, name").order("name"),
+    supabase.from("categories").select("id, name, parent_id").order("name"),
   ]);
 
   let products = (raw ?? []) as ProductRow[];
@@ -33,7 +46,11 @@ export default async function ProductsPage({
     products = products.filter((p) => p.name.toLowerCase().includes(q));
   }
   if (category) {
-    products = products.filter((p) => p.category_id === category);
+    // Include the selected category AND all its descendants so that
+    // filtering by a parent (e.g. "Comic Books") shows products in
+    // child categories (Marvel Comics, DC Comics, etc.) too.
+    const descendantIds = getDescendantIds(category, categories);
+    products = products.filter((p) => p.category_id && descendantIds.has(p.category_id));
   }
 
   // Sort: category name A-Z, then product name A-Z
