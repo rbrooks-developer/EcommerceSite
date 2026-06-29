@@ -179,7 +179,7 @@ export async function fetchItemSpecifics(
     <eBayAuthToken>${config.access_token}</eBayAuthToken>
   </RequesterCredentials>
   <ItemID>${listingId}</ItemID>
-  <OutputSelector>Item.ItemSpecifics</OutputSelector>
+  <DetailLevel>ReturnAll</DetailLevel>
 </GetItemRequest>`;
 
   const res = await fetch(TRADING_URL, {
@@ -192,7 +192,7 @@ export async function fetchItemSpecifics(
       "Content-Type":                   "text/xml",
     },
     body,
-    signal: AbortSignal.timeout(30_000),
+    signal: AbortSignal.timeout(45_000),
   });
 
   if (!res.ok) {
