@@ -59,7 +59,7 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
   type DebugItem = {
     title: string;
     brand: string | null;
-    specificsKeys: string;
+    specifics: Record<string, string>;
     parentCategory: string;
     childCategory: string | null;
   };
@@ -67,8 +67,9 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
   type ListingSyncState =
     | { status: "idle" }
     | { status: "fetching" }
+    | { status: "enriching"; count: number }
     | { status: "syncing"; current: number; total: number; inserted: number; updated: number; lastTitle: string }
-    | { status: "done"; inserted: number; updated: number; errors: SyncError[]; debugItems: DebugItem[] }
+    | { status: "done"; inserted: number; updated: number; errors: SyncError[]; debugItems: DebugItem[]; warnings: string[] }
     | { status: "error"; message: string };
 
   const [listingSyncState, setListingSyncState] = useState<ListingSyncState>({ status: "idle" });
@@ -85,6 +86,7 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
       let   inserted = 0, updated = 0, total = 0;
       const errors: SyncError[] = [];
       const debugItems: DebugItem[] = [];
+      const warnings: string[] = [];
 
       while (true) {
         const { done, value } = await reader.read();
@@ -99,6 +101,10 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
             const msg = JSON.parse(line);
             if (msg.type === "fetching") {
               setListingSyncState({ status: "fetching" });
+            } else if (msg.type === "enriching") {
+              setListingSyncState({ status: "enriching", count: msg.count });
+            } else if (msg.type === "warn") {
+              warnings.push(msg.message);
             } else if (msg.type === "total") {
               total = msg.count;
               setListingSyncState({ status: "syncing", current: 0, total, inserted: 0, updated: 0, lastTitle: "" });
@@ -109,13 +115,13 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
               debugItems.push({
                 title:          msg.title,
                 brand:          msg.brand ?? null,
-                specificsKeys:  msg.specifics ? Object.keys(msg.specifics).join(", ") : "",
+                specifics:      msg.specifics ?? {},
                 parentCategory: msg.parentCategory ?? "",
                 childCategory:  msg.childCategory ?? null,
               });
               setListingSyncState({ status: "syncing", current: msg.current, total, inserted, updated, lastTitle: msg.title });
             } else if (msg.type === "done") {
-              setListingSyncState({ status: "done", inserted: msg.inserted, updated: msg.updated, errors: msg.errors ?? [], debugItems });
+              setListingSyncState({ status: "done", inserted: msg.inserted, updated: msg.updated, errors: msg.errors ?? [], debugItems, warnings });
             } else if (msg.type === "fatal") {
               setListingSyncState({ status: "error", message: msg.message });
             }
@@ -329,12 +335,17 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
         )}
 
         {/* Live progress */}
-        {(listingSyncState.status === "fetching" || listingSyncState.status === "syncing") && (
+        {(listingSyncState.status === "fetching" || listingSyncState.status === "enriching" || listingSyncState.status === "syncing") && (
           <div className="rounded-lg border border-blue-200 bg-blue-50 p-4 space-y-3">
             {listingSyncState.status === "fetching" ? (
               <div className="flex items-center gap-2 text-sm text-blue-700">
                 <Loader2 className="h-4 w-4 animate-spin shrink-0" />
                 Fetching active listings from eBay…
+              </div>
+            ) : listingSyncState.status === "enriching" ? (
+              <div className="flex items-center gap-2 text-sm text-blue-700">
+                <Loader2 className="h-4 w-4 animate-spin shrink-0" />
+                Fetching item specifics for {listingSyncState.count} listings (GetItem)…
               </div>
             ) : (
               <>
@@ -402,33 +413,56 @@ export function EbaySettings({ config, credentialsConfigured, successParam, erro
               </div>
             )}
 
+            {/* GetItem warnings */}
+            {listingSyncState.warnings.length > 0 && (
+              <div className="rounded-lg border border-red-200 bg-red-50 p-3">
+                <p className="text-xs font-medium text-red-700 mb-1">GetItem errors ({listingSyncState.warnings.length}):</p>
+                <div className="max-h-32 overflow-y-auto space-y-0.5">
+                  {listingSyncState.warnings.map((w, i) => (
+                    <p key={i} className="text-xs text-red-600">{w}</p>
+                  ))}
+                </div>
+              </div>
+            )}
+
             {/* Category routing debug table */}
             {listingSyncState.debugItems.length > 0 && (
               <details className="rounded-lg border border-gray-200 bg-gray-50">
                 <summary className="cursor-pointer px-3 py-2 text-xs font-medium text-gray-600 hover:text-gray-900">
                   Category routing debug ({listingSyncState.debugItems.length} items)
                 </summary>
-                <div className="overflow-x-auto max-h-64 overflow-y-auto">
+                <div className="overflow-x-auto max-h-96 overflow-y-auto">
                   <table className="w-full text-xs">
                     <thead className="sticky top-0 bg-gray-100">
                       <tr>
-                        <th className="px-2 py-1 text-left font-medium text-gray-600 min-w-[180px]">Title</th>
-                        <th className="px-2 py-1 text-left font-medium text-gray-600">Detected Brand</th>
-                        <th className="px-2 py-1 text-left font-medium text-gray-600">Specifics Keys</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600 min-w-[160px]">Title</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600 min-w-[100px]">Brand (detected)</th>
+                        <th className="px-2 py-1 text-left font-medium text-gray-600 min-w-[200px]">All Specifics</th>
                         <th className="px-2 py-1 text-left font-medium text-gray-600">Parent</th>
                         <th className="px-2 py-1 text-left font-medium text-gray-600">Child</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {listingSyncState.debugItems.map((d, i) => (
-                        <tr key={i} className={`border-t border-gray-200 ${!d.childCategory && d.parentCategory ? "bg-amber-50" : ""}`}>
-                          <td className="px-2 py-1 text-gray-700 max-w-[220px] truncate" title={d.title}>{d.title}</td>
-                          <td className="px-2 py-1 font-mono text-gray-900">{d.brand ?? <span className="text-red-500">null</span>}</td>
-                          <td className="px-2 py-1 text-gray-500 max-w-[160px] truncate" title={d.specificsKeys}>{d.specificsKeys || <span className="text-red-500">empty</span>}</td>
-                          <td className="px-2 py-1 text-gray-700">{d.parentCategory}</td>
-                          <td className="px-2 py-1 font-medium text-gray-900">{d.childCategory ?? <span className="text-amber-600">—</span>}</td>
-                        </tr>
-                      ))}
+                      {listingSyncState.debugItems.map((d, i) => {
+                        const specEntries = Object.entries(d.specifics);
+                        return (
+                          <tr key={i} className={`border-t border-gray-200 ${!d.childCategory && d.parentCategory ? "bg-amber-50" : ""}`}>
+                            <td className="px-2 py-1 text-gray-700 max-w-[200px] truncate" title={d.title}>{d.title}</td>
+                            <td className="px-2 py-1 font-mono">{d.brand ?? <span className="text-red-500">null</span>}</td>
+                            <td className="px-2 py-1 font-mono text-gray-600">
+                              {specEntries.length === 0
+                                ? <span className="text-red-500">empty — GetItem may have failed</span>
+                                : specEntries.map(([k, v]) => (
+                                  <span key={k} className="inline-block mr-2 whitespace-nowrap">
+                                    <span className="text-gray-400">{k}:</span> {v}
+                                  </span>
+                                ))}
+                            </td>
+                            <td className="px-2 py-1 text-gray-700">{d.parentCategory}</td>
+                            <td className="px-2 py-1 font-medium">{d.childCategory ?? <span className="text-amber-600">—</span>}</td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>

@@ -69,6 +69,7 @@ export async function POST(_request: NextRequest): Promise<Response> {
         const cat = ebayCatMap.get(l.ebayCategoryId);
         return cat && childrenMap.has(cat.id);
       });
+      await send({ type: "enriching", count: needsSpecifics.length });
       for (let b = 0; b < needsSpecifics.length; b += 8) {
         await Promise.all(
           needsSpecifics.slice(b, b + 8).map(async (listing) => {
@@ -76,7 +77,8 @@ export async function POST(_request: NextRequest): Promise<Response> {
               listing.specifics = await fetchItemSpecifics(listing.listingId, config);
               listing.brand     = listing.specifics["brand"] ?? listing.specifics["publisher"] ?? null;
             } catch (err) {
-              console.warn(`[ebay/sync] GetItem specifics failed for ${listing.listingId}:`, (err as Error).message);
+              const msg = (err as Error & { cause?: Error });
+              await send({ type: "warn", message: `GetItem failed for "${listing.title}": ${msg.cause?.message ?? msg.message}` });
             }
           }),
         );
