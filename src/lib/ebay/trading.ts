@@ -164,7 +164,53 @@ async function fetchPage(
   return { items, hasMore };
 }
 
-/** Fetches every active Fixed Price listing via the Trading API (paginated). */
+const SHOPPING_API_URL = "https://open.api.ebay.com/shopping";
+
+/**
+ * Shopping API — GetMultipleItems with IncludeSelector=ItemSpecifics.
+ * No user token required; returns JSON; max 20 IDs per call.
+ * Returns a map of listingId → normalized specifics (lowercase key → first value).
+ */
+async function fetchSpecificsForIds(
+  ids: string[],
+  appId: string,
+): Promise<Map<string, Record<string, string>>> {
+  const url = new URL(SHOPPING_API_URL);
+  url.searchParams.set("callname",        "GetMultipleItems");
+  url.searchParams.set("version",         "863");
+  url.searchParams.set("appid",           appId);
+  url.searchParams.set("siteid",          "0");
+  url.searchParams.set("ItemID",          ids.join(","));
+  url.searchParams.set("IncludeSelector", "ItemSpecifics");
+  url.searchParams.set("responseencoding","JSON");
+
+  const res  = await fetch(url.toString(), { signal: AbortSignal.timeout(30_000) });
+  const data = await res.json() as any; // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  const map = new Map<string, Record<string, string>>();
+  const items: any[] = Array.isArray(data?.Item) ? data.Item : (data?.Item ? [data.Item] : []); // eslint-disable-line @typescript-eslint/no-explicit-any
+
+  for (const item of items) {
+    const itemId   = String(item.ItemID ?? "");
+    const nvList   = item.ItemSpecifics?.NameValueList;
+    const list     = Array.isArray(nvList) ? nvList : (nvList ? [nvList] : []);
+    const specifics: Record<string, string> = {};
+
+    for (const nv of list) {
+      const key = String(nv.Name ?? "").toLowerCase().trim();
+      const val = Array.isArray(nv.Value)
+        ? String(nv.Value[0] ?? "").trim()
+        : String(nv.Value ?? "").trim();
+      if (key && val) specifics[key] = val;
+    }
+    if (itemId) map.set(itemId, specifics);
+  }
+
+  return map;
+}
+
+/** Fetches every active Fixed Price listing via the Trading API (paginated),
+ *  then enriches each item with ItemSpecifics via the Shopping API. */
 export async function fetchAllActiveListings(config: EbayConfig): Promise<TradingItem[]> {
   if (!config.access_token) throw new Error("No eBay access token — connect your account first");
 
@@ -178,8 +224,21 @@ export async function fetchAllActiveListings(config: EbayConfig): Promise<Tradin
   while (true) {
     const { items, hasMore } = await fetchPage(config, page, endTimeFrom, endTimeTo);
     all.push(...items);
-    if (!hasMore || page >= 50) break; // 50 × 200 = 10,000 items safety cap
+    if (!hasMore || page >= 50) break;
     page++;
+  }
+
+  // Enrich with ItemSpecifics in batches of 20 via Shopping API
+  for (let i = 0; i < all.length; i += 20) {
+    const batch   = all.slice(i, i + 20);
+    const ids     = batch.map((item) => item.listingId);
+    const specMap = await fetchSpecificsForIds(ids, config.app_id);
+
+    for (const item of batch) {
+      const specifics = specMap.get(item.listingId) ?? {};
+      item.specifics  = specifics;
+      item.brand      = specifics["brand"] ?? specifics["publisher"] ?? null;
+    }
   }
 
   return all;
