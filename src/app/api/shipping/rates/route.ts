@@ -4,7 +4,7 @@ import { getEasyPostClient } from "@/lib/easypost/client";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
 import { resolveSubtotal } from "@/lib/cart/pricing";
-import { resolveShippingProtection } from "@/lib/easypost/protection";
+import { resolveShippingProtection, calculateInsuranceFee } from "@/lib/easypost/protection";
 import type { Product, StoreAddress } from "@/types";
 
 const requestSchema = z.object({
@@ -76,6 +76,7 @@ export async function POST(request: NextRequest) {
   } = await supabase.auth.getUser();
   const subtotal = await resolveSubtotal(supabase, items, user?.id ?? null);
   const { insuranceRequired, signatureRequired } = resolveShippingProtection(subtotal, settings);
+  const insuranceFee = calculateInsuranceFee(subtotal, insuranceRequired);
 
   try {
     const shipment = await (getEasyPostClient() as any).Shipment.create({
@@ -113,14 +114,14 @@ export async function POST(request: NextRequest) {
       id: r.id,
       carrier: r.carrier,
       service: r.service,
-      rate: (parseFloat(r.rate) + handlingFee).toFixed(2),
+      rate: (parseFloat(r.rate) + handlingFee + insuranceFee).toFixed(2),
       delivery_days: r.delivery_days ?? null,
       delivery_date: r.delivery_date ?? null,
     }));
 
     rates.sort((a: any, b: any) => parseFloat(a.rate) - parseFloat(b.rate));
 
-    return Response.json({ rates, insuranceRequired, signatureRequired });
+    return Response.json({ rates, insuranceRequired, signatureRequired, insuranceFee: insuranceFee.toFixed(2) });
   } catch (err: any) {
     console.error("EasyPost error:", err);
     return Response.json(

@@ -20,3 +20,15 @@ export function resolveShippingProtection(
     signatureRequired: signatureMin > 0 && subtotal >= signatureMin,
   };
 }
+
+/**
+ * EasyPost charges 1% of declared value for insurance, $1 minimum (see
+ * Shipment.insure docs) — billed to us when the label is purchased via
+ * Shipment.buy(..., subtotal) in generateLabels(). That cost has to be
+ * quoted to the customer up front, or the store eats it on every
+ * high-value order.
+ */
+export function calculateInsuranceFee(subtotal: number, insuranceRequired: boolean): number {
+  if (!insuranceRequired) return 0;
+  return Math.max(1, subtotal * 0.01);
+}

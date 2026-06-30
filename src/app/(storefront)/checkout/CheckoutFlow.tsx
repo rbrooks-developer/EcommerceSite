@@ -58,6 +58,7 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
   const [error, setError] = useState<string | null>(null);
   const [insuranceRequired, setInsuranceRequired] = useState(false);
   const [signatureRequired, setSignatureRequired] = useState(false);
+  const [insuranceFee, setInsuranceFee] = useState(0);
 
   const subdivisions = SUBDIVISIONS[address.country] ?? [];
   const hasSubdivisions = subdivisions.length > 0;
@@ -119,6 +120,7 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
       setSelectedRate(sorted[0] ?? null);
       setInsuranceRequired(!!data.insuranceRequired);
       setSignatureRequired(!!data.signatureRequired);
+      setInsuranceFee(parseFloat(data.insuranceFee ?? "0"));
       setStep("review");
     } catch (err: any) {
       setError(err.message);
@@ -343,7 +345,7 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {insuranceRequired && (
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, transparent)" }}>
-                        Insured
+                        Insured (+{formatPrice(insuranceFee * 100)})
                       </span>
                     )}
                     {signatureRequired && (
@@ -386,7 +388,12 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
               <div className="flex justify-between" style={{ opacity: 0.7 }}><span>Subtotal</span><span>{formatPrice(subtotal * 100)}</span></div>
               {selectedRate && (
                 <div className="flex justify-between" style={{ opacity: 0.7 }}>
-                  <span>Shipping</span><span>{formatPrice(parseFloat(selectedRate.rate) * 100)}</span>
+                  <span>Shipping</span><span>{formatPrice((parseFloat(selectedRate.rate) - insuranceFee) * 100)}</span>
+                </div>
+              )}
+              {insuranceFee > 0 && (
+                <div className="flex justify-between" style={{ opacity: 0.7 }}>
+                  <span>Insurance (1%)</span><span>{formatPrice(insuranceFee * 100)}</span>
                 </div>
               )}
               <div className="flex justify-between font-semibold pt-1" style={dividerStyle}>
