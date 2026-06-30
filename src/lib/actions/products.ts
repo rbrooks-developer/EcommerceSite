@@ -77,20 +77,47 @@ export async function deleteProduct(id: string) {
 
   const supabase = await createClient();
   const { error } = await supabase.from("products").delete().eq("id", id);
-  if (error) throw new Error(error.message);
+  if (error) {
+    // order_items.product_id has no ON DELETE clause, so products that
+    // appear in a past order can't be deleted without losing that order's
+    // line-item history.
+    if (error.code === "23503") {
+      throw new Error("This product can't be deleted because it's referenced by an existing order.");
+    }
+    throw new Error(error.message);
+  }
   revalidatePath("/admin/products");
   revalidatePath("/products");
 }
 
-export async function deleteAllProducts() {
+export async function deleteAllProducts(): Promise<{ deleted: number; skipped: number }> {
   const auth = await requireAdmin();
   if (auth.error) throw new Error(auth.error);
 
   const supabase = await createClient();
-  const { error } = await supabase.from("products").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+
+  // Products referenced by order_items can't be deleted (FK constraint) —
+  // exclude them up front so the bulk delete doesn't fail outright and
+  // skip every product just because one has order history.
+  const { data: orderedRows, error: orderedErr } = await supabase
+    .from("order_items")
+    .select("product_id");
+  if (orderedErr) throw new Error(orderedErr.message);
+
+  const orderedIds = Array.from(new Set((orderedRows ?? []).map((r) => r.product_id)));
+
+  let query = supabase.from("products").delete({ count: "exact" });
+  query = orderedIds.length > 0
+    ? query.not("id", "in", `(${orderedIds.join(",")})`)
+    : query.neq("id", "00000000-0000-0000-0000-000000000000");
+
+  const { error, count } = await query;
   if (error) throw new Error(error.message);
+
   revalidatePath("/admin/products");
   revalidatePath("/products");
+
+  return { deleted: count ?? 0, skipped: orderedIds.length };
 }
 
 export async function togglePublished(id: string, current: boolean) {

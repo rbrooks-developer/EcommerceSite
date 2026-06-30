@@ -12,6 +12,8 @@ export function DeleteProductButton({ id }: { id: string }) {
     setLoading(true);
     try {
       await deleteProduct(id);
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete product.");
     } finally {
       setLoading(false);
     }
@@ -36,7 +38,15 @@ export function DeleteAllProductsButton() {
     if (!confirm("Delete ALL products? This will permanently remove every product and cannot be undone.")) return;
     setLoading(true);
     try {
-      await deleteAllProducts();
+      const { deleted, skipped } = await deleteAllProducts();
+      if (skipped > 0) {
+        alert(
+          `Deleted ${deleted} product(s). ${skipped} product(s) were kept because ` +
+          `they're referenced by an existing order and can't be removed without losing that order's history.`,
+        );
+      }
+    } catch (err) {
+      alert(err instanceof Error ? err.message : "Failed to delete products.");
     } finally {
       setLoading(false);
     }
