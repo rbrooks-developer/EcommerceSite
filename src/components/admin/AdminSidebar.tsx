@@ -58,7 +58,7 @@ function NavLink({ item, unreadCount, onClick }: { item: typeof navItems[0]; unr
   );
 }
 
-function SidebarContent({ onClose, unreadNotifications }: { onClose?: () => void; unreadNotifications?: number }) {
+function SidebarContent({ onClose, unreadNotifications, pendingOffers }: { onClose?: () => void; unreadNotifications?: number; pendingOffers?: number }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center border-b px-4">
@@ -75,7 +75,11 @@ function SidebarContent({ onClose, unreadNotifications }: { onClose?: () => void
             key={item.href}
             item={item}
             onClick={onClose}
-            unreadCount={item.href === "/admin/notifications" ? unreadNotifications : undefined}
+            unreadCount={
+              item.href === "/admin/notifications" ? unreadNotifications :
+              item.href === "/admin/offers"        ? pendingOffers :
+              undefined
+            }
           />
         ))}
       </nav>
@@ -101,7 +105,7 @@ function SidebarContent({ onClose, unreadNotifications }: { onClose?: () => void
   );
 }
 
-export function AdminSidebar({ unreadNotifications }: { unreadNotifications?: number }) {
+export function AdminSidebar({ unreadNotifications, pendingOffers }: { unreadNotifications?: number; pendingOffers?: number }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -138,12 +142,12 @@ export function AdminSidebar({ unreadNotifications }: { unreadNotifications?: nu
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent onClose={() => setMobileOpen(false)} unreadNotifications={unreadNotifications} />
+        <SidebarContent onClose={() => setMobileOpen(false)} unreadNotifications={unreadNotifications} pendingOffers={pendingOffers} />
       </div>
 
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-white">
-        <SidebarContent unreadNotifications={unreadNotifications} />
+        <SidebarContent unreadNotifications={unreadNotifications} pendingOffers={pendingOffers} />
       </div>
     </>
   );
