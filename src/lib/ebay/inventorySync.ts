@@ -58,7 +58,7 @@ export async function runEbayInventorySync(config: EbayConfig): Promise<Inventor
  * Returns the available quantity for an eBay listing, or null if the listing
  * no longer exists. Returns 0 if the listing exists but is not active.
  */
-async function getEbayAvailableQty(
+export async function getEbayAvailableQty(
   listingId: string,
   config: EbayConfig,
 ): Promise<number | null> {

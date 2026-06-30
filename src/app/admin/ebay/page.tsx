@@ -3,7 +3,6 @@ import { EbaySettings } from "@/components/admin/EbaySettings";
 import { EbayInventorySyncSettings } from "@/components/admin/EbayInventorySyncSettings";
 
 export const dynamic = "force-dynamic";
-export const maxDuration = 60;
 
 export default async function EbayAdminPage({
   searchParams,
@@ -13,17 +12,6 @@ export default async function EbayAdminPage({
   const [config, params] = await Promise.all([getEbayConfig(), searchParams]);
   const success = params.success ?? null;
   const error   = params.error   ?? null;
-
-  const syncError  = params.syncError ?? null;
-  const syncResult = params.total
-    ? {
-        total:     Number(params.total),
-        updated:   Number(params.updated   ?? 0),
-        zeroed:    Number(params.zeroed    ?? 0),
-        unchanged: Number(params.unchanged ?? 0),
-        errors:    Number(params.errors    ?? 0),
-      }
-    : null;
 
   // Credentials come from env vars — check independently of token state
   const credentialsConfigured = !!(
@@ -46,7 +34,7 @@ export default async function EbayAdminPage({
         successParam={success}
         errorParam={error}
       />
-      <EbayInventorySyncSettings config={config} syncResult={syncResult} syncError={syncError} />
+      <EbayInventorySyncSettings config={config} />
     </div>
   );
 }
