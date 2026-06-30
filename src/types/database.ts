@@ -145,6 +145,7 @@ export interface Database {
           shipping_state: string;
           shipping_zip: string;
           shipping_country: string;
+          refunded_amount: number;
           created_at: string;
           updated_at: string;
         };
@@ -156,6 +157,7 @@ export interface Database {
           shipping_cost: number;
           tax_amount: number;
           total_price: number;
+          refunded_amount?: number;
           stripe_session_id?: string | null;
           stripe_payment_intent_id?: string | null;
           selected_shipping_rate?: Json | null;
@@ -179,6 +181,7 @@ export interface Database {
           tracking_number?: string | null;
           shipping_label_url?: string | null;
           easypost_shipment_id?: string | null;
+          refunded_amount?: number;
           updated_at?: string;
         };
       };

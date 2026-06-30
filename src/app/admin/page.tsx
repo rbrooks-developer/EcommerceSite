@@ -8,19 +8,22 @@ async function getStats() {
   const [products, categories, orders] = await Promise.all([
     supabase.from("products").select("id, is_published", { count: "exact" }),
     supabase.from("categories").select("id", { count: "exact" }),
-    supabase.from("orders").select("id, total_price, status", { count: "exact" }),
+    supabase.from("orders").select("id, total_price, refunded_amount, status", { count: "exact" }),
   ]);
 
-  const orderRows = (orders.data ?? []) as Pick<Order, "id" | "total_price" | "status">[];
+  const orderRows = (orders.data ?? []) as Pick<Order, "id" | "total_price" | "refunded_amount" | "status">[];
   const productRows = (products.data ?? []) as Pick<Product, "id" | "is_published">[];
 
-  const paidOrderIds = orderRows
-    .filter((o) => o.status !== "cancelled" && o.status !== "pending")
-    .map((o) => o.id);
+  const paidOrders = orderRows.filter((o) => o.status !== "cancelled" && o.status !== "pending");
+  const paidOrderIds = paidOrders.map((o) => o.id);
 
-  const revenue = orderRows
-    .filter((o) => o.status !== "cancelled")
-    .reduce((sum, o) => sum + Number(o.total_price), 0);
+  // Net of refunds — a full refund contributes $0, a partial refund
+  // contributes only what the customer actually still paid.
+  const netRevenueByOrder = Object.fromEntries(
+    paidOrders.map((o) => [o.id, Math.max(0, Number(o.total_price) - Number(o.refunded_amount ?? 0))])
+  );
+
+  const revenue = Object.values(netRevenueByOrder).reduce((sum, n) => sum + n, 0);
 
   // Profit: fetch order items for paid orders, then product costs separately
   let profit: number | null = null;
@@ -29,10 +32,10 @@ async function getStats() {
   if (paidOrderIds.length > 0) {
     const { data: itemsRaw } = await supabase
       .from("order_items")
-      .select("price, quantity, product_id")
+      .select("order_id, price, quantity, product_id")
       .in("order_id", paidOrderIds);
 
-    const items = (itemsRaw ?? []) as { price: number; quantity: number; product_id: string }[];
+    const items = (itemsRaw ?? []) as { order_id: string; price: number; quantity: number; product_id: string }[];
 
     if (items.length > 0) {
       const productIds = [...new Set(items.map((i) => i.product_id))];
@@ -46,13 +49,24 @@ async function getStats() {
         ((costRows ?? []) as { id: string; cost: number }[]).map((p) => [p.id, p.cost])
       );
 
+      // Scale each order's item revenue down by the same fraction that was
+      // refunded — we don't know which specific items a partial refund
+      // covered, so this approximates proportionally across the order.
+      const refundFactorByOrder = Object.fromEntries(
+        paidOrders.map((o) => {
+          const total = Number(o.total_price);
+          return [o.id, total > 0 ? (netRevenueByOrder[o.id] ?? 0) / total : 1];
+        })
+      );
+
       profitProductCount = Object.keys(costMap).length;
 
       if (profitProductCount > 0) {
         profit = items.reduce((sum, item) => {
           const cost = costMap[item.product_id];
           if (cost == null) return sum;
-          return sum + (Number(item.price) - Number(cost)) * item.quantity;
+          const factor = refundFactorByOrder[item.order_id] ?? 1;
+          return sum + (Number(item.price) - Number(cost)) * item.quantity * factor;
         }, 0);
       }
     }

@@ -287,7 +287,12 @@ export async function POST(request: NextRequest) {
       const isFullRefund = charge.amount_refunded >= charge.amount;
       const { error: statusUpdateError } = await supabase
         .from("orders")
-        .update({ status: isFullRefund ? "refunded" : "partially_refunded" })
+        // amount_refunded is the cumulative total refunded on this charge, not
+        // a delta, so it's safe to set directly even across multiple partial refunds.
+        .update({
+          status: isFullRefund ? "refunded" : "partially_refunded",
+          refunded_amount: charge.amount_refunded / 100,
+        })
         .eq("id", orderId);
 
       if (statusUpdateError) {

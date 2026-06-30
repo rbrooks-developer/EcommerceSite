@@ -157,6 +157,18 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <span>Total</span>
             <span>{formatPrice(Number(order.total_price) * 100)}</span>
           </div>
+          {Number(order.refunded_amount) > 0 && (
+            <>
+              <div className="flex justify-between text-red-600">
+                <span>Refunded</span>
+                <span>-{formatPrice(Number(order.refunded_amount) * 100)}</span>
+              </div>
+              <div className="flex justify-between font-semibold text-gray-900 text-base pt-2 border-t border-gray-100">
+                <span>Net</span>
+                <span>{formatPrice(Math.max(0, Number(order.total_price) - Number(order.refunded_amount)) * 100)}</span>
+              </div>
+            </>
+          )}
         </div>
       </div>
     </div>
