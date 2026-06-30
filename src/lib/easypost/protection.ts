@@ -22,13 +22,23 @@ export function resolveShippingProtection(
 }
 
 /**
+ * EasyPost will only insure a shipment for up to $5000 (see the `amount`
+ * field docs on Insurance.create / Shipment.buy) — declared value above
+ * that is rejected outright, not silently capped. generateLabels() must
+ * pass at most this much, and the fee charged to the customer has to be
+ * based on the same capped amount, not the full order subtotal.
+ */
+export const EASYPOST_MAX_INSURABLE_VALUE = 5000;
+
+/**
  * EasyPost charges 1% of declared value for insurance, $1 minimum (see
  * Shipment.insure docs) — billed to us when the label is purchased via
- * Shipment.buy(..., subtotal) in generateLabels(). That cost has to be
- * quoted to the customer up front, or the store eats it on every
+ * Shipment.buy(..., insuredAmount) in generateLabels(). That cost has to
+ * be quoted to the customer up front, or the store eats it on every
  * high-value order.
  */
 export function calculateInsuranceFee(subtotal: number, insuranceRequired: boolean): number {
   if (!insuranceRequired) return 0;
-  return Math.max(1, subtotal * 0.01);
+  const insuredAmount = Math.min(subtotal, EASYPOST_MAX_INSURABLE_VALUE);
+  return Math.max(1, insuredAmount * 0.01);
 }

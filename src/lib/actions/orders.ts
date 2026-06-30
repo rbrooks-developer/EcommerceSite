@@ -4,6 +4,7 @@ import { revalidatePath, refresh } from "next/cache";
 import { createServiceClient } from "@/lib/supabase/server";
 import { getStripeClient } from "@/lib/stripe/client";
 import { getEasyPostClient } from "@/lib/easypost/client";
+import { EASYPOST_MAX_INSURABLE_VALUE } from "@/lib/easypost/protection";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { getSettings } from "@/lib/data/settings";
 import { sendShippingUpdate } from "@/lib/emails/shippingUpdate";
@@ -169,7 +170,7 @@ export async function generateLabels(orderIds: string[]): Promise<LabelResult[]>
 
       const lowestRate = shipment.lowestRate();
       const purchased = order.insurance_required
-        ? await easypost.Shipment.buy(shipment.id, lowestRate, order.subtotal)
+        ? await easypost.Shipment.buy(shipment.id, lowestRate, Math.min(order.subtotal, EASYPOST_MAX_INSURABLE_VALUE))
         : await easypost.Shipment.buy(shipment.id, lowestRate);
 
       const trackingNumber: string = purchased.tracking_code ?? "";

@@ -9,6 +9,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { SUBDIVISIONS, getSubdivisionLabel, getCountryName } from "@/lib/data/countries";
 import type { Country } from "@/lib/data/countries";
 import type { EasyPostRate, ShippingAddress, UserAddress } from "@/types";
+import { EASYPOST_MAX_INSURABLE_VALUE } from "@/lib/easypost/protection";
 
 type Step = "address" | "shipping" | "review";
 
@@ -345,7 +346,7 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
                   <div className="mt-1.5 flex flex-wrap gap-1.5">
                     {insuranceRequired && (
                       <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, transparent)" }}>
-                        Insured (+{formatPrice(insuranceFee * 100)})
+                        Insured up to {formatPrice(Math.min(subtotal, EASYPOST_MAX_INSURABLE_VALUE) * 100)} (+{formatPrice(insuranceFee * 100)})
                       </span>
                     )}
                     {signatureRequired && (
