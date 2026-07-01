@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 
@@ -8,8 +8,11 @@ const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAA
 
 export function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
+  const [touchZoomed, setTouchZoomed] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
+  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
+  const touchMovedRef = useRef(false);
 
   function getPos(clientX: number, clientY: number) {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -41,6 +44,88 @@ export function ProductImages({ images, name }: { images: string[]; name: string
     wrapperRef.current.style.transform = "scale(1)";
   }
 
+  // iOS Safari ignores touch-action CSS and passive-listener prevention at the element level.
+  // The only reliable fix is locking document.body with position:fixed while the finger is
+  // on the image (same pattern used by react-modal, framer-motion, etc.).
+  useEffect(() => {
+    const el = containerRef.current;
+    if (!el) return;
+
+    let savedScrollY = 0;
+
+    function lockBody() {
+      savedScrollY = window.scrollY;
+      Object.assign(document.body.style, {
+        overflow: "hidden",
+        position: "fixed",
+        top: `-${savedScrollY}px`,
+        width: "100%",
+      });
+    }
+
+    function unlockBody() {
+      Object.assign(document.body.style, {
+        overflow: "",
+        position: "",
+        top: "",
+        width: "",
+      });
+      window.scrollTo(0, savedScrollY);
+    }
+
+    function blockMove(e: TouchEvent) {
+      e.preventDefault();
+    }
+
+    el.addEventListener("touchstart", lockBody, { passive: true });
+    el.addEventListener("touchend", unlockBody, { passive: true });
+    el.addEventListener("touchcancel", unlockBody, { passive: true });
+    el.addEventListener("touchmove", blockMove, { passive: false });
+
+    return () => {
+      el.removeEventListener("touchstart", lockBody);
+      el.removeEventListener("touchend", unlockBody);
+      el.removeEventListener("touchcancel", unlockBody);
+      el.removeEventListener("touchmove", blockMove);
+      unlockBody();
+    };
+  }, []);
+
+  // Mobile/tablet: tap to zoom in (stays zoomed), drag to pan, tap again to zoom out
+  function handleTouchStart(e: React.TouchEvent) {
+    const t = e.touches[0];
+    touchStartRef.current = { x: t.clientX, y: t.clientY };
+    touchMovedRef.current = false;
+    if (!touchZoomed) zoomIn(t.clientX, t.clientY); // preview zoom at touch point
+  }
+
+  function handleTouchMove(e: React.TouchEvent) {
+    const t = e.touches[0];
+    const start = touchStartRef.current;
+    if (start) {
+      if (Math.abs(t.clientX - start.x) > 5 || Math.abs(t.clientY - start.y) > 5)
+        touchMovedRef.current = true;
+    }
+    if (touchZoomed) pan(t.clientX, t.clientY);
+  }
+
+  function handleTouchEnd() {
+    const wasTap = !touchMovedRef.current;
+    if (!touchZoomed) {
+      if (wasTap) {
+        setTouchZoomed(true); // confirm zoom, image stays zoomed
+      } else {
+        zoomOut(); // drag on un-zoomed: cancel preview
+      }
+    } else {
+      if (wasTap) {
+        zoomOut();
+        setTouchZoomed(false);
+      }
+      // drag while zoomed: stay zoomed, user was panning
+    }
+  }
+
   if (images.length === 0) {
     return (
       <div className="aspect-square rounded-lg flex items-center justify-center text-gray-300">
@@ -56,13 +141,13 @@ export function ProductImages({ images, name }: { images: string[]; name: string
       <div
         ref={containerRef}
         className="product-zoom-container relative aspect-square overflow-hidden rounded-lg cursor-crosshair"
-        style={{ backgroundColor: "var(--product-detail-bg, transparent)", zIndex: 46, isolation: "isolate" }}
+        style={{ backgroundColor: "var(--product-detail-bg, transparent)", zIndex: 46, isolation: "isolate", touchAction: "none" }}
         onMouseEnter={(e) => zoomIn(e.clientX, e.clientY)}
         onMouseMove={(e) => pan(e.clientX, e.clientY)}
         onMouseLeave={zoomOut}
-        onTouchStart={(e) => { const t = e.touches[0]; zoomIn(t.clientX, t.clientY); }}
-        onTouchMove={(e) => { const t = e.touches[0]; pan(t.clientX, t.clientY); }}
-        onTouchEnd={zoomOut}
+        onTouchStart={handleTouchStart}
+        onTouchMove={handleTouchMove}
+        onTouchEnd={handleTouchEnd}
       >
         <div
           ref={wrapperRef}
@@ -87,7 +172,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
           {images.map((src, i) => (
             <button
               key={src}
-              onClick={() => setSelected(i)}
+              onClick={() => { setSelected(i); if (touchZoomed) { zoomOut(); setTouchZoomed(false); } }}
               className={cn(
                 "relative h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-opacity",
                 i === selected ? "border-current" : "border-transparent opacity-50"
