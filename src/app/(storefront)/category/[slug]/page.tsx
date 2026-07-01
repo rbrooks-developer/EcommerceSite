@@ -1,11 +1,11 @@
 import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
-import { ProductCard } from "@/components/storefront/ProductCard";
+import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { Category, Product, HomepageConfig } from "@/types";
+import type { Category, Product } from "@/types";
 
 type CategoryRow = Pick<Category, "id" | "slug" | "name"> & { parent_id: string | null };
 
@@ -42,10 +42,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const { slug } = await params;
   const supabase = await createClient();
 
-  const [category, allCatsRes, settings] = await Promise.all([
+  const [category, allCatsRes] = await Promise.all([
     getCategoryBySlug(slug),
     supabase.from("categories").select("id, slug, name, parent_id"),
-    getSettings(),
   ]);
 
   if (!category) notFound();
@@ -62,9 +61,6 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   const products = (rawProducts ?? []) as Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory">[];
 
-  const homepage = settings?.homepage_config as HomepageConfig | null;
-  const fontColor = homepage?.font_color ?? "#111827";
-
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const breadcrumbLd = {
     "@context": "https://schema.org",
@@ -78,7 +74,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8" style={{ zIndex: 2 }}>
+    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <Breadcrumbs crumbs={[
         { label: "Home", href: "/" },
         { label: category.name },
@@ -88,15 +84,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
         <span className="text-sm" style={{ opacity: 0.5 }}>{products.length} products</span>
       </div>
 
-      {products.length === 0 ? (
-        <p className="text-center py-20" style={{ opacity: 0.4 }}>No products in this category yet.</p>
-      ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {products.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
-      )}
+      <CategoryProducts products={products} />
     </div>
     </>
   );
