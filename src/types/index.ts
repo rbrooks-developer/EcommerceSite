@@ -139,6 +139,7 @@ export type EbayConfig = {
   inventory_sync_enabled?: boolean | null;
   inventory_sync_interval_minutes?: number | null;
   inventory_sync_last_run?: string | null;
+  price_discount_percent?: number | null;
 };
 
 export type CategoryWithEbay = Category & {

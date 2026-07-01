@@ -69,13 +69,15 @@ export async function saveEbayInventorySyncSettings(
   const auth = await requireAdmin();
   if (auth.error) return { error: auth.error };
 
-  const enabled = formData.has("enabled");
-  const hours   = Math.max(1, Math.min(24, Number(formData.get("interval_hours")) || 1));
+  const enabled   = formData.has("enabled");
+  const hours     = Math.max(1, Math.min(24, Number(formData.get("interval_hours")) || 1));
+  const discount  = Math.max(0, Math.min(99, Number(formData.get("price_discount_percent")) || 0));
 
   try {
     await saveEbayConfig({
       inventory_sync_enabled:          enabled,
       inventory_sync_interval_minutes: hours * 60,
+      price_discount_percent:          discount,
     });
     revalidatePath("/admin/ebay");
     refresh();

@@ -92,7 +92,8 @@ export async function POST(_request: NextRequest): Promise<Response> {
         }));
       }
 
-      const total = listings.length;
+      const total       = listings.length;
+      const discountPct = config.price_discount_percent ?? 0;
       await send({ type: "total", count: total });
 
       // One bulk lookup instead of a SELECT per listing — keeps existing slugs
@@ -147,7 +148,9 @@ export async function POST(_request: NextRequest): Promise<Response> {
               name:            listing.title,
               slug,
               description:     listing.description,
-              price:           listing.price,
+              price:           discountPct > 0
+                ? Math.round(listing.price * (1 - discountPct / 100) * 100) / 100
+                : listing.price,
               cost:            0,
               inventory:       listing.inventory,
               images:          listing.images,

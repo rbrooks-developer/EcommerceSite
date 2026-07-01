@@ -11,10 +11,11 @@ export function EbayInventorySyncSettings({
 }: {
   config: EbayConfig | null;
 }) {
-  const isConnected  = !!config?.access_token;
-  const enabled      = config?.inventory_sync_enabled          ?? false;
-  const intervalHours = Math.max(1, Math.round((config?.inventory_sync_interval_minutes ?? 60) / 60));
-  const lastRun      = config?.inventory_sync_last_run         ?? null;
+  const isConnected    = !!config?.access_token;
+  const enabled        = config?.inventory_sync_enabled          ?? false;
+  const intervalHours  = Math.max(1, Math.round((config?.inventory_sync_interval_minutes ?? 60) / 60));
+  const lastRun        = config?.inventory_sync_last_run         ?? null;
+  const discountPct    = config?.price_discount_percent          ?? 0;
 
   const [state, formAction, pending] = useActionState(saveEbayInventorySyncSettings, null);
 
@@ -64,6 +65,27 @@ export function EbayInventorySyncSettings({
                        focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
           />
           <span className="text-xs text-gray-400">1–24 hours</span>
+        </div>
+
+        <div className="flex items-center gap-3">
+          <label htmlFor="ebay-discount" className="text-sm text-gray-700 shrink-0 w-40">
+            eBay Price Discount
+          </label>
+          <input
+            id="ebay-discount"
+            type="number"
+            name="price_discount_percent"
+            defaultValue={discountPct}
+            min={0}
+            max={99}
+            step={1}
+            disabled={!isConnected}
+            className="w-24 rounded-md border border-gray-300 px-3 py-1.5 text-sm text-gray-900
+                       focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50"
+          />
+          <span className="text-xs text-gray-400">
+            % off eBay price on import{discountPct > 0 ? ` — e.g. $1,000 → $${(1000 * (1 - discountPct / 100)).toFixed(2)}` : " (0 = no discount)"}
+          </span>
         </div>
 
         {state?.success && (
