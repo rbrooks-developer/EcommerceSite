@@ -11,7 +11,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
   const outOfStock = product.inventory <= 0;
 
   return (
-    <Link href={`/products/${product.slug}`} className="group block" style={{ color: "inherit" }}>
+    <Link href={`/products/${product.slug}`} className="group flex flex-col" style={{ color: "inherit" }}>
       <div
         className="aspect-square overflow-hidden rounded-lg relative"
         style={{ backgroundColor: "var(--product-detail-bg, transparent)", zIndex: 46, isolation: "isolate" }}
@@ -41,7 +41,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
           </div>
         )}
       </div>
-      <div className="mt-3">
+      <div className="mt-3 flex flex-col flex-1">
         <h3
           className="text-sm font-medium group-hover:underline underline-offset-2"
           style={{
@@ -51,7 +51,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
             overflow: "hidden",
           }}
         >{product.name}</h3>
-        <p className="mt-1 text-sm font-semibold" style={{ opacity: 0.75 }}>{formatPrice(Number(product.price) * 100)}</p>
+        <p className="mt-auto pt-1 text-sm font-semibold" style={{ opacity: 0.75 }}>{formatPrice(Number(product.price) * 100)}</p>
       </div>
     </Link>
   );
