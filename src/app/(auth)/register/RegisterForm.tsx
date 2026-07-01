@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { register } from "@/lib/actions/auth";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -87,7 +88,7 @@ export function RegisterForm() {
 
         <div>
           <Label htmlFor="password" required>Password</Label>
-          <Input id="password" name="password" type="password" autoComplete="new-password" error={errors?.password?.[0]} required />
+          <PasswordInput id="password" name="password" autoComplete="new-password" error={errors?.password?.[0]} required />
           <p className="mt-1 text-xs opacity-60">Minimum 8 characters</p>
         </div>
 

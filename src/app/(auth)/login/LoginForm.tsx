@@ -3,6 +3,7 @@
 import { useActionState } from "react";
 import { login } from "@/lib/actions/auth";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Label } from "@/components/ui/label";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
@@ -49,7 +50,7 @@ export function LoginForm() {
               Forgot password?
             </Link>
           </div>
-          <Input id="password" name="password" type="password" autoComplete="current-password" error={errors?.password?.[0]} required />
+          <PasswordInput id="password" name="password" autoComplete="current-password" error={errors?.password?.[0]} required />
         </div>
 
         <Button type="submit" size="lg" className="w-full font-semibold" loading={isPending} style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)", fontFamily: "inherit" }}>
