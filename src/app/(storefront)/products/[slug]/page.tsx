@@ -127,7 +127,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   }
 
   const ebayConfig = await getEbayConfig();
-  const cgcCensusUrl = ebayConfig?.cgc_census_url ?? null;
+  const cgcCensusUrl      = ebayConfig?.cgc_census_url       ?? null;
+  const cgcButtonImageUrl = ebayConfig?.cgc_button_image_url ?? null;
   const showCgcButton =
     cgcCensusUrl &&
     product.name.includes("CGC") &&
@@ -208,13 +209,21 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
                 href={`${cgcCensusUrl}${(product as any).certification_number}`}
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium transition-colors hover:opacity-80"
-                style={{
-                  borderColor: "currentColor",
-                  opacity: 0.85,
-                }}
+                className="inline-block transition-opacity hover:opacity-80"
               >
-                CGC Census / Grader Notes
+                {cgcButtonImageUrl ? (
+                  // eslint-disable-next-line @next/next/no-img-element
+                  <img
+                    src={cgcButtonImageUrl}
+                    alt="CGC Census / Grader Notes"
+                    style={{ maxWidth: "100%", height: "auto" }}
+                  />
+                ) : (
+                  <span className="inline-flex items-center gap-2 rounded-md border px-4 py-2 text-sm font-medium"
+                    style={{ borderColor: "currentColor", opacity: 0.85 }}>
+                    CGC Census / Grader Notes
+                  </span>
+                )}
               </a>
             )}
 

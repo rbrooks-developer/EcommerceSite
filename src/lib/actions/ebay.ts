@@ -69,10 +69,11 @@ export async function saveEbayListingSettings(
   const auth = await requireAdmin();
   if (auth.error) return { error: auth.error };
 
-  const cgcCensusUrl = (formData.get("cgc_census_url") as string | null)?.trim() || null;
+  const cgcCensusUrl      = (formData.get("cgc_census_url")        as string | null)?.trim() || null;
+  const cgcButtonImageUrl = (formData.get("cgc_button_image_url")  as string | null)?.trim() || null;
 
   try {
-    await saveEbayConfig({ cgc_census_url: cgcCensusUrl });
+    await saveEbayConfig({ cgc_census_url: cgcCensusUrl, cgc_button_image_url: cgcButtonImageUrl });
     revalidatePath("/admin/ebay");
     refresh();
     return { success: true };

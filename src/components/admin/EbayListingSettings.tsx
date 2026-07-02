@@ -1,12 +1,17 @@
 "use client";
 
+import { useState } from "react";
 import { useActionState } from "react";
 import { saveEbayListingSettings } from "@/lib/actions/ebay";
+import { ImageUpload } from "@/components/admin/ImageUpload";
 import { CheckCircle, XCircle } from "lucide-react";
 import type { EbayConfig } from "@/types";
 
 export function EbayListingSettings({ config }: { config: EbayConfig | null }) {
   const cgcCensusUrl = config?.cgc_census_url ?? "";
+  const [cgcButtonImageUrl, setCgcButtonImageUrl] = useState<string[]>(
+    config?.cgc_button_image_url ? [config.cgc_button_image_url] : []
+  );
 
   const [state, formAction, pending] = useActionState(saveEbayListingSettings, null);
 
@@ -37,6 +42,24 @@ export function EbayListingSettings({ config }: { config: EbayConfig | null }) {
             The certification number will be appended to this URL when the CGC Census button is clicked.
             The button appears on product pages whose title contains &quot;CGC&quot; and have a certification number.
           </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <label className="block text-sm font-medium text-gray-700">
+            CGC Census Button Image
+          </label>
+          <ImageUpload
+            value={cgcButtonImageUrl}
+            onChange={setCgcButtonImageUrl}
+            max={1}
+            bucket="site-assets"
+            pathPrefix="settings"
+          />
+          <p className="text-xs text-gray-400">
+            Optional custom image for the CGC Census button. If not set, a plain text button is shown.
+            Recommended size: 460×84px.
+          </p>
+          <input type="hidden" name="cgc_button_image_url" value={cgcButtonImageUrl[0] ?? ""} />
         </div>
 
         {state?.success && (
