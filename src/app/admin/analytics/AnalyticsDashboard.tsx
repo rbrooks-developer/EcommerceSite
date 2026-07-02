@@ -87,10 +87,10 @@ export function AnalyticsDashboard({ lookerStudioUrl }: { lookerStudioUrl: strin
                   → click <strong>Blank Report</strong>.
                 </li>
                 <li>
-                  In the <em>Add data to report</em> panel that opens, choose <strong>Google Analytics</strong> → select your GA4 property → click <strong>Add</strong>.
+                  In the <em>Add data to report</em> panel that opens, choose <strong>Google Analytics</strong> → select your GA4 property → click <strong>Add</strong> → click <strong>Add to report</strong> in the confirmation dialog. You will be taken to the <strong>report canvas</strong> (a blank white page with a toolbar across the top). If you see a page listing hundreds of &ldquo;Dimensions&rdquo; and &ldquo;Metrics&rdquo;, click the <strong>← back arrow</strong> (top-left, next to &ldquo;Edit Connection&rdquo;) to return to the canvas.
                 </li>
                 <li>
-                  <strong>World Map (city dots):</strong> In the toolbar click <strong>Add a chart</strong> (the bar-chart icon) → scroll down to find <strong>Google Maps</strong> (shows a globe). In the chart setup panel on the right set <em>Location dimension</em> to <strong>City</strong> and <em>Size metric</em> to <strong>Sessions</strong>.
+                  <strong>World Map (city dots):</strong> On the report canvas toolbar click <strong>Add a chart</strong> (the bar-chart icon) → scroll down to find <strong>Google Maps</strong> (shows a globe). In the chart setup panel on the right set <em>Location dimension</em> to <strong>City</strong> and <em>Size metric</em> to <strong>Sessions</strong>.
                 </li>
                 <li>
                   <strong>Traffic by Hour:</strong> Add a chart → <strong>Bar chart</strong>. Set <em>Dimension</em> to <strong>Hour</strong> (search for it — it may appear as "Hour" under Date &amp; Time) and <em>Metric</em> to <strong>Sessions</strong>.
