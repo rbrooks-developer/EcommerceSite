@@ -28,7 +28,7 @@ const securityHeaders = [
       "frame-ancestors 'none'",
       // Stripe hosted checkout and 3DS frames; Tawk.to chat widget uses iframes
       // Note: both https://tawk.to (root) and https://*.tawk.to (subdomains) are needed
-      "frame-src https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://tawk.to https://*.tawk.to",
+      "frame-src https://js.stripe.com https://hooks.stripe.com https://checkout.stripe.com https://tawk.to https://*.tawk.to https://lookerstudio.google.com https://*.looker.com",
       // API connections: Supabase, Stripe, Resend, EasyPost, Tawk.to (including WebSocket for live chat)
       "connect-src 'self' https://*.supabase.co wss://*.supabase.co https://api.stripe.com https://checkout.stripe.com https://api.resend.com https://api.easypost.com https://tawk.to https://*.tawk.to wss://tawk.to wss://*.tawk.to https://www.google-analytics.com https://region1.google-analytics.com https://stats.g.doubleclick.net https://www.facebook.com https://www.clarity.ms",
       "upgrade-insecure-requests",
