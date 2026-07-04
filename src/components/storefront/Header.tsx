@@ -47,9 +47,27 @@ export function Header({ siteTitle, logoUrl, navConfig, isLoggedIn, isAdmin = fa
   return (
     <header
       className="sticky top-0 z-50"
-      style={{ backgroundColor: bgColor, color: fontColor, isolation: "isolate" }}
+      style={{ backgroundColor: bgColor, color: fontColor }}
     >
-      <div style={{ position: "relative" }}>
+      {striationImageUrl && (
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 0,
+            pointerEvents: "none",
+            backgroundImage: `url(${striationImageUrl})`,
+            backgroundAttachment: "fixed",
+            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "tile" ? "auto" : "auto 100%",
+            backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
+            backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
+            opacity: striationOpacity / 100,
+            mixBlendMode: striationBlendMode,
+          }}
+        />
+      )}
+      <div style={{ position: "relative", zIndex: 1 }}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between pt-2">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg" style={{ color: fontColor }}>
