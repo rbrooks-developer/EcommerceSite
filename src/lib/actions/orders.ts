@@ -112,7 +112,7 @@ export async function generateLabels(orderIds: string[]): Promise<LabelResult[]>
       // Load order items with product dimensions
       const { data: itemsRaw } = await supabase
         .from("order_items")
-        .select("*, products(id, name, weight_oz, length_in, width_in, height_in, category_id)")
+        .select("*, products(id, name, weight_oz, length_in, width_in, height_in, category_id, hs_tariff_number)")
         .eq("order_id", orderId);
 
       type ItemWithProduct = OrderItem & {
@@ -138,16 +138,18 @@ export async function generateLabels(orderIds: string[]): Promise<LabelResult[]>
       const originCountry = storeAddress.country ?? "US";
       const isInternational = order.shipping_country !== originCountry;
 
-      let hsTariffMap: Record<string, string | null> = {};
+      let hsTariffByCategory: Record<string, string | null> = {};
+      let defaultHsTariff: string | null = null;
       if (isInternational) {
         const categoryIds = [...new Set(items.map((i) => i.products?.category_id).filter(Boolean))] as string[];
-        if (categoryIds.length > 0) {
-          const { data: cats } = await supabase
-            .from("categories")
-            .select("id, hs_tariff_number")
-            .in("id", categoryIds);
-          hsTariffMap = Object.fromEntries((cats ?? []).map((c: any) => [c.id, c.hs_tariff_number ?? null]));
-        }
+        const [catResult, settingsResult] = await Promise.all([
+          categoryIds.length > 0
+            ? supabase.from("categories").select("id, hs_tariff_number").in("id", categoryIds)
+            : Promise.resolve({ data: [] }),
+          supabase.from("site_settings").select("default_hs_tariff_number").eq("id", 1).single(),
+        ]);
+        hsTariffByCategory = Object.fromEntries((catResult.data ?? []).map((c: any) => [c.id, c.hs_tariff_number ?? null]));
+        defaultHsTariff = (settingsResult.data as any)?.default_hs_tariff_number ?? null;
       }
 
       const customsInfo = isInternational
@@ -158,7 +160,11 @@ export async function generateLabels(orderIds: string[]): Promise<LabelResult[]>
               weightOz: Number(item.products?.weight_oz ?? 0),
               unitValueUsd: Number(item.price),
               originCountry,
-              hsTariffNumber: item.products?.category_id ? (hsTariffMap[item.products.category_id] ?? undefined) : undefined,
+              hsTariffNumber:
+                (item.products as any)?.hs_tariff_number ||
+                (item.products?.category_id ? (hsTariffByCategory[item.products.category_id] ?? null) : null) ||
+                defaultHsTariff ||
+                undefined,
             })),
             storeAddress.name,
           )

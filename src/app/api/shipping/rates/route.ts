@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
   const productIds = items.map((i) => i.productId);
   const { data: rawProducts } = await supabase
     .from("products")
-    .select("id, name, price, weight_oz, length_in, width_in, height_in, category_id")
+    .select("id, name, price, weight_oz, length_in, width_in, height_in, category_id, hs_tariff_number")
     .in("id", productIds);
 
   const products = (rawProducts ?? []) as Pick<
@@ -82,16 +82,18 @@ export async function POST(request: NextRequest) {
   const originCountry = storeAddress.country ?? "US";
   const isInternational = address.country !== originCountry;
 
-  let hsTariffMap: Record<string, string | null> = {};
+  let hsTariffByCategory: Record<string, string | null> = {};
+  let defaultHsTariff: string | null = null;
   if (isInternational) {
     const categoryIds = [...new Set(products.map((p) => (p as any).category_id).filter(Boolean))];
-    if (categoryIds.length > 0) {
-      const { data: cats } = await supabase
-        .from("categories")
-        .select("id, hs_tariff_number")
-        .in("id", categoryIds);
-      hsTariffMap = Object.fromEntries((cats ?? []).map((c: any) => [c.id, c.hs_tariff_number ?? null]));
-    }
+    const [catResult, settingsResult] = await Promise.all([
+      categoryIds.length > 0
+        ? supabase.from("categories").select("id, hs_tariff_number").in("id", categoryIds)
+        : Promise.resolve({ data: [] }),
+      supabase.from("site_settings").select("default_hs_tariff_number").eq("id", 1).single(),
+    ]);
+    hsTariffByCategory = Object.fromEntries((catResult.data ?? []).map((c: any) => [c.id, c.hs_tariff_number ?? null]));
+    defaultHsTariff = (settingsResult.data as any)?.default_hs_tariff_number ?? null;
   }
 
   const customsInfo = isInternational
@@ -99,7 +101,11 @@ export async function POST(request: NextRequest) {
         items.flatMap((item) => {
           const product = products.find((p) => p.id === item.productId);
           if (!product) return [];
-          const hsTariffNumber = hsTariffMap[(product as any).category_id] ?? undefined;
+          const hsTariffNumber =
+            (product as any).hs_tariff_number ||
+            hsTariffByCategory[(product as any).category_id] ||
+            defaultHsTariff ||
+            undefined;
           return [{
             description: product.name,
             quantity: item.quantity,

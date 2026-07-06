@@ -16,6 +16,7 @@ export const productSchema = z.object({
   seo_title: z.string().max(60).optional(),
   seo_description: z.string().max(160).optional(),
   images: z.array(z.string().url()).max(10, "Maximum 10 images allowed").default([]),
+  hs_tariff_number: z.string().max(20).nullable().optional(),
 });
 
 export type ProductInput = z.infer<typeof productSchema>;

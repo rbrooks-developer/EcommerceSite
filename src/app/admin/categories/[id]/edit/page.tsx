@@ -9,9 +9,10 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
   const { id } = await params;
   const supabase = await createClient();
 
-  const [{ data: category }, { data: categories }] = await Promise.all([
+  const [{ data: category }, { data: categories }, { data: tariffCodes }] = await Promise.all([
     supabase.from("categories").select("*").eq("id", id).single(),
     supabase.from("categories").select("*").order("name"),
+    supabase.from("tariff_codes").select("id, hs_tariff_number, description").order("hs_tariff_number"),
   ]);
 
   if (!category) notFound();
@@ -29,6 +30,7 @@ export default async function EditCategoryPage({ params }: { params: Promise<{ i
       <CategoryForm
         action={boundAction}
         categories={categories ?? []}
+        tariffCodes={tariffCodes ?? []}
         defaultValues={category}
         submitLabel="Save Changes"
       />

@@ -25,6 +25,7 @@ function parseProductFormData(formData: FormData) {
     seo_title: (formData.get("seo_title") as string) || undefined,
     seo_description: (formData.get("seo_description") as string) || undefined,
     images: imagesRaw ? JSON.parse(imagesRaw) : [],
+    hs_tariff_number: (formData.get("hs_tariff_number") as string) || null,
   };
 }
 

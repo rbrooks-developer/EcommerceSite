@@ -19,6 +19,7 @@ import {
   RefreshCw,
   Bell,
   BarChart2,
+  Globe,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -30,6 +31,7 @@ const navItems = [
   { label: "Offers",        href: "/admin/offers",          icon: Tag },
   { label: "eBay Sync",        href: "/admin/ebay",            icon: RefreshCw },
   { label: "Google Analytics", href: "/admin/analytics",      icon: BarChart2 },
+  { label: "Customs",           href: "/admin/customs",        icon: Globe },
   { label: "Notifications",    href: "/admin/notifications",  icon: Bell },
   { label: "Settings",         href: "/admin/settings",       icon: Settings },
 ];

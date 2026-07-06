@@ -5,6 +5,27 @@ import { siteSettingsSchema, type SiteSettingsInput } from "@/lib/validations/se
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import { revalidatePath, refresh } from "next/cache";
 
+export async function saveCustomsSettings(
+  _prevState: { error?: string; success?: true } | null,
+  formData: FormData,
+): Promise<{ error?: string; success?: true }> {
+  const auth = await requireAdmin();
+  if (auth.error) return { error: auth.error };
+
+  const defaultHsTariffNumber = (formData.get("default_hs_tariff_number") as string | null)?.trim() || null;
+
+  const supabase = await createClient();
+  const { error } = await supabase
+    .from("site_settings")
+    .update({ default_hs_tariff_number: defaultHsTariffNumber } as any)
+    .eq("id", 1);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin/customs");
+  refresh();
+  return { success: true };
+}
+
 export async function saveAnalyticsSettings(
   _prevState: { error?: string; success?: true } | null,
   formData: FormData,

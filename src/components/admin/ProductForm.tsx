@@ -10,9 +10,12 @@ import { slugify } from "@/lib/utils";
 import { CategorySelect, buildCategoryOptions } from "./CategorySelect";
 import type { Category, Product } from "@/types";
 
+interface TariffCode { id: string; hs_tariff_number: string; description: string }
+
 interface ProductFormProps {
   action: (prevState: unknown, formData: FormData) => Promise<unknown>;
   categories: Category[];
+  tariffCodes?: TariffCode[];
   defaultValues?: Partial<Product>;
   submitLabel?: string;
 }
@@ -20,6 +23,7 @@ interface ProductFormProps {
 export function ProductForm({
   action,
   categories,
+  tariffCodes = [],
   defaultValues,
   submitLabel = "Save Product",
 }: ProductFormProps) {
@@ -161,6 +165,30 @@ export function ProductForm({
             <Input id="height_in" name="height_in" type="number" step="0.1" min="0.1" defaultValue={defaultValues?.height_in ?? ""} placeholder="0.0" error={errors?.height_in?.[0]} />
           </div>
         </div>
+      </div>
+
+      {/* HS Tariff Number */}
+      <div>
+        <Label htmlFor="hs_tariff_number">HS Tariff Number <span className="text-gray-400 font-normal">(optional)</span></Label>
+        <input
+          id="hs_tariff_number"
+          name="hs_tariff_number"
+          list="tariff-codes-list-product"
+          defaultValue={(defaultValues as any)?.hs_tariff_number ?? ""}
+          placeholder={tariffCodes.length > 0 ? "Pick from library or type a code…" : "e.g. 9705.00.0000"}
+          maxLength={20}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
+        />
+        {tariffCodes.length > 0 && (
+          <datalist id="tariff-codes-list-product">
+            {tariffCodes.map((tc) => (
+              <option key={tc.id} value={tc.hs_tariff_number}>{tc.description}</option>
+            ))}
+          </datalist>
+        )}
+        <p className="mt-1 text-xs text-gray-500">
+          Overrides the category HS code on international customs forms. Leave blank to inherit from the category or store default.
+        </p>
       </div>
 
       {/* SEO */}

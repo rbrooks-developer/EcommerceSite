@@ -59,6 +59,7 @@ export interface Database {
           certification_number: string | null;
           signed: boolean | null;
           signed_by: string | null;
+          hs_tariff_number: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -86,6 +87,7 @@ export interface Database {
           certification_number?: string | null;
           signed?: boolean | null;
           signed_by?: string | null;
+          hs_tariff_number?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -112,6 +114,7 @@ export interface Database {
           certification_number?: string | null;
           signed?: boolean | null;
           signed_by?: string | null;
+          hs_tariff_number?: string | null;
           updated_at?: string;
         };
       };
@@ -255,6 +258,7 @@ export interface Database {
           insurance_min_subtotal: number;
           signature_min_subtotal: number;
           tracking_config: Json | null;
+          default_hs_tariff_number: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -278,6 +282,7 @@ export interface Database {
           insurance_min_subtotal?: number;
           signature_min_subtotal?: number;
           tracking_config?: Json | null;
+          default_hs_tariff_number?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -300,7 +305,26 @@ export interface Database {
           insurance_min_subtotal?: number;
           signature_min_subtotal?: number;
           tracking_config?: Json | null;
+          default_hs_tariff_number?: string | null;
           updated_at?: string;
+        };
+      };
+      tariff_codes: {
+        Row: {
+          id: string;
+          hs_tariff_number: string;
+          description: string;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          hs_tariff_number: string;
+          description: string;
+          created_at?: string;
+        };
+        Update: {
+          hs_tariff_number?: string;
+          description?: string;
         };
       };
       admin_notifications: {

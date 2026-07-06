@@ -16,9 +16,12 @@ interface EbaySearchResult {
   is_leaf: boolean;
 }
 
+interface TariffCode { id: string; hs_tariff_number: string; description: string }
+
 interface CategoryFormProps {
   action: (prevState: unknown, formData: FormData) => Promise<unknown>;
   categories: Category[];
+  tariffCodes?: TariffCode[];
   defaultValues?: Partial<Category & { ebay_category_id?: string | null; ebay_category_name?: string | null }>;
   submitLabel?: string;
 }
@@ -26,6 +29,7 @@ interface CategoryFormProps {
 export function CategoryForm({
   action,
   categories,
+  tariffCodes = [],
   defaultValues,
   submitLabel = "Save Category",
 }: CategoryFormProps) {
@@ -184,15 +188,28 @@ export function CategoryForm({
       {/* ── HS Tariff Number ── */}
       <div>
         <Label htmlFor="hs_tariff_number">HS Tariff Number</Label>
-        <Input
+        <input
           id="hs_tariff_number"
           name="hs_tariff_number"
+          list="tariff-codes-list"
           defaultValue={defaultValues?.hs_tariff_number ?? ""}
-          placeholder="e.g. 9705.00.0000"
-          error={errors?.hs_tariff_number?.[0]}
+          placeholder="e.g. 9705.00.0000 or pick from library…"
           maxLength={20}
+          className="w-full rounded-md border border-gray-300 px-3 py-2 text-sm shadow-sm focus:border-gray-400 focus:outline-none focus:ring-1 focus:ring-gray-400"
         />
-        <p className="mt-1 text-xs text-gray-500">Used on international customs forms. 6–10 digit Harmonized System code.</p>
+        {tariffCodes.length > 0 && (
+          <datalist id="tariff-codes-list">
+            {tariffCodes.map((tc) => (
+              <option key={tc.id} value={tc.hs_tariff_number}>{tc.description}</option>
+            ))}
+          </datalist>
+        )}
+        {errors?.hs_tariff_number?.[0] && <p className="mt-1 text-xs text-red-500">{errors.hs_tariff_number[0]}</p>}
+        <p className="mt-1 text-xs text-gray-500">
+          {tariffCodes.length > 0
+            ? "Select from your tariff code library or type a custom 6–10 digit code."
+            : "6–10 digit Harmonized System code. Add codes to your library on the Customs page."}
+        </p>
       </div>
 
       <Button type="submit" loading={isPending}>{submitLabel}</Button>

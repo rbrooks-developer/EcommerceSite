@@ -6,7 +6,10 @@ import { ChevronLeft } from "lucide-react";
 
 export default async function NewCategoryPage() {
   const supabase = await createClient();
-  const { data: categories } = await supabase.from("categories").select("*").order("name");
+  const [{ data: categories }, { data: tariffCodes }] = await Promise.all([
+    supabase.from("categories").select("*").order("name"),
+    supabase.from("tariff_codes").select("id, hs_tariff_number, description").order("hs_tariff_number"),
+  ]);
 
   return (
     <div className="space-y-5">
@@ -16,7 +19,7 @@ export default async function NewCategoryPage() {
         </Link>
         <h1 className="text-2xl font-bold text-gray-900">New Category</h1>
       </div>
-      <CategoryForm action={createCategory} categories={categories ?? []} submitLabel="Create Category" />
+      <CategoryForm action={createCategory} categories={categories ?? []} tariffCodes={tariffCodes ?? []} submitLabel="Create Category" />
     </div>
   );
 }
