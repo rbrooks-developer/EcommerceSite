@@ -1,18 +1,21 @@
 "use client";
 
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
+import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
+import "yet-another-react-lightbox/styles.css";
 
 const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
 
 export function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
-  const [touchZoomed, setTouchZoomed] = useState(false);
+  const [lightboxOpen, setLightboxOpen] = useState(false);
+
+  // Desktop hover-zoom refs
   const containerRef = useRef<HTMLDivElement>(null);
   const wrapperRef = useRef<HTMLDivElement>(null);
-  const touchStartRef = useRef<{ x: number; y: number } | null>(null);
-  const touchMovedRef = useRef(false);
 
   function getPos(clientX: number, clientY: number) {
     const rect = containerRef.current?.getBoundingClientRect();
@@ -44,88 +47,6 @@ export function ProductImages({ images, name }: { images: string[]; name: string
     wrapperRef.current.style.transform = "scale(1)";
   }
 
-  // iOS Safari ignores touch-action CSS and passive-listener prevention at the element level.
-  // The only reliable fix is locking document.body with position:fixed while the finger is
-  // on the image (same pattern used by react-modal, framer-motion, etc.).
-  useEffect(() => {
-    const el = containerRef.current;
-    if (!el) return;
-
-    let savedScrollY = 0;
-
-    function lockBody() {
-      savedScrollY = window.scrollY;
-      Object.assign(document.body.style, {
-        overflow: "hidden",
-        position: "fixed",
-        top: `-${savedScrollY}px`,
-        width: "100%",
-      });
-    }
-
-    function unlockBody() {
-      Object.assign(document.body.style, {
-        overflow: "",
-        position: "",
-        top: "",
-        width: "",
-      });
-      window.scrollTo(0, savedScrollY);
-    }
-
-    function blockMove(e: TouchEvent) {
-      e.preventDefault();
-    }
-
-    el.addEventListener("touchstart", lockBody, { passive: true });
-    el.addEventListener("touchend", unlockBody, { passive: true });
-    el.addEventListener("touchcancel", unlockBody, { passive: true });
-    el.addEventListener("touchmove", blockMove, { passive: false });
-
-    return () => {
-      el.removeEventListener("touchstart", lockBody);
-      el.removeEventListener("touchend", unlockBody);
-      el.removeEventListener("touchcancel", unlockBody);
-      el.removeEventListener("touchmove", blockMove);
-      unlockBody();
-    };
-  }, []);
-
-  // Mobile/tablet: tap to zoom in (stays zoomed), drag to pan, tap again to zoom out
-  function handleTouchStart(e: React.TouchEvent) {
-    const t = e.touches[0];
-    touchStartRef.current = { x: t.clientX, y: t.clientY };
-    touchMovedRef.current = false;
-    if (!touchZoomed) zoomIn(t.clientX, t.clientY); // preview zoom at touch point
-  }
-
-  function handleTouchMove(e: React.TouchEvent) {
-    const t = e.touches[0];
-    const start = touchStartRef.current;
-    if (start) {
-      if (Math.abs(t.clientX - start.x) > 5 || Math.abs(t.clientY - start.y) > 5)
-        touchMovedRef.current = true;
-    }
-    if (touchZoomed) pan(t.clientX, t.clientY);
-  }
-
-  function handleTouchEnd() {
-    const wasTap = !touchMovedRef.current;
-    if (!touchZoomed) {
-      if (wasTap) {
-        setTouchZoomed(true); // confirm zoom, image stays zoomed
-      } else {
-        zoomOut(); // drag on un-zoomed: cancel preview
-      }
-    } else {
-      if (wasTap) {
-        zoomOut();
-        setTouchZoomed(false);
-      }
-      // drag while zoomed: stay zoomed, user was panning
-    }
-  }
-
   if (images.length === 0) {
     return (
       <div className="aspect-square rounded-lg flex items-center justify-center text-gray-300">
@@ -136,18 +57,40 @@ export function ProductImages({ images, name }: { images: string[]; name: string
     );
   }
 
+  const slides = images.map((src) => ({ src }));
+
   return (
     <div className="space-y-3">
+      {/* Mobile: tap-to-lightbox */}
+      <div
+        className="relative aspect-[3/4] overflow-hidden lg:hidden cursor-zoom-in"
+        onClick={() => setLightboxOpen(true)}
+      >
+        <Image
+          src={images[selected]}
+          alt={`${name} - image ${selected + 1}`}
+          fill
+          className="object-contain p-4"
+          sizes="100vw"
+          priority
+          placeholder="blur"
+          blurDataURL={BLUR_URL}
+        />
+        <div className="absolute bottom-2 right-2 rounded-full bg-black/40 p-1.5 text-white pointer-events-none">
+          <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
+            <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0zm-3-3v2m0 4h.01" />
+          </svg>
+        </div>
+      </div>
+
+      {/* Desktop: hover-zoom */}
       <div
         ref={containerRef}
-        className="product-zoom-container relative aspect-[3/4] lg:aspect-square overflow-hidden lg:rounded-lg cursor-crosshair"
-        style={{ backgroundColor: "transparent", zIndex: 46, isolation: "isolate", touchAction: "none" }}
+        className="product-zoom-container relative aspect-square overflow-hidden rounded-lg cursor-crosshair hidden lg:block"
+        style={{ zIndex: 46, isolation: "isolate" }}
         onMouseEnter={(e) => zoomIn(e.clientX, e.clientY)}
         onMouseMove={(e) => pan(e.clientX, e.clientY)}
         onMouseLeave={zoomOut}
-        onTouchStart={handleTouchStart}
-        onTouchMove={handleTouchMove}
-        onTouchEnd={handleTouchEnd}
       >
         <div
           ref={wrapperRef}
@@ -159,7 +102,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
             alt={`${name} - image ${selected + 1}`}
             fill
             className="object-contain p-4"
-            sizes="(max-width: 1024px) 100vw, 50vw"
+            sizes="50vw"
             priority
             placeholder="blur"
             blurDataURL={BLUR_URL}
@@ -172,7 +115,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
           {images.map((src, i) => (
             <button
               key={src}
-              onClick={() => { setSelected(i); if (touchZoomed) { zoomOut(); setTouchZoomed(false); } }}
+              onClick={() => setSelected(i)}
               className={cn(
                 "relative h-16 w-16 shrink-0 overflow-hidden rounded-md border-2 transition-opacity",
                 i === selected ? "border-current" : "border-transparent opacity-50"
@@ -191,6 +134,18 @@ export function ProductImages({ images, name }: { images: string[]; name: string
           ))}
         </div>
       )}
+
+      <Lightbox
+        open={lightboxOpen}
+        close={() => setLightboxOpen(false)}
+        index={selected}
+        slides={slides}
+        plugins={[Zoom]}
+        on={{ view: ({ index }) => setSelected(index) }}
+        zoom={{ maxZoomPixelRatio: 4, scrollToZoom: true }}
+        carousel={{ finite: images.length <= 1 }}
+        styles={{ root: { "--yarl__color_backdrop": "rgba(0,0,0,0.92)" } }}
+      />
     </div>
   );
 }
