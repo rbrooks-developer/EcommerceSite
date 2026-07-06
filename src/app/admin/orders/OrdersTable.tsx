@@ -309,10 +309,50 @@ function CancelModal({
   );
 }
 
+function GenerateLabelModal({
+  orderNumber,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  orderNumber: string;
+  onConfirm: () => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-sm rounded-lg bg-white shadow-xl p-6 space-y-4 mx-4">
+        <h2 className="text-base font-semibold text-gray-900">Generate Label for #{orderNumber}?</h2>
+        <p className="text-sm text-gray-600">
+          This will purchase a shipping label via EasyPost and email the tracking number to the customer.
+        </p>
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={onConfirm}
+            disabled={isPending}
+            className="flex-1 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+          >
+            {isPending ? <Spinner className="h-4 w-4 mx-auto" /> : "Yes, Generate Label"}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={isPending}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            Cancel
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function OrderRowActions({ order }: { order: OrderRow }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [showCancelModal, setShowCancelModal] = useState(false);
+  const [showLabelModal, setShowLabelModal] = useState(false);
 
   function handleCancelConfirm(restoreInventory: boolean) {
     startTransition(async () => {
@@ -326,12 +366,14 @@ function OrderRowActions({ order }: { order: OrderRow }) {
     });
   }
 
-  function handleSingleLabel() {
+  function handleLabelConfirm() {
     startTransition(async () => {
       try {
         await generateLabels([order.id]);
+        setShowLabelModal(false);
       } catch (err: any) {
         setError(err.message);
+        setShowLabelModal(false);
       }
     });
   }
@@ -348,11 +390,19 @@ function OrderRowActions({ order }: { order: OrderRow }) {
           isPending={isPending}
         />
       )}
+      {showLabelModal && (
+        <GenerateLabelModal
+          orderNumber={order.id.slice(0, 8).toUpperCase()}
+          onConfirm={handleLabelConfirm}
+          onClose={() => setShowLabelModal(false)}
+          isPending={isPending}
+        />
+      )}
       <div className="flex items-center gap-2 text-xs">
         {error && <span className="text-red-500 text-xs">{error}</span>}
         {order.status === "paid" && (
-          <button onClick={handleSingleLabel} className="text-indigo-600 hover:underline">
-            Label
+          <button onClick={() => setShowLabelModal(true)} className="text-indigo-600 hover:underline">
+            Generate Label
           </button>
         )}
         {(order.status === "paid" || order.status === "shipped") && (
