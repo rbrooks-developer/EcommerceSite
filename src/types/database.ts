@@ -13,6 +13,7 @@ export interface Database {
           email: string;
           role: UserRole;
           avatar_url: string | null;
+          theme_preference: string | null;
           created_at: string;
           updated_at: string;
         };
@@ -21,6 +22,7 @@ export interface Database {
           email: string;
           role?: UserRole;
           avatar_url?: string | null;
+          theme_preference?: string | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -28,6 +30,7 @@ export interface Database {
           email?: string;
           role?: UserRole;
           avatar_url?: string | null;
+          theme_preference?: string | null;
           updated_at?: string;
         };
       };

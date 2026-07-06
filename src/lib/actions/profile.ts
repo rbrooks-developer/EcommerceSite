@@ -53,6 +53,21 @@ export async function saveAvatarUrl(avatarUrl: string | null): Promise<{ error?:
   return { success: true };
 }
 
+export async function saveThemePreference(theme: "light" | "dark"): Promise<{ error?: string; success?: true }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const { error } = await supabase
+    .from("profiles")
+    .update({ theme_preference: theme, updated_at: new Date().toISOString() } as any)
+    .eq("id", user.id);
+
+  if (error) return { error: error.message };
+  revalidatePath("/admin", "layout");
+  return { success: true };
+}
+
 export async function changePassword(_prev: unknown, formData: FormData) {
   const password = (formData.get("password") as string) ?? "";
   const confirm = (formData.get("confirm_password") as string) ?? "";

@@ -10,11 +10,13 @@ export default async function AdminLayout({ children }: { children: React.ReactN
 
   const { data: profile } = await supabase
     .from("profiles")
-    .select("role")
+    .select("role, theme_preference")
     .eq("id", user.id)
     .maybeSingle();
 
   if ((profile as { role: string } | null)?.role !== "admin") redirect("/");
+
+  const isDark = (profile as { theme_preference?: string | null } | null)?.theme_preference === "dark";
 
   const serviceSupabase = createServiceClient();
   const [{ count: unreadCount }, { count: pendingOffersCount }] = await Promise.all([
@@ -31,8 +33,8 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]);
 
   return (
-    <div className="flex h-screen flex-col lg:flex-row overflow-hidden bg-gray-50 text-gray-900" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
-      <AdminSidebar unreadNotifications={unreadCount ?? 0} pendingOffers={pendingOffersCount ?? 0} />
+    <div data-admin-theme={isDark ? "dark" : "light"} className="flex h-screen flex-col lg:flex-row overflow-hidden bg-gray-50 text-gray-900" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
+      <AdminSidebar unreadNotifications={unreadCount ?? 0} pendingOffers={pendingOffersCount ?? 0} isDark={isDark} />
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6 lg:p-8">{children}</div>
       </main>

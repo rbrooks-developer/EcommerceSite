@@ -1,5 +1,51 @@
 @import "tailwindcss";
 
+/* Scoped dark variant — activates dark: classes inside [data-admin-theme="dark"] */
+@custom-variant dark (&:where([data-admin-theme="dark"], [data-admin-theme="dark"] *));
+
+/* Admin dark mode — override common Tailwind utilities for page content */
+[data-admin-theme="dark"] {
+  color-scheme: dark;
+
+  /* Backgrounds */
+  .bg-white         { background-color: #1f2937; }
+  .bg-gray-50       { background-color: #111827; }
+  .bg-gray-100      { background-color: #374151; }
+  .bg-gray-200      { background-color: #4b5563; }
+
+  /* Text */
+  .text-gray-900    { color: #f9fafb; }
+  .text-gray-800    { color: #f3f4f6; }
+  .text-gray-700    { color: #e5e7eb; }
+  .text-gray-600    { color: #d1d5db; }
+  .text-gray-500    { color: #9ca3af; }
+  .text-gray-400    { color: #6b7280; }
+
+  /* Borders */
+  .border-gray-100  { border-color: #374151; }
+  .border-gray-200  { border-color: #374151; }
+  .border-gray-300  { border-color: #4b5563; }
+  .divide-gray-200 > * + * { border-color: #374151; }
+
+  /* Inputs / selects / textareas */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]),
+  select,
+  textarea {
+    background-color: #374151;
+    color: #f9fafb;
+    border-color: #4b5563;
+  }
+  input::placeholder, textarea::placeholder { color: #6b7280; }
+
+  /* Hover overrides */
+  .hover\:bg-gray-50:hover  { background-color: #1f2937; }
+  .hover\:bg-gray-100:hover { background-color: #374151; }
+
+  /* Table zebra / head rows */
+  thead tr  { background-color: #1f2937; }
+  tbody tr:nth-child(even) { background-color: #1f2937; }
+}
+
 :root {
   --background: #ffffff;
   --foreground: #171717;
