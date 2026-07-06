@@ -1,10 +1,12 @@
 import { Header } from "@/components/storefront/Header";
 import { Footer } from "@/components/storefront/Footer";
+import { PromoBanner } from "@/components/storefront/PromoBanner";
 import { CartProvider } from "@/lib/cart/store";
 import { getSettings } from "@/lib/data/settings";
 import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
 import { checkSitePassword } from "@/lib/sitePasswordGate";
+import type { PromoBanner as PromoBannerType } from "@/lib/actions/promos";
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
   const [settings, supabase] = await Promise.all([getSettings(), createClient()]);
@@ -65,6 +67,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         striationBlendMode={striationBlendMode}
         striationPosition={striationPosition}
       />
+      <PromoBanner banner={(settings as any)?.promo_banner as PromoBannerType | null} />
       <main className="flex-1">{children}</main>
       <Footer
         siteTitle={settings?.site_title ?? "My Store"}

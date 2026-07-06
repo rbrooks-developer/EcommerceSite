@@ -3,6 +3,7 @@ export type Json = string | number | boolean | null | { [key: string]: Json | un
 export type OrderStatus = "pending" | "paid" | "shipped" | "fulfilled" | "cancelled" | "refunded" | "partially_refunded";
 export type UserRole = "customer" | "admin";
 export type TaxMode = "stripe" | "flat_rate" | "none";
+export type PromoDiscountType = "percentage" | "fixed" | "free_shipping";
 
 export interface Database {
   public: {
@@ -177,6 +178,10 @@ export interface Database {
           shipping_zip: string;
           shipping_country: string;
           refunded_amount: number;
+          promo_code: string | null;
+          promo_id: string | null;
+          discount_amount: number;
+          shipping_discount: number;
           created_at: string;
           updated_at: string;
         };
@@ -189,6 +194,10 @@ export interface Database {
           tax_amount: number;
           total_price: number;
           refunded_amount?: number;
+          promo_code?: string | null;
+          promo_id?: string | null;
+          discount_amount?: number;
+          shipping_discount?: number;
           stripe_session_id?: string | null;
           stripe_payment_intent_id?: string | null;
           selected_shipping_rate?: Json | null;
@@ -262,6 +271,7 @@ export interface Database {
           signature_min_subtotal: number;
           tracking_config: Json | null;
           default_hs_tariff_number: string | null;
+          promo_banner: Json | null;
           created_at: string;
           updated_at: string;
         };
@@ -289,6 +299,7 @@ export interface Database {
           signature_min_subtotal?: number;
           tracking_config?: Json | null;
           default_hs_tariff_number?: string | null;
+          promo_banner?: Json | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -315,6 +326,7 @@ export interface Database {
           signature_min_subtotal?: number;
           tracking_config?: Json | null;
           default_hs_tariff_number?: string | null;
+          promo_banner?: Json | null;
           updated_at?: string;
         };
       };
@@ -359,6 +371,99 @@ export interface Database {
         };
         Update: {
           read_at?: string | null;
+        };
+      };
+      promos: {
+        Row: {
+          id: string;
+          code: string;
+          description: string | null;
+          enabled: boolean;
+          discount_type: PromoDiscountType;
+          discount_value: number;
+          max_shipping_discount: number | null;
+          start_date: string | null;
+          expiration_date: string | null;
+          minimum_order: number | null;
+          maximum_order: number | null;
+          max_uses: number | null;
+          current_uses: number;
+          max_uses_per_customer: number | null;
+          created_at: string;
+          updated_at: string;
+        };
+        Insert: {
+          id?: string;
+          code: string;
+          description?: string | null;
+          enabled?: boolean;
+          discount_type: PromoDiscountType;
+          discount_value: number;
+          max_shipping_discount?: number | null;
+          start_date?: string | null;
+          expiration_date?: string | null;
+          minimum_order?: number | null;
+          maximum_order?: number | null;
+          max_uses?: number | null;
+          current_uses?: number;
+          max_uses_per_customer?: number | null;
+          created_at?: string;
+          updated_at?: string;
+        };
+        Update: {
+          code?: string;
+          description?: string | null;
+          enabled?: boolean;
+          discount_type?: PromoDiscountType;
+          discount_value?: number;
+          max_shipping_discount?: number | null;
+          start_date?: string | null;
+          expiration_date?: string | null;
+          minimum_order?: number | null;
+          maximum_order?: number | null;
+          max_uses?: number | null;
+          current_uses?: number;
+          max_uses_per_customer?: number | null;
+          updated_at?: string;
+        };
+      };
+      promo_redemptions: {
+        Row: {
+          id: string;
+          promo_id: string;
+          order_id: string;
+          customer_id: string | null;
+          customer_email: string | null;
+          discount_amount: number;
+          shipping_discount: number;
+          redeemed_at: string;
+        };
+        Insert: {
+          id?: string;
+          promo_id: string;
+          order_id: string;
+          customer_id?: string | null;
+          customer_email?: string | null;
+          discount_amount?: number;
+          shipping_discount?: number;
+          redeemed_at?: string;
+        };
+        Update: never;
+      };
+      cart_promos: {
+        Row: {
+          user_id: string;
+          promo_code: string;
+          applied_at: string;
+        };
+        Insert: {
+          user_id: string;
+          promo_code: string;
+          applied_at?: string;
+        };
+        Update: {
+          promo_code?: string;
+          applied_at?: string;
         };
       };
     };

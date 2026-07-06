@@ -20,6 +20,7 @@ import {
   Bell,
   BarChart2,
   Globe,
+  Percent,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -29,6 +30,7 @@ const navItems = [
   { label: "Categories",    href: "/admin/categories",      icon: FolderOpen },
   { label: "Orders",        href: "/admin/orders",          icon: ShoppingCart },
   { label: "Offers",        href: "/admin/offers",          icon: Tag },
+  { label: "Promos",        href: "/admin/promos",          icon: Percent },
   { label: "eBay Sync",        href: "/admin/ebay",            icon: RefreshCw },
   { label: "Google Analytics", href: "/admin/analytics",      icon: BarChart2 },
   { label: "Customs",           href: "/admin/customs",        icon: Globe },

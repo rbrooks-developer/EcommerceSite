@@ -4,8 +4,12 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart/store";
 import { validateAndSyncCart } from "@/lib/actions/cart";
+import { applyPromoCode, removePromoCode } from "@/lib/actions/promos";
+import type { AppliedPromo } from "@/lib/actions/promos";
+import { calculatePromoDiscount } from "@/lib/promos/calculate";
 import { formatPrice } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
+import { X } from "lucide-react";
 import { SUBDIVISIONS, getSubdivisionLabel, getCountryName } from "@/lib/data/countries";
 import type { Country } from "@/lib/data/countries";
 import type { EasyPostRate, ShippingAddress, UserAddress } from "@/types";
@@ -36,7 +40,11 @@ const btnPrimaryStyle: React.CSSProperties = {
 
 const inputClass = "w-full rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-current";
 
-export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCountries: Country[]; defaultShipping: UserAddress | null }) {
+export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo }: {
+  allowedCountries: Country[];
+  defaultShipping: UserAddress | null;
+  initialPromo?: AppliedPromo | null;
+}) {
   const router = useRouter();
   const { items, subtotal, clearCart, reloadCart } = useCart();
 
@@ -58,6 +66,10 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [insuranceRequired, setInsuranceRequired] = useState(false);
+  const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(initialPromo ?? null);
+  const [promoInput, setPromoInput] = useState("");
+  const [promoError, setPromoError] = useState<string | null>(null);
+  const [promoLoading, setPromoLoading] = useState(false);
   const [signatureRequired, setSignatureRequired] = useState(false);
   const [insuranceFee, setInsuranceFee] = useState(0);
 
@@ -162,6 +174,25 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
       setError(err.message);
       setLoading(false);
     }
+  }
+
+  async function handleApplyPromo() {
+    if (!promoInput.trim()) return;
+    setPromoLoading(true);
+    setPromoError(null);
+    const result = await applyPromoCode(promoInput.trim());
+    setPromoLoading(false);
+    if (!result.ok) { setPromoError(result.error ?? "Invalid promo code."); return; }
+    setAppliedPromo(result.promo!);
+    setPromoInput("");
+  }
+
+  async function handleRemovePromo() {
+    setPromoLoading(true);
+    await removePromoCode();
+    setAppliedPromo(null);
+    setPromoError(null);
+    setPromoLoading(false);
   }
 
   const shippingCost = selectedRate ? parseFloat(selectedRate.rate) : 0;
@@ -387,6 +418,25 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
             <h3 className="font-semibold text-sm">Order Summary</h3>
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between" style={{ opacity: 0.7 }}><span>Subtotal</span><span>{formatPrice(subtotal * 100)}</span></div>
+              {appliedPromo && (() => {
+                const d = calculatePromoDiscount(appliedPromo, subtotal, shippingCost);
+                return (
+                  <>
+                    {d.discountAmount > 0 && (
+                      <div className="flex justify-between text-green-600 dark:text-green-400">
+                        <span>Promo ({appliedPromo.code})</span>
+                        <span>-{formatPrice(d.discountAmount * 100)}</span>
+                      </div>
+                    )}
+                    {d.shippingDiscount > 0 && (
+                      <div className="flex justify-between text-green-600 dark:text-green-400">
+                        <span>Shipping discount</span>
+                        <span>-{formatPrice(d.shippingDiscount * 100)}</span>
+                      </div>
+                    )}
+                  </>
+                );
+              })()}
               {selectedRate && (
                 <div className="flex justify-between" style={{ opacity: 0.7 }}>
                   <span>Shipping</span><span>{formatPrice((parseFloat(selectedRate.rate) - insuranceFee) * 100)}</span>
@@ -398,8 +448,56 @@ export function CheckoutFlow({ allowedCountries, defaultShipping }: { allowedCou
                 </div>
               )}
               <div className="flex justify-between font-semibold pt-1" style={dividerStyle}>
-                <span>Total</span><span>{formatPrice((subtotal + shippingCost) * 100)}</span>
+                <span>Total</span>
+                <span>
+                  {(() => {
+                    const d = appliedPromo ? calculatePromoDiscount(appliedPromo, subtotal, shippingCost) : null;
+                    const total = (subtotal - (d?.discountAmount ?? 0)) + (shippingCost - (d?.shippingDiscount ?? 0));
+                    return formatPrice(Math.max(0, total) * 100);
+                  })()}
+                </span>
               </div>
+            </div>
+
+            {/* Promo code input */}
+            <div className="pt-2" style={dividerStyle}>
+              {appliedPromo ? (
+                <div className="flex items-center justify-between gap-2">
+                  <span className="text-xs text-green-600 dark:text-green-400 font-medium">
+                    ✓ {appliedPromo.code} applied
+                  </span>
+                  <button
+                    onClick={handleRemovePromo}
+                    disabled={promoLoading}
+                    className="flex items-center gap-0.5 text-xs opacity-50 hover:opacity-100 transition-opacity"
+                  >
+                    <X className="h-3 w-3" /> Remove
+                  </button>
+                </div>
+              ) : (
+                <div className="space-y-1.5">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={promoInput}
+                      onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                      onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                      placeholder="Promo code"
+                      className="flex-1 rounded px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-current"
+                      style={inputStyle}
+                    />
+                    <button
+                      onClick={handleApplyPromo}
+                      disabled={promoLoading || !promoInput.trim()}
+                      className="rounded px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80 disabled:opacity-40 flex items-center gap-1"
+                      style={btnPrimaryStyle}
+                    >
+                      {promoLoading ? <Spinner className="h-3 w-3" /> : "Apply"}
+                    </button>
+                  </div>
+                  {promoError && <p className="text-xs text-red-400">{promoError}</p>}
+                </div>
+              )}
             </div>
           </div>
 

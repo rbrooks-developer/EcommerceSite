@@ -1,9 +1,11 @@
 import { NextRequest } from "next/server";
 import { z } from "zod";
 import { getStripeClient } from "@/lib/stripe/client";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
 import { resolveShippingProtection } from "@/lib/easypost/protection";
+import { validatePromoCode } from "@/lib/promos/validate";
+import { calculatePromoDiscount } from "@/lib/promos/calculate";
 import type { Product } from "@/types";
 
 const requestSchema = z.object({
@@ -122,17 +124,46 @@ export async function POST(request: NextRequest) {
 
   const shippingCost = parseFloat(shippingRate.rate);
 
+  // Read and validate any applied promo code
+  const sb = createServiceClient();
+  let promoCode: string | null = null;
+  let promoId: string | null = null;
+  let discountAmount = 0;
+  let shippingDiscount = 0;
+
+  const { data: cartPromo } = await sb
+    .from("cart_promos")
+    .select("promo_code")
+    .eq("user_id", user.id)
+    .maybeSingle();
+
+  if (cartPromo) {
+    const promoResult = await validatePromoCode(sb, (cartPromo as { promo_code: string }).promo_code, user.id, subtotal);
+    if (promoResult.valid) {
+      const promo = promoResult.promo;
+      promoCode = promo.code;
+      promoId = promo.id;
+      const discount = calculatePromoDiscount(promo, subtotal, shippingCost);
+      discountAmount = discount.discountAmount;
+      shippingDiscount = discount.shippingDiscount;
+    }
+  }
+
+  const discountedSubtotal = subtotal - discountAmount;
+  const effectiveShipping = shippingCost - shippingDiscount;
+
   const settings = await getSettings();
   const taxMode = settings?.tax_mode ?? "none";
   const taxFlatRate = Number(settings?.tax_flat_rate ?? 0);
   const { insuranceRequired, signatureRequired } = resolveShippingProtection(subtotal, settings);
 
+  // Tax on discounted subtotal only (not shipping)
   let taxAmount = 0;
   if (taxMode === "flat_rate" && taxFlatRate > 0) {
-    taxAmount = (subtotal + shippingCost) * (taxFlatRate / 100);
+    taxAmount = discountedSubtotal * (taxFlatRate / 100);
   }
 
-  const totalPrice = subtotal + shippingCost + taxAmount;
+  const totalPrice = discountedSubtotal + effectiveShipping + taxAmount;
 
   // Create pending order in DB
   const { data: orderData, error: orderError } = await supabase
@@ -144,6 +175,10 @@ export async function POST(request: NextRequest) {
       shipping_cost: shippingCost,
       tax_amount: taxAmount,
       total_price: totalPrice,
+      promo_code: promoCode,
+      promo_id: promoId,
+      discount_amount: discountAmount,
+      shipping_discount: shippingDiscount,
       selected_shipping_rate: shippingRate,
       insurance_required: insuranceRequired,
       signature_required: signatureRequired,
@@ -180,32 +215,64 @@ export async function POST(request: NextRequest) {
     quantity: number;
   };
 
-  // Build Stripe line items using resolved prices
-  const lineItems: StripeLineItem[] = [
-    ...items.map((item) => {
-      const product = products.find((p) => p.id === item.productId)!;
-      const images = (product.images as string[]) ?? [];
-      const unitPrice = resolvePrice(item);
-      const isOffer = !!item.offerId && !!offerMap[item.offerId];
-      return {
-        price_data: {
-          currency: "usd",
-          product_data: {
-            name: isOffer ? `${product.name} (Offer Price)` : product.name,
-            ...(images[0] ? { images: [images[0]] } : {}),
-          },
-          unit_amount: Math.round(unitPrice * 100),
+  // Build product line items at full price, then scale down if a merchandise discount applies
+  let productLineItems: StripeLineItem[] = items.map((item) => {
+    const product = products.find((p) => p.id === item.productId)!;
+    const images = (product.images as string[]) ?? [];
+    const unitPrice = resolvePrice(item);
+    const isOffer = !!item.offerId && !!offerMap[item.offerId];
+    return {
+      price_data: {
+        currency: "usd",
+        product_data: {
+          name: isOffer ? `${product.name} (Offer Price)` : product.name,
+          ...(images[0] ? { images: [images[0]] } : {}),
         },
-        quantity: item.quantity,
-      };
-    }),
+        unit_amount: Math.round(unitPrice * 100),
+      },
+      quantity: item.quantity,
+    };
+  });
+
+  // Distribute merchandise discount proportionally across product line items
+  if (discountAmount > 0) {
+    const discountCents = Math.round(discountAmount * 100);
+    const totalProductCents = productLineItems.reduce((s, i) => s + i.price_data.unit_amount * i.quantity, 0);
+    if (totalProductCents > 0) {
+      let used = 0;
+      productLineItems = productLineItems.map((item, idx) => {
+        const isLast = idx === productLineItems.length - 1;
+        const itemTotal = item.price_data.unit_amount * item.quantity;
+        const allot = isLast
+          ? discountCents - used
+          : Math.round(discountCents * (itemTotal / totalProductCents));
+        used += allot;
+        const perUnit = Math.floor(allot / item.quantity);
+        return {
+          ...item,
+          price_data: {
+            ...item.price_data,
+            unit_amount: Math.max(0, item.price_data.unit_amount - perUnit),
+          },
+        };
+      });
+    }
+  }
+
+  // Shipping line item (reduced by shipping discount if applicable)
+  const effectiveShippingCents = Math.max(0, Math.round(effectiveShipping * 100));
+
+  const lineItems: StripeLineItem[] = [
+    ...productLineItems,
     {
       price_data: {
         currency: "usd",
         product_data: {
-          name: `Shipping – ${shippingRate.carrier} ${shippingRate.service}`,
+          name: promoCode && shippingDiscount > 0
+            ? `Shipping – ${shippingRate.carrier} ${shippingRate.service} (${promoCode} applied)`
+            : `Shipping – ${shippingRate.carrier} ${shippingRate.service}`,
         },
-        unit_amount: Math.round(shippingCost * 100),
+        unit_amount: effectiveShippingCents,
       },
       quantity: 1,
     },

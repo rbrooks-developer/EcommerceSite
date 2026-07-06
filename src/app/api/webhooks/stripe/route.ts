@@ -173,11 +173,33 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // Clear the user's DB cart now that payment succeeded so the
-      // success page loads with an empty cart immediately.
+      // Clear the user's DB cart and any applied promo now that payment succeeded.
       if (order.user_id) {
-        await supabase.from("cart_items").delete().eq("user_id", order.user_id);
+        await Promise.all([
+          supabase.from("cart_items").delete().eq("user_id", order.user_id),
+          supabase.from("cart_promos").delete().eq("user_id", order.user_id),
+        ]);
         console.log(`[webhook] cart cleared for user ${order.user_id}`);
+      }
+
+      // Record promo redemption and increment usage counter
+      const orderWithPromo = order as typeof order & { promo_id?: string | null; discount_amount?: number; shipping_discount?: number };
+      if (orderWithPromo.promo_id) {
+        const customerEmail = (await supabase.from("profiles").select("email").eq("id", order.user_id).maybeSingle()).data as { email: string } | null;
+        await supabase.from("promo_redemptions").insert({
+          promo_id: orderWithPromo.promo_id,
+          order_id: orderId,
+          customer_id: order.user_id,
+          customer_email: customerEmail?.email ?? null,
+          discount_amount: Number(orderWithPromo.discount_amount ?? 0),
+          shipping_discount: Number(orderWithPromo.shipping_discount ?? 0),
+        });
+        // Soft atomic increment — matches our agreed "soft limit" race condition policy
+        const { data: promoRow } = await supabase.from("promos").select("current_uses").eq("id", orderWithPromo.promo_id).maybeSingle();
+        if (promoRow) {
+          await supabase.from("promos").update({ current_uses: (promoRow as { current_uses: number }).current_uses + 1 }).eq("id", orderWithPromo.promo_id);
+        }
+        console.log(`[webhook] promo ${orderWithPromo.promo_id} redeemed for order ${orderId}`);
       }
 
       // Send confirmation email

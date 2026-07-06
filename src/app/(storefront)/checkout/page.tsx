@@ -1,9 +1,10 @@
 import type { Metadata } from "next";
 import { getSettings } from "@/lib/data/settings";
 import { COUNTRIES } from "@/lib/data/countries";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { CheckoutFlow } from "./CheckoutFlow";
 import type { UserAddress } from "@/types";
+import type { AppliedPromo } from "@/lib/actions/promos";
 
 export const metadata: Metadata = {
   title: "Checkout",
@@ -17,16 +18,26 @@ export default async function CheckoutPage() {
 
   const { data: { user } } = await supabase.auth.getUser();
   let defaultShipping: UserAddress | null = null;
+  let initialPromo: AppliedPromo | null = null;
+
   if (user) {
-    const { data } = await supabase
-      .from("user_addresses")
-      .select("*")
-      .eq("user_id", user.id)
-      .eq("label", "shipping")
-      .eq("is_default_shipping", true)
-      .maybeSingle();
-    defaultShipping = (data as UserAddress | null) ?? null;
+    const sb = createServiceClient();
+    const [addrResult, promoResult] = await Promise.all([
+      supabase.from("user_addresses").select("*").eq("user_id", user.id).eq("label", "shipping").eq("is_default_shipping", true).maybeSingle(),
+      sb.from("cart_promos").select("promo_code").eq("user_id", user.id).maybeSingle(),
+    ]);
+    defaultShipping = (addrResult.data as UserAddress | null) ?? null;
+
+    if (promoResult.data) {
+      const { data: promoData } = await sb
+        .from("promos")
+        .select("code, discount_type, discount_value, max_shipping_discount")
+        .eq("code", (promoResult.data as { promo_code: string }).promo_code)
+        .eq("enabled", true)
+        .maybeSingle();
+      if (promoData) initialPromo = promoData as AppliedPromo;
+    }
   }
 
-  return <CheckoutFlow allowedCountries={allowedCountries} defaultShipping={defaultShipping} />;
+  return <CheckoutFlow allowedCountries={allowedCountries} defaultShipping={defaultShipping} initialPromo={initialPromo} />;
 }

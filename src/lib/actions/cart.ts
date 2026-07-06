@@ -10,7 +10,10 @@ export async function clearCartAction(): Promise<void> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return;
   const sb = createServiceClient();
-  await sb.from("cart_items").delete().eq("user_id", user.id);
+  await Promise.all([
+    sb.from("cart_items").delete().eq("user_id", user.id),
+    sb.from("cart_promos").delete().eq("user_id", user.id),
+  ]);
 }
 
 export async function removeCartItemAction(productId: string): Promise<void> {
