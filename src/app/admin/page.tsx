@@ -1,7 +1,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { formatPrice } from "@/lib/utils";
 import { Package, FolderOpen, ShoppingCart, DollarSign, TrendingUp } from "lucide-react";
-import type { Product } from "@/types";
+import type { Order, Product } from "@/types";
 
 async function getStats() {
   const supabase = await createClient();
