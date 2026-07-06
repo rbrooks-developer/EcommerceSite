@@ -122,26 +122,6 @@ export default async function RootLayout({
       )}
       {googleFontUrl && <link rel="stylesheet" href={googleFontUrl} precedence="default" />}
       {heroFontUrl   && <link rel="stylesheet" href={heroFontUrl}   precedence="default" />}
-      <script
-        type="application/ld+json"
-        dangerouslySetInnerHTML={{
-          __html: JSON.stringify({
-            "@context": "https://schema.org",
-            "@type": "Organization",
-            name: settings?.site_title ?? "My Store",
-            url: process.env.NEXT_PUBLIC_APP_URL ?? "",
-            ...(settings?.logo_url ? { logo: settings.logo_url } : {}),
-            ...(contact?.email || contact?.phone ? {
-              contactPoint: {
-                "@type": "ContactPoint",
-                ...(contact.email ? { email: contact.email } : {}),
-                ...(contact.phone ? { telephone: contact.phone } : {}),
-                contactType: "customer service",
-              },
-            } : {}),
-          }),
-        }}
-      />
       <body
         className="min-h-full flex flex-col"
         style={{
@@ -156,6 +136,26 @@ export default async function RootLayout({
           ...(productDetailBgColor  ? { '--product-detail-bg':     productDetailBgColor  } : {}),
         } as React.CSSProperties}
       >
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify({
+              "@context": "https://schema.org",
+              "@type": "Organization",
+              name: settings?.site_title ?? "My Store",
+              url: process.env.NEXT_PUBLIC_APP_URL ?? "",
+              ...(settings?.logo_url ? { logo: settings.logo_url } : {}),
+              ...(contact?.email || contact?.phone ? {
+                contactPoint: {
+                  "@type": "ContactPoint",
+                  ...(contact.email ? { email: contact.email } : {}),
+                  ...(contact.phone ? { telephone: contact.phone } : {}),
+                  contactType: "customer service",
+                },
+              } : {}),
+            }).replace(/</g, "\\u003c"),
+          }}
+        />
         {children}
         {chatVisitor && (
           <TawkChat
