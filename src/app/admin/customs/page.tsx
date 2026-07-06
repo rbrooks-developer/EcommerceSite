@@ -19,7 +19,7 @@ export default async function CustomsPage() {
         <p className="mt-1 text-sm text-gray-500">Settings and tariff codes for international shipment customs declarations.</p>
       </div>
 
-      <CustomsSettingsForm defaultHsTariffNumber={defaultHsTariffNumber} />
+      <CustomsSettingsForm defaultHsTariffNumber={defaultHsTariffNumber} tariffCodes={tariffCodes ?? []} />
 
       <TariffCodesGrid codes={tariffCodes ?? []} />
     </div>
