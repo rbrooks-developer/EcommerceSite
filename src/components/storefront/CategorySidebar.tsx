@@ -83,7 +83,7 @@ function CategoryNode({
         )}
 
         <Link
-          href={`/products?category=${node.cat.slug}`}
+          href={`/category/${node.cat.slug}`}
           className="flex-1 text-sm px-2 py-1.5 rounded-md transition-colors"
           style={
             isActive

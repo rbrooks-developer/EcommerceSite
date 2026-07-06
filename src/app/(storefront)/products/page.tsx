@@ -80,7 +80,7 @@ export default async function ProductsPage({
           <aside className="md:w-52 shrink-0">
             <CategorySidebar
               categories={categories}
-              activeSlug={category}
+              activeSlug={undefined}
               fontColor={fontColor}
               bgColor={bgColor}
               categoryIdsWithProducts={categoryIdsWithProducts}
