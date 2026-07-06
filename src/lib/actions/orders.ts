@@ -25,7 +25,7 @@ export async function updateOrderStatus(orderId: string, status: OrderStatus) {
   refresh();
 }
 
-export async function cancelOrder(orderId: string) {
+export async function cancelOrder(orderId: string, restoreInventory: boolean = true) {
   const supabase = createServiceClient();
 
   const { data: orderRaw } = await supabase
@@ -42,7 +42,7 @@ export async function cancelOrder(orderId: string) {
   }
 
   // Issue Stripe refund
-  console.log(`[cancelOrder] orderId=${orderId} status=${order.status} stripe_session_id=${order.stripe_session_id ?? "null"} stripe_payment_intent_id=${(order as any).stripe_payment_intent_id ?? "null"} tracking_number=${order.tracking_number ?? "null"}`);
+  console.log(`[cancelOrder] orderId=${orderId} restoreInventory=${restoreInventory} status=${order.status} stripe_session_id=${order.stripe_session_id ?? "null"}`);
 
   if (order.stripe_session_id) {
     try {
@@ -51,8 +51,13 @@ export async function cancelOrder(orderId: string) {
       const paymentIntentId = session.payment_intent as string | null;
       console.log(`[cancelOrder] session payment_intent=${paymentIntentId ?? "null"}`);
       if (paymentIntentId) {
-        const refund = await stripe.refunds.create({ payment_intent: paymentIntentId });
-        console.log(`[cancelOrder] refund created id=${refund.id} status=${refund.status}`);
+        // Embed the inventory intent in refund metadata so the charge.refunded
+        // webhook knows what the admin decided without a separate DB column.
+        const refund = await stripe.refunds.create({
+          payment_intent: paymentIntentId,
+          metadata: { source: "admin_cancel", restore_inventory: restoreInventory ? "yes" : "no" },
+        });
+        console.log(`[cancelOrder] refund created id=${refund.id} status=${refund.status} restore_inventory=${restoreInventory}`);
       } else {
         console.error(`[cancelOrder] WARNING: session has no payment_intent — no refund issued, webhook will NOT fire`);
       }

@@ -5,20 +5,75 @@ import { Spinner } from "@/components/ui/spinner";
 import { cancelOrder, clearLabelFromOrder, generateLabels, updateOrderStatus, voidLabel } from "@/lib/actions/orders";
 import type { Order } from "@/types";
 
+function CancelModal({
+  orderNumber,
+  onConfirm,
+  onClose,
+  isPending,
+}: {
+  orderNumber: string;
+  onConfirm: (restoreInventory: boolean) => void;
+  onClose: () => void;
+  isPending: boolean;
+}) {
+  const [restoreInventory, setRestoreInventory] = useState(true);
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+      <div className="w-full max-w-sm rounded-lg bg-white shadow-xl p-6 space-y-4 mx-4">
+        <h2 className="text-base font-semibold text-gray-900">Cancel Order #{orderNumber}?</h2>
+        <p className="text-sm text-gray-600">This will issue a full Stripe refund to the customer.</p>
+
+        <label className="flex items-center gap-3 cursor-pointer">
+          <input
+            type="checkbox"
+            checked={restoreInventory}
+            onChange={(e) => setRestoreInventory(e.target.checked)}
+            className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+          />
+          <span className="text-sm text-gray-700">Restore inventory to website</span>
+        </label>
+        <p className="text-xs text-gray-400 -mt-2 pl-7">
+          Uncheck only if the item was already shipped and you do not expect it back.
+        </p>
+
+        <div className="flex gap-2 pt-1">
+          <button
+            onClick={() => onConfirm(restoreInventory)}
+            disabled={isPending}
+            className="flex-1 rounded-md bg-red-600 px-4 py-2 text-sm font-medium text-white hover:bg-red-700 disabled:opacity-50 transition-colors"
+          >
+            {isPending ? <Spinner className="h-4 w-4 mx-auto" /> : "Confirm Cancel & Refund"}
+          </button>
+          <button
+            onClick={onClose}
+            disabled={isPending}
+            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+          >
+            Back
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export function OrderDetailActions({ order }: { order: Order }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [voidEasypostFailed, setVoidEasypostFailed] = useState(false);
   const [labelResult, setLabelResult] = useState<{ trackingNumber: string; labelUrl: string } | null>(null);
+  const [showCancelModal, setShowCancelModal] = useState(false);
 
-  function handleCancel() {
-    if (!confirm(`Cancel order #${order.id.slice(0, 8).toUpperCase()}? This will issue a full Stripe refund.`)) return;
+  function handleCancelConfirm(restoreInventory: boolean) {
     startTransition(async () => {
       try {
         setError(null);
-        await cancelOrder(order.id);
+        await cancelOrder(order.id, restoreInventory);
+        setShowCancelModal(false);
       } catch (err: any) {
         setError(err.message);
+        setShowCancelModal(false);
       }
     });
   }
@@ -84,73 +139,83 @@ export function OrderDetailActions({ order }: { order: Order }) {
 
   const canCancel = order.status === "paid" || order.status === "shipped";
   const canGenerateLabel = order.status === "paid";
-  const canMarkFulfilled = order.status === "shipped";
   const canVoidLabel = order.status === "shipped" && !!(order as any).easypost_shipment_id;
 
   if (order.status === "cancelled" || order.status === "fulfilled") return null;
 
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
-      {error && (
-        <div className="space-y-2">
-          <p className="text-sm text-red-500 bg-red-50 rounded-md px-3 py-2">{error}</p>
-          {voidEasypostFailed && (
-            <p className="text-xs text-gray-500 px-1">
-              EasyPost denied the refund (carrier already has the package). You can remove the label from this order without a refund if needed.
-            </p>
-          )}
-        </div>
-      )}
-      {labelResult && (
-        <div className="text-sm text-green-700 bg-green-50 rounded-md px-3 py-2 space-y-1">
-          <p className="font-medium">Label generated!</p>
-          <p>Tracking: <span className="font-mono">{labelResult.trackingNumber}</span></p>
-          {labelResult.labelUrl && (
-            <a href={labelResult.labelUrl} target="_blank" rel="noreferrer" className="underline text-green-800">
-              Download Label PDF
-            </a>
-          )}
-        </div>
+    <>
+      {showCancelModal && (
+        <CancelModal
+          orderNumber={order.id.slice(0, 8).toUpperCase()}
+          onConfirm={handleCancelConfirm}
+          onClose={() => setShowCancelModal(false)}
+          isPending={isPending}
+        />
       )}
 
-      <div className="flex flex-wrap gap-2">
-        {isPending && <Spinner className="h-5 w-5 text-gray-400" />}
-
-        {canGenerateLabel && !isPending && (
-          <button
-            onClick={handleGenerateLabel}
-            className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
-          >
-            Generate Shipping Label
-          </button>
+      <div className="rounded-lg border border-gray-200 bg-white p-4 space-y-3">
+        {error && (
+          <div className="space-y-2">
+            <p className="text-sm text-red-500 bg-red-50 rounded-md px-3 py-2">{error}</p>
+            {voidEasypostFailed && (
+              <p className="text-xs text-gray-500 px-1">
+                EasyPost denied the refund (carrier already has the package). You can remove the label from this order without a refund if needed.
+              </p>
+            )}
+          </div>
+        )}
+        {labelResult && (
+          <div className="text-sm text-green-700 bg-green-50 rounded-md px-3 py-2 space-y-1">
+            <p className="font-medium">Label generated!</p>
+            <p>Tracking: <span className="font-mono">{labelResult.trackingNumber}</span></p>
+            {labelResult.labelUrl && (
+              <a href={labelResult.labelUrl} target="_blank" rel="noreferrer" className="underline text-green-800">
+                Download Label PDF
+              </a>
+            )}
+          </div>
         )}
 
-        {canVoidLabel && !isPending && (
-          <button
-            onClick={handleVoidLabel}
-            className="rounded-md border border-orange-200 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 transition-colors"
-          >
-            Void Label & Get Refund
-          </button>
-        )}
-        {voidEasypostFailed && !isPending && (
-          <button
-            onClick={handleClearLabel}
-            className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
-          >
-            Remove Label (No Refund)
-          </button>
-        )}
+        <div className="flex flex-wrap gap-2">
+          {isPending && <Spinner className="h-5 w-5 text-gray-400" />}
 
-        {canCancel && !isPending && (
-          <button
-            onClick={handleCancel}
-            className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
-          >
-            Cancel & Refund
-          </button>
-        )}
+          {canGenerateLabel && !isPending && (
+            <button
+              onClick={handleGenerateLabel}
+              className="rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+            >
+              Generate Shipping Label
+            </button>
+          )}
+
+          {canVoidLabel && !isPending && (
+            <button
+              onClick={handleVoidLabel}
+              className="rounded-md border border-orange-200 px-4 py-2 text-sm font-medium text-orange-600 hover:bg-orange-50 transition-colors"
+            >
+              Void Label & Get Refund
+            </button>
+          )}
+          {voidEasypostFailed && !isPending && (
+            <button
+              onClick={handleClearLabel}
+              className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-600 hover:bg-gray-50 transition-colors"
+            >
+              Remove Label (No Refund)
+            </button>
+          )}
+
+          {canCancel && !isPending && (
+            <button
+              onClick={() => setShowCancelModal(true)}
+              className="rounded-md border border-red-200 px-4 py-2 text-sm font-medium text-red-600 hover:bg-red-50 transition-colors"
+            >
+              Cancel & Refund
+            </button>
+          )}
+        </div>
       </div>
-    </div>
+    </>
   );
 }

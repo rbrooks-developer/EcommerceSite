@@ -259,6 +259,7 @@ export async function POST(request: NextRequest) {
         payment_intent?: string | null;
         amount_refunded: number;
         amount: number;
+        refunds?: { data: Array<{ metadata?: Record<string, string> }> };
       };
 
       console.log(`[webhook] charge.refunded: payment_intent=${charge.payment_intent ?? "null"} amount=${charge.amount} amount_refunded=${charge.amount_refunded}`);
@@ -315,23 +316,20 @@ export async function POST(request: NextRequest) {
         console.log(`charge.refunded: order ${orderId} → ${isFullRefund ? "refunded" : "partially_refunded"}`);
       }
 
-      // Restore local inventory whenever the order never actually shipped —
-      // that's the real signal for whether the stock is still on hand, not
-      // whether the refund happened to be full or partial. An order that's
-      // refunded (fully or partially) before a label was ever purchased
-      // still has its goods in the warehouse and should be restocked. An
-      // order that already shipped keeps its inventory deducted even on a
-      // partial refund, since the physical item is gone. This is the single
-      // place inventory is restored for any refund, whether triggered by the
-      // admin "Cancel & Refund" button or a refund issued directly in
-      // Stripe, so it only ever happens once per order.
-      // Only skip inventory restoration if the order was explicitly marked as
-      // "shipped" — meaning the item physically went out. Generating a label sets
-      // tracking_number but the item may never have been mailed, so tracking_number
-      // alone is not a reliable signal. Admin cancellations always restore inventory.
-      const alreadyShipped = refundedOrder?.status === "shipped";
-      console.log(`[webhook] charge.refunded: order_status=${refundedOrder?.status} alreadyShipped=${alreadyShipped} — ${alreadyShipped ? "SKIPPING inventory restore (status=shipped)" : "will restore inventory"}`);
-      if (!alreadyShipped) {
+      // Decide whether to restore inventory:
+      // - Admin cancel: the refund carries metadata with the admin's explicit choice.
+      // - Stripe portal refund: no metadata → always restore (user requested it).
+      const latestRefund = charge.refunds?.data?.[0];
+      const isAdminCancel = latestRefund?.metadata?.source === "admin_cancel";
+      let shouldRestoreInventory: boolean;
+      if (isAdminCancel) {
+        shouldRestoreInventory = latestRefund?.metadata?.restore_inventory !== "no";
+      } else {
+        // Stripe dashboard or any other refund source: always restore.
+        shouldRestoreInventory = true;
+      }
+      console.log(`[webhook] charge.refunded: isAdminCancel=${isAdminCancel} shouldRestoreInventory=${shouldRestoreInventory}`);
+      if (shouldRestoreInventory) {
         const { data: itemsRaw } = await supabase
           .from("order_items")
           .select("product_id, quantity")
@@ -351,7 +349,7 @@ export async function POST(request: NextRequest) {
         }
         console.log(`[webhook] inventory restored for order ${orderId}`);
       } else {
-        console.log(`[webhook] order ${orderId} already shipped — skipping inventory restore`);
+        console.log(`[webhook] order ${orderId} — admin chose not to restore inventory, skipping`);
       }
 
       // Send cancellation/refund email with the actual amount Stripe refunded
