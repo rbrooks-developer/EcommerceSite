@@ -187,9 +187,9 @@ export function OrdersTable({ orders }: Props) {
       {/* Desktop table */}
       <div className="hidden md:block rounded-lg border border-gray-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
-          <table className="min-w-full divide-y divide-gray-200 text-sm">
+          <table className="min-w-full text-sm">
             <thead className="bg-gray-50">
-              <tr>
+              <tr className="border-b border-gray-200">
                 <th className="w-10 px-4 py-3">
                   <input
                     type="checkbox"
@@ -208,14 +208,14 @@ export function OrdersTable({ orders }: Props) {
                 <th className="px-4 py-3 text-right font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {orders.length === 0 && (
                 <tr>
                   <td colSpan={8} className="py-12 text-center text-sm text-gray-400">No orders yet.</td>
                 </tr>
               )}
               {orders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
+                <tr key={order.id} className="border-b border-gray-100 hover:bg-gray-50">
                   <td className="px-4 py-3">
                     {(order.status === "paid" || !!order.shipping_label_url) && (
                       <input
