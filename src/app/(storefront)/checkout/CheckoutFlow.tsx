@@ -451,6 +451,8 @@ export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo }
               }
 
               const effectiveTotal = (subtotal - (d?.discountAmount ?? 0)) + (shippingCost - (d?.shippingDiscount ?? 0));
+              const shippingDiscountApplied = baseShipping - displayBaseShipping;
+              const insuranceDiscountApplied = insuranceFee - displayInsurance;
 
               return (
                 <div className="space-y-1.5 text-sm">
@@ -469,8 +471,16 @@ export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo }
                         Shipping
                         {d?.shippingDiscount ? <span className="ml-1.5 text-xs text-green-600 dark:text-green-400">({appliedPromo!.code})</span> : null}
                       </span>
-                      {displayBaseShipping === 0
-                        ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                      {shippingDiscountApplied > 0
+                        ? <span>
+                            <span style={{ opacity: 0.5 }}>{formatPrice(baseShipping * 100)}</span>
+                            {" "}<span className="text-green-600 dark:text-green-400">- {formatPrice(shippingDiscountApplied * 100)}</span>
+                            {" = "}
+                            {displayBaseShipping === 0
+                              ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                              : <span className="font-medium">{formatPrice(displayBaseShipping * 100)}</span>
+                            }
+                          </span>
                         : <span style={{ opacity: 0.7 }}>{formatPrice(displayBaseShipping * 100)}</span>
                       }
                     </div>
@@ -478,8 +488,16 @@ export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo }
                   {insuranceFee > 0 && (
                     <div className="flex justify-between" style={d?.shippingDiscount ? {} : { opacity: 0.7 }}>
                       <span>Insurance (1%)</span>
-                      {displayInsurance === 0
-                        ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                      {insuranceDiscountApplied > 0
+                        ? <span>
+                            <span style={{ opacity: 0.5 }}>{formatPrice(insuranceFee * 100)}</span>
+                            {" "}<span className="text-green-600 dark:text-green-400">- {formatPrice(insuranceDiscountApplied * 100)}</span>
+                            {" = "}
+                            {displayInsurance === 0
+                              ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                              : <span className="font-medium">{formatPrice(displayInsurance * 100)}</span>
+                            }
+                          </span>
                         : <span style={{ opacity: 0.7 }}>{formatPrice(displayInsurance * 100)}</span>
                       }
                     </div>

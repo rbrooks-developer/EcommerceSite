@@ -37,6 +37,10 @@ export async function sendOrderConfirmation(opts: SendOrderConfirmationOptions) 
     )
     .join("");
 
+  const shippingDisplay = opts.shippingDiscount && opts.shippingDiscount > 0
+    ? `<span style="color:#9ca3af">$${opts.shippingCost.toFixed(2)}</span> <span style="color:#16a34a">- $${opts.shippingDiscount.toFixed(2)}</span> = ${opts.shippingDiscount >= opts.shippingCost ? '<span style="color:#16a34a;font-weight:600">FREE</span>' : '$' + (opts.shippingCost - opts.shippingDiscount).toFixed(2)}`
+    : `$${opts.shippingCost.toFixed(2)}`;
+
   const html = `
 <!DOCTYPE html>
 <html>
@@ -69,7 +73,7 @@ export async function sendOrderConfirmation(opts: SendOrderConfirmationOptions) 
         ${opts.discountAmount && opts.discountAmount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:#16a34a">Promo${opts.promoCode ? ` (${opts.promoCode})` : " discount"}</span><span style="color:#16a34a">-$${opts.discountAmount.toFixed(2)}</span></div>` : ""}
         <div style="display:flex;justify-content:space-between;margin-bottom:6px">
           <span style="color:#6b7280">Shipping${opts.shippingDiscount && opts.shippingDiscount > 0 && opts.promoCode ? ` (${opts.promoCode})` : ""}</span>
-          <span>${opts.shippingDiscount && opts.shippingDiscount >= opts.shippingCost ? '<span style="color:#16a34a">FREE</span>' : `$${(opts.shippingCost - (opts.shippingDiscount ?? 0)).toFixed(2)}`}</span>
+          <span>${shippingDisplay}</span>
         </div>
         ${opts.taxAmount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:#6b7280">Tax</span><span>$${opts.taxAmount.toFixed(2)}</span></div>` : ""}
         <div style="display:flex;justify-content:space-between;font-weight:600;font-size:15px;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
