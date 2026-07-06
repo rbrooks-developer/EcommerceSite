@@ -13,7 +13,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
   return (
     <Link href={`/products/${product.slug}`} className="group flex flex-col" style={{ color: "inherit" }}>
       <div
-        className="aspect-square overflow-hidden sm:rounded-lg relative"
+        className="aspect-[3/4] md:aspect-square overflow-hidden md:rounded-lg relative"
         style={{ backgroundColor: "var(--product-detail-bg, transparent)", zIndex: 46, isolation: "isolate" }}
       >
         {image ? (
@@ -22,7 +22,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
             alt={product.name}
             fill
             className="object-contain p-2"
-            sizes="(max-width: 640px) 100vw, (max-width: 1024px) 50vw, 25vw"
+            sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
             placeholder="blur"
             blurDataURL={BLUR_URL}
           />
