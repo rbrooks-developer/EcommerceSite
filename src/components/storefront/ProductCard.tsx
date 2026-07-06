@@ -21,7 +21,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
             src={image}
             alt={product.name}
             fill
-            className="object-contain p-2"
+            className="object-cover"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
             placeholder="blur"
             blurDataURL={BLUR_URL}
