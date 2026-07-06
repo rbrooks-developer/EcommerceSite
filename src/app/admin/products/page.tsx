@@ -90,8 +90,8 @@ export default async function ProductsPage({
       <div className="hidden md:block rounded-lg border border-gray-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50 border-b border-gray-200">
-              <tr>
+            <thead className="bg-gray-50">
+              <tr className="border-b border-gray-200">
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Price</th>
@@ -100,7 +100,7 @@ export default async function ProductsPage({
                 <th className="px-4 py-3 text-right font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-100">
+            <tbody>
               {products.map((product) => (
                 <ProductTableRow key={product.id} product={product} />
               ))}
