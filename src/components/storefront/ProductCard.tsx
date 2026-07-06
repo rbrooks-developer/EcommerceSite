@@ -14,14 +14,14 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
     <Link href={`/products/${product.slug}`} className="group flex flex-col" style={{ color: "inherit" }}>
       <div
         className="aspect-[3/4] md:aspect-square overflow-hidden md:rounded-lg relative"
-        style={{ backgroundColor: "var(--product-detail-bg, transparent)", zIndex: 46, isolation: "isolate" }}
+        style={{ backgroundColor: "var(--product-detail-bg, var(--site-bg, #111111))", zIndex: 46, isolation: "isolate" }}
       >
         {image ? (
           <Image
             src={image}
             alt={product.name}
             fill
-            className="object-cover"
+            className="object-contain p-2"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
             placeholder="blur"
             blurDataURL={BLUR_URL}
