@@ -70,6 +70,8 @@ export function OrdersTable({ orders }: Props) {
   }
 
   const [printPending, setPrintPending] = useState(false);
+  const [showBulkGenerateModal, setShowBulkGenerateModal] = useState(false);
+  const [showBulkPrintModal, setShowBulkPrintModal] = useState(false);
 
   async function handlePrintLabels() {
     const urls = [...selected]
@@ -104,6 +106,64 @@ export function OrdersTable({ orders }: Props) {
 
   return (
     <div className="space-y-4">
+      {/* Bulk confirm modals */}
+      {showBulkGenerateModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-lg bg-white shadow-xl p-6 space-y-4 mx-4">
+            <h2 className="text-base font-semibold text-gray-900">
+              Generate {selectedPaid} Label{selectedPaid !== 1 ? "s" : ""}?
+            </h2>
+            <p className="text-sm text-gray-600">
+              This will purchase {selectedPaid} shipping label{selectedPaid !== 1 ? "s" : ""} via EasyPost and email tracking numbers to each customer.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => { setShowBulkGenerateModal(false); handleGenerateLabels(); }}
+                disabled={isPending}
+                className="flex-1 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
+              >
+                {isPending ? <Spinner className="h-4 w-4 mx-auto" /> : "Yes, Generate Labels"}
+              </button>
+              <button
+                onClick={() => setShowBulkGenerateModal(false)}
+                disabled={isPending}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      {showBulkPrintModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
+          <div className="w-full max-w-sm rounded-lg bg-white shadow-xl p-6 space-y-4 mx-4">
+            <h2 className="text-base font-semibold text-gray-900">
+              Print {selectedWithLabels} Label{selectedWithLabels !== 1 ? "s" : ""}?
+            </h2>
+            <p className="text-sm text-gray-600">
+              This will merge {selectedWithLabels} label PDF{selectedWithLabels !== 1 ? "s" : ""} and open them for printing.
+            </p>
+            <div className="flex gap-2 pt-1">
+              <button
+                onClick={() => { setShowBulkPrintModal(false); handlePrintLabels(); }}
+                disabled={printPending}
+                className="flex-1 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              >
+                {printPending ? <Spinner className="h-4 w-4 mx-auto" /> : "Yes, Print Labels"}
+              </button>
+              <button
+                onClick={() => setShowBulkPrintModal(false)}
+                disabled={printPending}
+                className="rounded-md border border-gray-300 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Bulk action bar */}
       {selectedCount > 0 && (
         <div className="flex items-center gap-3 rounded-md bg-gray-900 px-4 py-3 text-white text-sm">
@@ -111,7 +171,7 @@ export function OrdersTable({ orders }: Props) {
           <div className="ml-auto flex items-center gap-2">
             {selectedWithLabels > 0 && (
               <button
-                onClick={handlePrintLabels}
+                onClick={() => setShowBulkPrintModal(true)}
                 disabled={printPending}
                 className="flex items-center gap-2 rounded-md bg-white px-3 py-1.5 text-sm font-medium text-gray-900 hover:bg-gray-100 disabled:opacity-60 transition-colors"
               >
@@ -121,7 +181,7 @@ export function OrdersTable({ orders }: Props) {
             )}
             {selectedPaid > 0 && (
               <button
-                onClick={handleGenerateLabels}
+                onClick={() => setShowBulkGenerateModal(true)}
                 disabled={isPending}
                 className="flex items-center gap-2 rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-60 transition-colors"
               >
@@ -407,7 +467,7 @@ function OrderRowActions({ order }: { order: OrderRow }) {
         )}
         {(order.status === "paid" || order.status === "shipped") && (
           <button onClick={() => setShowCancelModal(true)} className="text-red-500 hover:underline">
-            Cancel
+            Cancel &amp; Refund
           </button>
         )}
         {order.shipping_label_url && (
