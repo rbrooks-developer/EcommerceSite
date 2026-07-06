@@ -74,18 +74,24 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   return (
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd) }} />
-    <div className="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <Breadcrumbs crumbs={[
-        { label: "Home", href: "/" },
-        { label: category.name },
-      ]} />
-      <div className="flex items-center justify-between mb-6">
-        <h1 className="text-2xl font-bold">{category.name}</h1>
-        <span className="text-sm" style={{ opacity: 0.5 }}>{products.length} products</span>
-      </div>
+      <div className="relative py-8">
+        {/* Header — always padded */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          <Breadcrumbs crumbs={[
+            { label: "Home", href: "/" },
+            { label: category.name },
+          ]} />
+          <div className="flex items-center justify-between mb-6">
+            <h1 className="text-2xl font-bold">{category.name}</h1>
+            <span className="text-sm" style={{ opacity: 0.5 }}>{products.length} products</span>
+          </div>
+        </div>
 
-      <CategoryProducts products={products} />
-    </div>
+        {/* Products — edge-to-edge on mobile, padded on sm+ */}
+        <div className="mx-auto max-w-7xl sm:px-6 lg:px-8">
+          <CategoryProducts products={products} />
+        </div>
+      </div>
     </>
   );
 }

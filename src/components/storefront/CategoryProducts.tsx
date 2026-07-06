@@ -36,7 +36,7 @@ export function CategoryProducts({ products }: { products: ProductRow[] }) {
   return (
     <>
       <div
-        className="flex flex-col sm:flex-row gap-3 mb-6"
+        className="flex flex-col sm:flex-row gap-3 mb-6 px-4 sm:px-0"
         style={{ position: "relative", zIndex: 46 }}
       >
         <input
@@ -80,7 +80,7 @@ export function CategoryProducts({ products }: { products: ProductRow[] }) {
           {query ? `No products matching "${query}".` : "No products in this category yet."}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+        <div className="grid grid-cols-1 gap-y-8 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {filtered.map((product) => (
             <ProductCard key={product.id} product={product} />
           ))}

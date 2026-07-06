@@ -13,7 +13,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
   return (
     <Link href={`/products/${product.slug}`} className="group flex flex-col" style={{ color: "inherit" }}>
       <div
-        className="aspect-square overflow-hidden rounded-lg relative"
+        className="aspect-square overflow-hidden sm:rounded-lg relative"
         style={{ backgroundColor: "var(--product-detail-bg, transparent)", zIndex: 46, isolation: "isolate" }}
       >
         {image ? (
@@ -41,7 +41,7 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
           </div>
         )}
       </div>
-      <div className="mt-3 flex flex-col flex-1">
+      <div className="mt-3 flex flex-col flex-1 px-4 sm:px-0">
         <h3
           className="text-sm font-medium group-hover:underline underline-offset-2"
           style={{
