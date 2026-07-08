@@ -416,8 +416,10 @@ export async function POST(request: NextRequest) {
         }
       }
 
-      // On a full refund, try to restore eBay inventory in the background
-      if (isFullRefund) {
+      // Restore eBay inventory when inventory should be restored and the refund is full.
+      // Mirrors the website inventory logic: admin controls both via the checkbox;
+      // Stripe portal refunds always restore both.
+      if (isFullRefund && shouldRestoreInventory) {
         waitUntil((async () => {
           const { data: refundItems } = await supabase
             .from("order_items")
