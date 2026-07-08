@@ -169,6 +169,13 @@ export function SetupClient({ status }: { status: SetupStatus }) {
             hasManagementToken={status.hasManagementToken}
             featureId="ebay"
           />
+          <FeatureCard
+            title="About Us Page"
+            description="about_config column in site_settings — required for the /about page to save content"
+            feature={status.aboutUs}
+            hasManagementToken={status.hasManagementToken}
+            featureId="aboutUs"
+          />
         </div>
       </section>
 

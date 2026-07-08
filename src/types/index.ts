@@ -197,3 +197,12 @@ export type StoreAddress = {
   country: string;
   phone?: string;
 };
+
+export type AboutConfig = {
+  heading1: string;
+  body1: string;
+  image1_url: string | null;
+  heading2: string;
+  body2: string;
+  image2_url: string | null;
+};

@@ -110,6 +110,14 @@ export const siteSettingsSchema = z.object({
   handling_fee: z.number().min(0, "Handling fee cannot be negative").nullable().optional(),
   insurance_min_subtotal: z.number().min(0, "Must be 0 or greater").nullable().optional(),
   signature_min_subtotal: z.number().min(0, "Must be 0 or greater").nullable().optional(),
+  about_config: z.object({
+    heading1: z.string().default("About Us"),
+    body1: z.string().default(""),
+    image1_url: z.string().url().nullable().optional(),
+    heading2: z.string().default("Our Mission"),
+    body2: z.string().default(""),
+    image2_url: z.string().url().nullable().optional(),
+  }).optional(),
   shipping_countries: z.array(z.string()).min(1, "Select at least one shipping country"),
   store_address: z.object({
     name: z.string().min(1, "Store name is required"),

@@ -55,6 +55,7 @@ export type SetupStatus = {
   core: FeatureResult;
   promos: FeatureResult;
   ebay: FeatureResult;
+  aboutUs: FeatureResult;
   stripe: FeatureResult;
   easypost: FeatureResult;
   resend: FeatureResult;
@@ -65,7 +66,7 @@ export async function checkSetupStatus(): Promise<SetupStatus> {
   const [
     ordersOk, productsOk, siteSettingsOk,
     promosOk, cartPromosOk, promoRedemptionsOk,
-    promoColOk, ebayColOk,
+    promoColOk, ebayColOk, aboutColOk,
   ] = await Promise.all([
     tableExists("orders"),
     tableExists("products"),
@@ -75,6 +76,7 @@ export async function checkSetupStatus(): Promise<SetupStatus> {
     tableExists("promo_redemptions"),
     columnExists("orders", "promo_code"),
     columnExists("site_settings", "ebay_config"),
+    columnExists("site_settings", "about_config"),
   ]);
 
   const env = (key: string) => !!process.env[key];
@@ -132,6 +134,11 @@ export async function checkSetupStatus(): Promise<SetupStatus> {
       ok: ebayEnvItems.every((i) => i.ok),
       items: ebayEnvItems,
       sql: ebayColOk ? undefined : FEATURE_SQL.ebay,
+    },
+    aboutUs: {
+      ok: aboutColOk,
+      items: [{ label: "site_settings.about_config column", ok: aboutColOk }],
+      sql: aboutColOk ? undefined : FEATURE_SQL.aboutUs,
     },
     stripe: { ok: stripeItems.every((i) => i.ok), items: stripeItems },
     easypost: { ok: easypostItems.every((i) => i.ok), items: easypostItems },

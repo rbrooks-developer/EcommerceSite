@@ -45,4 +45,6 @@ ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS promo_banner jsonb;
   `.trim(),
 
   ebay: `ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS ebay_config jsonb;`.trim(),
+
+  aboutUs: `ALTER TABLE site_settings ADD COLUMN IF NOT EXISTS about_config jsonb;`.trim(),
 };

@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -203,6 +203,14 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
     homepage?.carousel ?? { images: [], speed: 40, direction: "left", height: 280, gap: 16, image_fit: "contain", image_padding: 0, border_radius: 8, pause_on_hover: true, fade_edges: true }
   );
 
+  const aboutCfg = (defaultValues as any)?.about_config as AboutConfig | null;
+  const [aboutHeading1, setAboutHeading1] = useState(aboutCfg?.heading1 ?? "About Us");
+  const [aboutBody1, setAboutBody1] = useState(aboutCfg?.body1 ?? "");
+  const [aboutImage1, setAboutImage1] = useState<string[]>(aboutCfg?.image1_url ? [aboutCfg.image1_url] : []);
+  const [aboutHeading2, setAboutHeading2] = useState(aboutCfg?.heading2 ?? "Our Mission");
+  const [aboutBody2, setAboutBody2] = useState(aboutCfg?.body2 ?? "");
+  const [aboutImage2, setAboutImage2] = useState<string[]>(aboutCfg?.image2_url ? [aboutCfg.image2_url] : []);
+
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
   const [chatEnabled, setChatEnabled] = useState(savedChat?.enabled ?? false);
   const [chatPropertyId, setChatPropertyId] = useState(savedChat?.property_id ?? "");
@@ -281,6 +289,14 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
       handling_fee: parseFloat(g("handling_fee")) || 0,
       insurance_min_subtotal: parseFloat(g("insurance_min_subtotal")) || 0,
       signature_min_subtotal: parseFloat(g("signature_min_subtotal")) || 0,
+      about_config: {
+        heading1: aboutHeading1,
+        body1: aboutBody1,
+        image1_url: aboutImage1[0] ?? null,
+        heading2: aboutHeading2,
+        body2: aboutBody2,
+        image2_url: aboutImage2[0] ?? null,
+      },
       shipping_countries: shippingCountries,
       store_address: {
         name: g("store_name"),
@@ -553,6 +569,72 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           bucket="site-assets"
           pathPrefix="services"
         />
+      </Section>
+
+      <Section title="About Us">
+        <p className="text-sm text-gray-500">
+          Content for the <code className="bg-gray-100 px-1 rounded text-xs">/about</code> page. Two blocks — the first shows text on the left and image on the right; the second flips to image left, text right. Fields are optional; leave any blank to hide it.
+        </p>
+
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Block 1 — text left · image right</p>
+          <div>
+            <Label htmlFor="about_heading1">Heading</Label>
+            <input
+              id="about_heading1"
+              type="text"
+              value={aboutHeading1}
+              onChange={(e) => setAboutHeading1(e.target.value)}
+              placeholder="About Us"
+              className="mt-1 flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+          </div>
+          <div>
+            <Label htmlFor="about_body1">Body Text</Label>
+            <Textarea
+              id="about_body1"
+              value={aboutBody1}
+              onChange={(e) => setAboutBody1(e.target.value)}
+              placeholder="Tell your story…"
+              rows={4}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label>Image</Label>
+            <ImageUpload value={aboutImage1} onChange={setAboutImage1} max={1} bucket="site-assets" pathPrefix="about" />
+          </div>
+        </div>
+
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Block 2 — image left · text right</p>
+          <div>
+            <Label htmlFor="about_heading2">Heading</Label>
+            <input
+              id="about_heading2"
+              type="text"
+              value={aboutHeading2}
+              onChange={(e) => setAboutHeading2(e.target.value)}
+              placeholder="Our Mission"
+              className="mt-1 flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+          </div>
+          <div>
+            <Label htmlFor="about_body2">Body Text</Label>
+            <Textarea
+              id="about_body2"
+              value={aboutBody2}
+              onChange={(e) => setAboutBody2(e.target.value)}
+              placeholder="Share your mission…"
+              rows={4}
+              className="mt-1"
+            />
+          </div>
+          <div>
+            <Label>Image</Label>
+            <ImageUpload value={aboutImage2} onChange={setAboutImage2} max={1} bucket="site-assets" pathPrefix="about" />
+          </div>
+        </div>
       </Section>
 
       <Section title="Carousel">
