@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -203,6 +203,11 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
     homepage?.carousel ?? { images: [], speed: 40, direction: "left", height: 280, gap: 16, image_fit: "contain", image_padding: 0, border_radius: 8, pause_on_hover: true, fade_edges: true }
   );
 
+  const checkoutCfg = (defaultValues as any)?.checkout_config as CheckoutConfig | null;
+  const [restockingFeeActive, setRestockingFeeActive] = useState(checkoutCfg?.restocking_fee_active ?? false);
+  const [restockingFeePercent, setRestockingFeePercent] = useState(checkoutCfg?.restocking_fee_percent ?? 0);
+  const [restockingFeeDisclaimer, setRestockingFeeDisclaimer] = useState(checkoutCfg?.restocking_fee_disclaimer ?? "");
+
   const aboutCfg = (defaultValues as any)?.about_config as AboutConfig | null;
   const [aboutHeading1, setAboutHeading1] = useState(aboutCfg?.heading1 ?? "About Us");
   const [aboutBody1, setAboutBody1] = useState(aboutCfg?.body1 ?? "");
@@ -225,6 +230,14 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
     e.preventDefault();
     setSaving(true);
     setMessage(null);
+
+    // Validate: can't activate restocking fee without both values
+    if (restockingFeeActive && (!restockingFeeDisclaimer.trim() || restockingFeePercent <= 0)) {
+      setSaving(false);
+      setMessage({ type: "error", text: "Restocking fee cannot be active without both a disclaimer and a percentage greater than 0." });
+      return;
+    }
+
     const form = e.currentTarget;
     const g = (name: string) => (form.elements.namedItem(name) as HTMLInputElement)?.value ?? "";
 
@@ -289,6 +302,11 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
       handling_fee: parseFloat(g("handling_fee")) || 0,
       insurance_min_subtotal: parseFloat(g("insurance_min_subtotal")) || 0,
       signature_min_subtotal: parseFloat(g("signature_min_subtotal")) || 0,
+      checkout_config: {
+        restocking_fee_active: restockingFeeActive,
+        restocking_fee_percent: restockingFeePercent,
+        restocking_fee_disclaimer: restockingFeeDisclaimer,
+      },
       about_config: {
         heading1: aboutHeading1,
         body1: aboutBody1,
@@ -772,6 +790,67 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         </div>
       </Section>
       */}
+
+      <Section title="Checkout">
+        <p className="text-sm text-gray-500">
+          Restocking fee disclaimer shown to customers on the checkout review step. When active, the fee is automatically deducted from the Stripe refund on admin cancellations.
+        </p>
+
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          <div>
+            <Label htmlFor="restocking_fee_percent">Restocking Fee %</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                id="restocking_fee_percent"
+                type="number"
+                min={0}
+                max={100}
+                step={0.01}
+                value={restockingFeePercent}
+                onChange={(e) => {
+                  const v = Math.max(0, Math.min(100, parseFloat(e.target.value) || 0));
+                  setRestockingFeePercent(v);
+                  if (restockingFeeActive && v <= 0) setRestockingFeeActive(false);
+                }}
+                className="w-24 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              />
+              <span className="text-sm text-gray-500">%</span>
+              {restockingFeePercent > 0 && (
+                <span className="text-xs text-gray-400">e.g. $100 order → ${(100 - restockingFeePercent).toFixed(2)} refunded</span>
+              )}
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="restocking_fee_disclaimer">Disclaimer Text</Label>
+            <Textarea
+              id="restocking_fee_disclaimer"
+              value={restockingFeeDisclaimer}
+              onChange={(e) => {
+                setRestockingFeeDisclaimer(e.target.value);
+                if (restockingFeeActive && !e.target.value.trim()) setRestockingFeeActive(false);
+              }}
+              placeholder={`All sales are subject to a ${restockingFeePercent || 15}% restocking fee if canceled or refunded.`}
+              rows={3}
+              className="mt-1"
+            />
+          </div>
+
+          <label className={`flex items-center gap-3 w-fit ${(!restockingFeeDisclaimer.trim() || restockingFeePercent <= 0) ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+            <input
+              type="checkbox"
+              checked={restockingFeeActive}
+              disabled={!restockingFeeDisclaimer.trim() || restockingFeePercent <= 0}
+              onChange={(e) => setRestockingFeeActive(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+            />
+            <span className="text-sm font-medium text-gray-700">Show disclaimer on checkout &amp; apply fee to refunds</span>
+          </label>
+          {(!restockingFeeDisclaimer.trim() || restockingFeePercent <= 0) && (
+            <p className="text-xs text-gray-400 -mt-2">Fill in both the percentage and disclaimer text above to enable.</p>
+          )}
+        </div>
+      </Section>
 
       <Section title="Navigation">
         <div className="space-y-2">
