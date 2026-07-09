@@ -233,7 +233,7 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
               )}
 
               <div className="flex justify-end">
-                <Button type="submit" loading={formPending} style={btnStyle}>
+                <Button type="submit" loading={formPending} className="font-semibold" style={btnStyle}>
                   Send
                 </Button>
               </div>
@@ -243,7 +243,10 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
       </div>
 
       {/* Newsletter section */}
-      <div className="mt-16 rounded-lg p-8" style={inputStyle}>
+      <div
+        className="mt-16 rounded-lg p-8"
+        style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 15%, transparent)" }}
+      >
         <div className="max-w-md">
           <h2 className="text-lg font-semibold mb-1" style={{ color: "var(--site-fg)" }}>
             Subscribe to our Newsletter
@@ -269,14 +272,10 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
                   required
                   placeholder="you@example.com"
                   className="w-full rounded-md px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-current"
-                  style={{
-                    backgroundColor: "var(--site-bg)",
-                    color: "var(--site-fg)",
-                    border: "1px solid color-mix(in srgb, var(--site-fg) 25%, transparent)",
-                  }}
+                  style={inputStyle}
                 />
               </div>
-              <Button type="submit" loading={newsletterPending} style={btnStyle}>
+              <Button type="submit" loading={newsletterPending} className="font-semibold" style={btnStyle}>
                 Subscribe
               </Button>
             </form>
