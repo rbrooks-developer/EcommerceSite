@@ -153,7 +153,6 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [heroFont, setHeroFont] = useState(homepage?.hero_font ?? "Playfair Display");
   const [fontGradient, setFontGradient] = useState(homepage?.font_gradient_enabled ?? false);
   const [checkoutSectionColor, setCheckoutSectionColor] = useState(homepage?.checkout_section_color ?? "#1a1a1a");
-  const [productDetailBgColor, setProductDetailBgColor] = useState<string>((homepage as any)?.product_detail_bg_color ?? "");
   const [checkoutTextboxColor, setCheckoutTextboxColor] = useState(homepage?.checkout_textbox_color ?? "#2a2a2a");
   const [striationUrl, setStriationUrl] = useState<string[]>(homepage?.striation_image_url ? [homepage.striation_image_url] : []);
   const [striationOpacity, setStriationOpacity] = useState(homepage?.striation_opacity ?? 30);
@@ -278,7 +277,6 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         service_images: serviceImages,
         og_image_url: ogImageUrl[0] ?? null,
         checkout_section_color: checkoutSectionColor,
-        product_detail_bg_color: productDetailBgColor || null,
         checkout_textbox_color: checkoutTextboxColor,
         striation_image_url: striationUrl[0] ?? null,
         striation_opacity: striationOpacity,
@@ -681,30 +679,6 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           <ColorPicker id="checkout_textbox_color" label="Textbox Color" value={checkoutTextboxColor} onChange={setCheckoutTextboxColor} />
         </div>
         <p className="text-xs text-gray-400">Section Color = background of panels/cards. Textbox Color = background of input fields and dropdowns.</p>
-
-        <div className="border-t border-gray-100 pt-4">
-          <p className="text-sm text-gray-500 mb-3">Color for the background behind the main product image on product detail pages. Leave unset to keep it transparent.</p>
-          <div className="flex items-end gap-3">
-            <ColorPicker
-              id="product_detail_bg_color"
-              label="Product Detail Background Color"
-              value={productDetailBgColor || "#ffffff"}
-              onChange={setProductDetailBgColor}
-            />
-            {productDetailBgColor && (
-              <button
-                type="button"
-                onClick={() => setProductDetailBgColor("")}
-                className="mb-0.5 text-xs text-gray-400 hover:text-gray-700 underline underline-offset-2 whitespace-nowrap"
-              >
-                Reset to transparent
-              </button>
-            )}
-          </div>
-          {!productDetailBgColor && (
-            <p className="mt-1.5 text-xs text-gray-400">Currently transparent — pick a color above to activate.</p>
-          )}
-        </div>
       </Section>
 
       <Section title="Background Overlay">

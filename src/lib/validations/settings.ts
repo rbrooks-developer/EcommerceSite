@@ -83,7 +83,6 @@ export const siteSettingsSchema = z.object({
     striation_blend_mode: z.string().default("screen"),
     striation_position: z.string().default("full"),
     carousel: carouselConfigSchema.optional(),
-    product_detail_bg_color: z.string().nullable().optional(),
   }),
   nav_config: z.object({
     items: z.array(navItemSchema),

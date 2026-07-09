@@ -91,7 +91,6 @@ export default async function RootLayout({
   }
   const checkoutSectionColor  = homepage?.checkout_section_color   ?? null;
   const checkoutTextboxColor  = homepage?.checkout_textbox_color   ?? null;
-  const productDetailBgColor  = (homepage as any)?.product_detail_bg_color as string | null ?? null;
 
   // Same gradient formula as the hero: light → base → dark, driven by fontColor
   const siteGradient = `linear-gradient(180deg, color-mix(in srgb, ${fontColor} 60%, white) 0%, ${fontColor} 50%, color-mix(in srgb, ${fontColor} 70%, black) 100%)`;
@@ -133,7 +132,6 @@ export default async function RootLayout({
           '--site-fg-gradient': siteGradient,
           ...(checkoutSectionColor  ? { '--checkout-section-bg':   checkoutSectionColor  } : {}),
           ...(checkoutTextboxColor  ? { '--checkout-input-bg':     checkoutTextboxColor  } : {}),
-          ...(productDetailBgColor  ? { '--product-detail-bg':     productDetailBgColor  } : {}),
         } as React.CSSProperties}
       >
         <script
