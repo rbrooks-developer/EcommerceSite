@@ -186,8 +186,8 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
                     value={firstName}
                     onChange={(e) => setFirstName(e.target.value)}
                     required
-                    className="w-full rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-current"
-                    style={inputStyle}
+                    className="w-full rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-current"
+                    style={{ ...inputStyle, height: "38px" }}
                   />
                 </div>
                 <div className="flex-1">
@@ -196,8 +196,8 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
                     type="text"
                     value={lastName}
                     onChange={(e) => setLastName(e.target.value)}
-                    className="w-full rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-current"
-                    style={inputStyle}
+                    className="w-full rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-current"
+                    style={{ ...inputStyle, height: "38px" }}
                   />
                 </div>
               </div>
@@ -210,8 +210,8 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
                   value={formEmail}
                   onChange={(e) => setFormEmail(e.target.value)}
                   required
-                  className="w-full rounded-md px-3 py-1.5 text-sm focus:outline-none focus:ring-2 focus:ring-current"
-                  style={inputStyle}
+                  className="w-full rounded-md px-3 text-sm focus:outline-none focus:ring-2 focus:ring-current"
+                  style={{ ...inputStyle, height: "38px" }}
                 />
               </div>
 
@@ -244,7 +244,7 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
 
       {/* Newsletter section */}
       <div
-        className="mt-16 rounded-lg p-8"
+        className="mt-6 rounded-lg p-6"
         style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 15%, transparent)" }}
       >
         <div className="max-w-md">
