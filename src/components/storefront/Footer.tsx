@@ -183,6 +183,18 @@ function SocialIcon({ platform }: { platform: string }) {
     </svg>
   );
 
+  if (p.includes("whatnot")) return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="w-5 h-5">
+      <path d="M3 6l3 12 6-8 6 8 3-12h-2.2L16.5 15 12 8.5 7.5 15 5.2 6H3z"/>
+    </svg>
+  );
+
+  if (p.includes("ebay")) return (
+    <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" className="w-5 h-5">
+      <path d="M21.41 11.58l-9-9A2 2 0 0011 2H4a2 2 0 00-2 2v7a2 2 0 00.59 1.42l9 9A2 2 0 0013 22a2 2 0 001.41-.59l7-7A2 2 0 0022 13a2 2 0 00-.59-1.42zM5.5 7A1.5 1.5 0 114 5.5 1.5 1.5 0 015.5 7z"/>
+    </svg>
+  );
+
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true" className="w-5 h-5">
       <path d="M18 13v6a2 2 0 01-2 2H5a2 2 0 01-2-2V8a2 2 0 012-2h6"/>

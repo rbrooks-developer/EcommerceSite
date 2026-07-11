@@ -158,6 +158,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [striationOpacity, setStriationOpacity] = useState(homepage?.striation_opacity ?? 30);
   const [striationBlendMode, setStriationBlendMode] = useState(homepage?.striation_blend_mode ?? "screen");
   const [striationPosition, setStriationPosition] = useState(homepage?.striation_position ?? "full");
+  const [heroTemplate, setHeroTemplate] = useState(homepage?.hero_template ?? "founder-and-creator");
 
   useEffect(() => {
     const id = "admin-font-preview-link";
@@ -282,6 +283,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         striation_opacity: striationOpacity,
         striation_blend_mode: striationBlendMode,
         striation_position: striationPosition,
+        hero_template: heroTemplate as "founder-and-creator" | "widescreen",
         carousel: carouselConfig,
       },
       nav_config: { items: navItems.filter((i) => i.label && i.link) },
@@ -510,6 +512,18 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
 
       <Section title="Hero">
         <div>
+          <Label htmlFor="hero_template">Hero Template</Label>
+          <select
+            id="hero_template"
+            value={heroTemplate}
+            onChange={(e) => setHeroTemplate(e.target.value)}
+            className="mt-1 flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            <option value="founder-and-creator">Founder &amp; Creator</option>
+            <option value="widescreen">Widescreen</option>
+          </select>
+        </div>
+        <div>
           <Label htmlFor="hero_display_name">Display Name <span className="text-gray-400 font-normal">(large title text on homepage)</span></Label>
           <Input id="hero_display_name" name="hero_display_name" defaultValue={homepage?.hero_display_name ?? ""} placeholder="e.g. Business Name" />
         </div>
@@ -713,6 +727,8 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
                   className="mt-1 flex h-11 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
                 >
                   <option value="full">Full (cover entire background)</option>
+                  <option value="stretch">Stretch (fill screen, no cropping)</option>
+                  <option value="contain">Fit (show full image, no cropping)</option>
                   <option value="left">Left side</option>
                   <option value="right">Right side</option>
                   <option value="tile">Tiled (repeat)</option>
@@ -739,7 +755,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
                     position: "absolute",
                     inset: 0,
                     backgroundImage: `url(${striationUrl[0]})`,
-                    backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "tile" ? "auto" : "auto 100%",
+                    backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
                     backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
                     backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
                     opacity: striationOpacity / 100,
@@ -903,7 +919,21 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           <div className="space-y-2">
             {socialLinks.map((s, i) => (
               <div key={i} className="flex gap-2">
-                <Input value={s.platform} onChange={(e) => setSocialLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, platform: e.target.value } : l))} placeholder="Platform (e.g. Instagram)" />
+                <select
+                  value={s.platform}
+                  onChange={(e) => setSocialLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, platform: e.target.value } : l))}
+                  className="h-9 rounded-md border border-input bg-background px-2 text-sm"
+                >
+                  <option value="">Select platform…</option>
+                  <option value="Instagram">Instagram</option>
+                  <option value="YouTube">YouTube</option>
+                  <option value="TikTok">TikTok</option>
+                  <option value="Facebook">Facebook</option>
+                  <option value="Twitter / X">Twitter / X</option>
+                  <option value="LinkedIn">LinkedIn</option>
+                  <option value="WhatNot">WhatNot</option>
+                  <option value="eBay">eBay</option>
+                </select>
                 <Input value={s.url} onChange={(e) => setSocialLinks((prev) => prev.map((l, idx) => idx === i ? { ...l, url: e.target.value } : l))} placeholder="URL" />
                 <button type="button" onClick={() => setSocialLinks((prev) => prev.filter((_, idx) => idx !== i))} className="shrink-0 text-red-500 px-2">✕</button>
               </div>
