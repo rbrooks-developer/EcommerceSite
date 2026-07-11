@@ -1,11 +1,11 @@
 import Link from "next/link";
 import Image from "next/image";
-import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
+import { getProducts, getCategories } from "@/lib/data/products";
 import { ogImageUrl } from "@/lib/utils";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ImageCarousel } from "@/components/storefront/ImageCarousel";
-import type { HomepageConfig, FooterConfig, Product, Category, CarouselConfig } from "@/types";
+import type { HomepageConfig, FooterConfig, CarouselConfig } from "@/types";
 import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -30,7 +30,7 @@ export async function generateMetadata(): Promise<Metadata> {
 }
 
 export default async function HomePage() {
-  const [settings, supabase] = await Promise.all([getSettings(), createClient()]);
+  const [settings, allProducts, allCategories] = await Promise.all([getSettings(), getProducts(), getCategories()]);
   const homepage = settings?.homepage_config as HomepageConfig | null;
   const footer   = settings?.footer_config  as FooterConfig  | null;
 
@@ -53,17 +53,13 @@ export default async function HomePage() {
   const featuredCategoryIds = homepage?.featured_category_ids ?? [];
   const carousel            = homepage?.carousel              ?? null;
 
-  const [productsRes, categoriesRes] = await Promise.all([
-    featuredProductIds.length
-      ? supabase.from("products").select("id, slug, name, price, images, inventory").in("id", featuredProductIds).eq("is_published", true)
-      : Promise.resolve({ data: [] as Pick<Product, "id" | "slug" | "name" | "price" | "images">[] }),
-    featuredCategoryIds.length
-      ? supabase.from("categories").select("id, slug, name").in("id", featuredCategoryIds)
-      : Promise.resolve({ data: [] as Pick<Category, "id" | "slug" | "name">[] }),
-  ]);
-
-  const featuredProducts   = productsRes.data   as Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory">[];
-  const featuredCategories = categoriesRes.data as Pick<Category, "id" | "slug" | "name">[];
+  // Filter from cached lists — preserves admin-configured display order
+  const featuredProducts = featuredProductIds.length
+    ? featuredProductIds.map((id) => allProducts.find((p) => p.id === id)).filter((p) => p !== undefined)
+    : [];
+  const featuredCategories = featuredCategoryIds.length
+    ? featuredCategoryIds.map((id) => allCategories.find((c) => c.id === id)).filter((c) => c !== undefined)
+    : [];
 
   return (
     <div>

@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { productSchema } from "@/lib/validations/product";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { revalidatePath, refresh } from "next/cache";
+import { revalidatePath, revalidateTag, refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 function parseProductFormData(formData: FormData) {
@@ -43,6 +43,7 @@ export async function createProduct(_prevState: unknown, formData: FormData) {
   const { error } = await supabase.from("products").insert(parsed.data);
   if (error) return { error: { _form: [error.message] } };
 
+  revalidateTag("products", "default");
   revalidatePath("/admin/products");
   revalidatePath("/products");
   redirect("/admin/products");
@@ -66,6 +67,7 @@ export async function updateProduct(id: string, _prevState: unknown, formData: F
 
   if (error) return { error: { _form: [error.message] } };
 
+  revalidateTag("products", "default");
   revalidatePath("/admin/products");
   revalidatePath(`/products/${parsed.data.slug}`);
   revalidatePath("/products");
@@ -88,6 +90,7 @@ export async function deleteProduct(id: string): Promise<{ success: true } | { e
     }
     return { error: error.message };
   }
+  revalidateTag("products", "default");
   revalidatePath("/admin/products");
   revalidatePath("/products");
   refresh();
@@ -118,6 +121,7 @@ export async function deleteAllProducts(): Promise<{ deleted: number; skipped: n
   const { error, count } = await query;
   if (error) return { error: error.message };
 
+  revalidateTag("products", "default");
   revalidatePath("/admin/products");
   revalidatePath("/products");
   refresh();
@@ -136,11 +140,7 @@ export async function togglePublished(id: string, current: boolean) {
     .eq("id", id);
   if (error) throw new Error(error.message);
 
-  // No refresh() here on purpose — the caller updates its own UI
-  // optimistically, so there's no need to pay for a synchronous full
-  // re-render of the (currently 270+ row) products table on every toggle.
-  // revalidatePath still marks both caches stale for the *next* navigation,
-  // which is enough to keep the admin list and storefront correct.
+  revalidateTag("products", "default");
   revalidatePath("/admin/products");
   revalidatePath("/products");
 }

@@ -1,6 +1,7 @@
+import { cache } from "react";
 import { createClient } from "@/lib/supabase/server";
+import { createServiceClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
-import { getEbayConfig } from "@/lib/ebay/auth";
 import { notFound } from "next/navigation";
 import { formatPrice, ogImageUrl } from "@/lib/utils";
 import { ProductImages } from "./ProductImages";
@@ -20,17 +21,23 @@ type ProductWithCategory = Product & {
   categories: CategoryNode | null;
 };
 
-export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
-  const { slug } = await params;
-  const supabase = await createClient();
+// Shared within a single request so generateMetadata and the page component
+// make one DB round-trip instead of two.
+const getProductBySlug = cache(async (slug: string): Promise<ProductWithCategory | null> => {
+  const supabase = createServiceClient();
   const { data } = await supabase
     .from("products")
-    .select("name, seo_title, seo_description, images")
+    .select("*, categories(name, slug, parent:parent_id(name, slug, parent:parent_id(name, slug)))")
     .eq("slug", slug)
+    .eq("is_published", true)
     .maybeSingle();
-  if (!data) return {};
-  const product = data as Pick<Product, "name" | "seo_title" | "seo_description" | "images">;
-  const settings = await getSettings();
+  return data as ProductWithCategory | null;
+});
+
+export async function generateMetadata({ params }: { params: Promise<{ slug: string }> }): Promise<Metadata> {
+  const { slug } = await params;
+  const [product, settings] = await Promise.all([getProductBySlug(slug), getSettings()]);
+  if (!product) return {};
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const title = product.seo_title || `${product.name} | ${settings?.site_title ?? "Store"}`;
   const description = product.seo_description || undefined;
@@ -71,19 +78,17 @@ function renderWithEmojiColor(text: string) {
 
 export default async function ProductDetailPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
-  const supabase = await createClient();
-  const { data: { user } } = await supabase.auth.getUser();
 
-  const { data } = await supabase
-    .from("products")
-    .select("*, categories(name, slug, parent:parent_id(name, slug, parent:parent_id(name, slug)))")
-    .eq("slug", slug)
-    .eq("is_published", true)
-    .maybeSingle();
+  const [product, settings, supabase] = await Promise.all([
+    getProductBySlug(slug),
+    getSettings(),
+    createClient(),
+  ]);
 
-  if (!data) notFound();
-  const product = data as ProductWithCategory;
+  if (!product) notFound();
   const images = product.images as string[];
+
+  const { data: { user } } = await supabase.auth.getUser();
 
   const MAX_OFFERS = 4;
   let existingOfferStatus: string | null = null;
@@ -128,9 +133,10 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     }
   }
 
-  const ebayConfig = await getEbayConfig();
-  const cgcCensusUrl      = ebayConfig?.cgc_census_url       ?? null;
-  const cgcButtonImageUrl = ebayConfig?.cgc_button_image_url ?? null;
+  // Pull CGC fields from already-cached settings instead of a separate DB call
+  const ebayConfig = (settings as any)?.ebay_config ?? {};
+  const cgcCensusUrl      = ebayConfig.cgc_census_url       ?? null;
+  const cgcButtonImageUrl = ebayConfig.cgc_button_image_url ?? null;
   const certNumber = ((product as any).certification_number as string | null)?.trim() || null;
   const hasCgcMark =
     product.name.toLowerCase().includes("cgc") ||

@@ -1,15 +1,11 @@
-import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
+import { getProducts, getCategories } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import type { Metadata } from "next";
-import type { Product, Category, HomepageConfig } from "@/types";
+import type { HomepageConfig } from "@/types";
+import type { ProductListRow, CategoryRow } from "@/lib/data/products";
 
-
-type ProductRow = Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory"> & { category_id: string | null };
-type CategoryRow = Pick<Category, "id" | "slug" | "name"> & { parent_id: string | null };
-
-/** Collects a category's ID plus all descendant IDs (recursive). */
 function collectIds(rootId: string, all: CategoryRow[]): string[] {
   const children = all.filter((c) => c.parent_id === rootId);
   return [rootId, ...children.flatMap((c) => collectIds(c.id, all))];
@@ -40,15 +36,10 @@ export default async function ProductsPage({
   searchParams: Promise<{ category?: string }>;
 }) {
   const { category } = await searchParams;
-  const supabase = await createClient();
 
-  const [productsRes, categoriesRes, settings] = await Promise.all([
-    supabase
-      .from("products")
-      .select("id, slug, name, price, images, inventory, category_id")
-      .eq("is_published", true)
-      .order("created_at", { ascending: false }),
-    supabase.from("categories").select("id, slug, name, parent_id").order("name"),
+  const [products, categories, settings] = await Promise.all([
+    getProducts(),
+    getCategories(),
     getSettings(),
   ]);
 
@@ -56,18 +47,13 @@ export default async function ProductsPage({
   const fontColor = homepage?.font_color ?? "#111827";
   const bgColor = homepage?.bg_color ?? "#ffffff";
 
-  const products = (productsRes.data ?? []) as ProductRow[];
-  const categories = (categoriesRes.data ?? []) as CategoryRow[];
-
-  // Build set of category IDs that have at least one published product
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
   );
 
-  // When a category is selected, also include products in all descendant categories
   const selectedCat = category ? categories.find((c) => c.slug === category) : null;
   const filterIds = selectedCat ? collectIds(selectedCat.id, categories) : null;
-  const filtered = filterIds
+  const filtered: ProductListRow[] = filterIds
     ? products.filter((p) => p.category_id && filterIds.includes(p.category_id))
     : products;
 

@@ -1,5 +1,6 @@
 import { fetchAllActiveListings } from "@/lib/ebay/trading";
 import { createServiceClient } from "@/lib/supabase/server";
+import { revalidateTag } from "next/cache";
 import type { EbayConfig } from "@/types";
 
 export interface InventorySyncResult {
@@ -95,6 +96,10 @@ export async function runEbayInventorySync(
       console.error(`[ebay-inv-sync] error on ${product.ebay_listing_id}:`, err.message);
       await callbacks?.onItem?.({ current: i + 1, total: items.length, title: product.name, status: "error" });
     }
+  }
+
+  if (updated > 0 || zeroed > 0) {
+    revalidateTag("products", "default");
   }
 
   return { total: items.length, updated, zeroed, unchanged, errors };

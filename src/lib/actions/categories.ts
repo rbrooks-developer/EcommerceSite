@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { categorySchema } from "@/lib/validations/category";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { revalidatePath, refresh } from "next/cache";
+import { revalidatePath, revalidateTag, refresh } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createCategory(_prevState: unknown, formData: FormData) {
@@ -28,6 +28,7 @@ export async function createCategory(_prevState: unknown, formData: FormData) {
   const { error } = await supabase.from("categories").insert(parsed.data as any);
   if (error) return { error: { _form: [error.message] } };
 
+  revalidateTag("categories", "default");
   revalidatePath("/admin/categories");
   revalidatePath("/");
   redirect("/admin/categories");
@@ -59,6 +60,7 @@ export async function updateCategory(id: string, _prevState: unknown, formData: 
 
   if (error) return { error: { _form: [error.message] } };
 
+  revalidateTag("categories", "default");
   revalidatePath("/admin/categories");
   revalidatePath("/");
   redirect("/admin/categories");
@@ -71,6 +73,7 @@ export async function deleteCategory(id: string) {
   const supabase = await createClient();
   const { error } = await supabase.from("categories").delete().eq("id", id);
   if (error) throw new Error(error.message);
+  revalidateTag("categories", "default");
   revalidatePath("/admin/categories");
   revalidatePath("/");
   refresh();
