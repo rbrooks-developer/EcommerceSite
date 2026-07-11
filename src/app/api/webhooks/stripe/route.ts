@@ -1,5 +1,6 @@
 import { NextRequest } from "next/server";
 import { waitUntil } from "@vercel/functions";
+import { revalidateTag } from "next/cache";
 import { getStripeClient } from "@/lib/stripe/client";
 import { createServiceClient } from "@/lib/supabase/server";
 import { sendOrderConfirmation } from "@/lib/emails/orderConfirmation";
@@ -110,6 +111,8 @@ export async function POST(request: NextRequest) {
           });
         }
       }
+
+      revalidateTag("products", "default");
 
       // Sync eBay inventory in the background so Stripe gets a fast response
       if (ebaySyncItems.length > 0) {
@@ -376,6 +379,7 @@ export async function POST(request: NextRequest) {
             console.log(`[webhook] charge.refunded: inventory restored product_id=${item.product_id} +${item.quantity}`);
           }
         }
+        revalidateTag("products", "default");
         console.log(`[webhook] inventory restored for order ${orderId}`);
       } else {
         console.log(`[webhook] order ${orderId} — admin chose not to restore inventory, skipping`);
