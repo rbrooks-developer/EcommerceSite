@@ -3,7 +3,7 @@
 import { createClient } from "@/lib/supabase/server";
 import { siteSettingsSchema, type SiteSettingsInput } from "@/lib/validations/settings";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { revalidatePath, refresh } from "next/cache";
+import { revalidatePath, revalidateTag, refresh } from "next/cache";
 
 export async function saveCustomsSettings(
   _prevState: { error?: string; success?: true } | null,
@@ -21,6 +21,7 @@ export async function saveCustomsSettings(
     .eq("id", 1);
 
   if (error) return { error: error.message };
+  revalidateTag("site-settings", "default");
   revalidatePath("/admin/customs");
   refresh();
   return { success: true };
@@ -45,6 +46,7 @@ export async function saveAnalyticsSettings(
     .eq("id", 1);
 
   if (error) return { error: error.message };
+  revalidateTag("site-settings", "default");
   revalidatePath("/admin/analytics");
   refresh();
   return { success: true };
@@ -78,6 +80,7 @@ export async function updateSettings(data: SiteSettingsInput) {
 
   if (error) return { error: { _form: [error.message] } };
 
+  revalidateTag("site-settings", "default");
   revalidatePath("/", "layout");
   refresh();
   return { success: true };
