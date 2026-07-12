@@ -1,5 +1,6 @@
 import { CollectionRequestForm } from "@/components/storefront/CollectionRequestForm";
 import { getSettings } from "@/lib/data/settings";
+import type { HomepageConfig } from "@/types";
 import type { Metadata } from "next";
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -14,9 +15,18 @@ export async function generateMetadata(): Promise<Metadata> {
 export default async function SellCollectionPage() {
   const settings = await getSettings();
   const siteTitle = settings?.site_title ?? "Store";
+  const homepage  = settings?.homepage_config as HomepageConfig | null;
+  const bgColor   = homepage?.bg_color ?? "#ffffff";
 
   return (
-    <div className="min-h-screen" style={{ backgroundColor: "var(--site-bg)", color: "var(--site-fg)" }}>
+    <>
+      {/* Cover the striation overlay (z-index 45) with the plain bg color on this page */}
+      <div
+        aria-hidden="true"
+        style={{ position: "fixed", inset: 0, zIndex: 46, backgroundColor: bgColor, pointerEvents: "none" }}
+      />
+
+    <div className="relative min-h-screen" style={{ zIndex: 47, backgroundColor: bgColor, color: "var(--site-fg)" }}>
 
       {/* ── Hero header ─────────────────────────────────── */}
       <div className="relative overflow-hidden">
@@ -87,5 +97,6 @@ export default async function SellCollectionPage() {
       </div>
 
     </div>
+    </>
   );
 }
