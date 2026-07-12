@@ -7,7 +7,7 @@ export async function generateMetadata(): Promise<Metadata> {
   const settings = await getSettings();
   const title = settings?.site_title ?? "Store";
   return {
-    title: `Sell Your Collection — ${title}`,
+    title: `Sell Us Your Collection — ${title}`,
     description: "Get a quote for your comic collection. Submit photos and details and we'll be in touch with an offer.",
   };
 }
@@ -60,7 +60,7 @@ export default async function SellCollectionPage() {
               backgroundClip: "text",
             }}
           >
-            Sell Your Collection
+            Sell Us Your Collection
           </h1>
 
           {/* Sub */}
