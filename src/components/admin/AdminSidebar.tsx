@@ -21,21 +21,23 @@ import {
   BarChart2,
   Globe,
   Percent,
+  BookOpen,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
 const navItems = [
-  { label: "Dashboard",     href: "/admin",                 icon: LayoutDashboard, exact: true },
-  { label: "Products",      href: "/admin/products",        icon: Package },
-  { label: "Categories",    href: "/admin/categories",      icon: FolderOpen },
-  { label: "Orders",        href: "/admin/orders",          icon: ShoppingCart },
-  { label: "Offers",        href: "/admin/offers",          icon: Tag },
-  { label: "Promos",        href: "/admin/promos",          icon: Percent },
-  { label: "eBay Sync",        href: "/admin/ebay",            icon: RefreshCw },
-  { label: "Google Analytics", href: "/admin/analytics",      icon: BarChart2 },
-  { label: "Customs",           href: "/admin/customs",        icon: Globe },
-  { label: "Notifications",    href: "/admin/notifications",  icon: Bell },
-  { label: "Settings",         href: "/admin/settings",       icon: Settings },
+  { label: "Dashboard",        href: "/admin",                  icon: LayoutDashboard, exact: true },
+  { label: "Products",         href: "/admin/products",         icon: Package },
+  { label: "Categories",       href: "/admin/categories",       icon: FolderOpen },
+  { label: "Orders",           href: "/admin/orders",           icon: ShoppingCart },
+  { label: "Offers",           href: "/admin/offers",           icon: Tag },
+  { label: "Promos",           href: "/admin/promos",           icon: Percent },
+  { label: "Collections",      href: "/admin/collections",      icon: BookOpen },
+  { label: "eBay Sync",        href: "/admin/ebay",             icon: RefreshCw },
+  { label: "Google Analytics", href: "/admin/analytics",        icon: BarChart2 },
+  { label: "Customs",          href: "/admin/customs",          icon: Globe },
+  { label: "Notifications",    href: "/admin/notifications",    icon: Bell },
+  { label: "Settings",         href: "/admin/settings",         icon: Settings },
 ];
 
 function NavLink({ item, unreadCount, onClick }: { item: typeof navItems[0]; unreadCount?: number; onClick?: () => void }) {
@@ -65,7 +67,7 @@ function NavLink({ item, unreadCount, onClick }: { item: typeof navItems[0]; unr
   );
 }
 
-function SidebarContent({ onClose, unreadNotifications, pendingOffers, isDark }: { onClose?: () => void; unreadNotifications?: number; pendingOffers?: number; isDark?: boolean }) {
+function SidebarContent({ onClose, unreadNotifications, pendingOffers, pendingCollections, isDark }: { onClose?: () => void; unreadNotifications?: number; pendingOffers?: number; pendingCollections?: number; isDark?: boolean }) {
   return (
     <div className="flex h-full flex-col">
       <div className="flex h-16 items-center border-b border-gray-200 dark:border-gray-700 px-4">
@@ -85,6 +87,7 @@ function SidebarContent({ onClose, unreadNotifications, pendingOffers, isDark }:
             unreadCount={
               item.href === "/admin/notifications" ? unreadNotifications :
               item.href === "/admin/offers"        ? pendingOffers :
+              item.href === "/admin/collections"   ? pendingCollections :
               undefined
             }
           />
@@ -113,7 +116,7 @@ function SidebarContent({ onClose, unreadNotifications, pendingOffers, isDark }:
   );
 }
 
-export function AdminSidebar({ unreadNotifications, pendingOffers, isDark }: { unreadNotifications?: number; pendingOffers?: number; isDark?: boolean }) {
+export function AdminSidebar({ unreadNotifications, pendingOffers, pendingCollections, isDark }: { unreadNotifications?: number; pendingOffers?: number; pendingCollections?: number; isDark?: boolean }) {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
@@ -150,12 +153,12 @@ export function AdminSidebar({ unreadNotifications, pendingOffers, isDark }: { u
           mobileOpen ? "translate-x-0" : "-translate-x-full"
         )}
       >
-        <SidebarContent onClose={() => setMobileOpen(false)} unreadNotifications={unreadNotifications} pendingOffers={pendingOffers} isDark={isDark} />
+        <SidebarContent onClose={() => setMobileOpen(false)} unreadNotifications={unreadNotifications} pendingOffers={pendingOffers} pendingCollections={pendingCollections} isDark={isDark} />
       </div>
 
       {/* Desktop sidebar */}
       <div className="hidden lg:flex lg:w-64 lg:flex-col lg:border-r lg:bg-white dark:bg-gray-900 dark:border-gray-700">
-        <SidebarContent unreadNotifications={unreadNotifications} pendingOffers={pendingOffers} isDark={isDark} />
+        <SidebarContent unreadNotifications={unreadNotifications} pendingOffers={pendingOffers} pendingCollections={pendingCollections} isDark={isDark} />
       </div>
     </>
   );

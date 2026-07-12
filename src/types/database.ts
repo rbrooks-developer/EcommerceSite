@@ -13,6 +13,9 @@ export interface Database {
           id: string;
           email: string;
           role: UserRole;
+          first_name: string | null;
+          last_name: string | null;
+          phone: string | null;
           avatar_url: string | null;
           theme_preference: string | null;
           created_at: string;
@@ -22,6 +25,9 @@ export interface Database {
           id: string;
           email: string;
           role?: UserRole;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
           avatar_url?: string | null;
           theme_preference?: string | null;
           created_at?: string;
@@ -30,6 +36,9 @@ export interface Database {
         Update: {
           email?: string;
           role?: UserRole;
+          first_name?: string | null;
+          last_name?: string | null;
+          phone?: string | null;
           avatar_url?: string | null;
           theme_preference?: string | null;
           updated_at?: string;
@@ -272,6 +281,14 @@ export interface Database {
           tracking_config: Json | null;
           default_hs_tariff_number: string | null;
           promo_banner: Json | null;
+          ebay_config: Json | null;
+          checkout_config: Json | null;
+          about_config: Json | null;
+          contact_config: Json | null;
+          chat_config: Json | null;
+          site_password: string | null;
+          handling_fee: number | null;
+          shipping_countries: string[] | null;
           created_at: string;
           updated_at: string;
         };
@@ -300,6 +317,14 @@ export interface Database {
           tracking_config?: Json | null;
           default_hs_tariff_number?: string | null;
           promo_banner?: Json | null;
+          ebay_config?: Json | null;
+          checkout_config?: Json | null;
+          about_config?: Json | null;
+          contact_config?: Json | null;
+          chat_config?: Json | null;
+          site_password?: string | null;
+          handling_fee?: number | null;
+          shipping_countries?: string[] | null;
           created_at?: string;
           updated_at?: string;
         };
@@ -327,6 +352,14 @@ export interface Database {
           tracking_config?: Json | null;
           default_hs_tariff_number?: string | null;
           promo_banner?: Json | null;
+          ebay_config?: Json | null;
+          checkout_config?: Json | null;
+          about_config?: Json | null;
+          contact_config?: Json | null;
+          chat_config?: Json | null;
+          site_password?: string | null;
+          handling_fee?: number | null;
+          shipping_countries?: string[] | null;
           updated_at?: string;
         };
       };
@@ -467,6 +500,39 @@ export interface Database {
         Update: {
           promo_code?: string;
           applied_at?: string;
+        };
+      };
+      collection_requests: {
+        Row: {
+          id: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone: string | null;
+          message: string | null;
+          image_urls: string[];
+          is_read: boolean;
+          created_at: string;
+        };
+        Insert: {
+          id?: string;
+          first_name: string;
+          last_name: string;
+          email: string;
+          phone?: string | null;
+          message?: string | null;
+          image_urls?: string[];
+          is_read?: boolean;
+          created_at?: string;
+        };
+        Update: {
+          first_name?: string;
+          last_name?: string;
+          email?: string;
+          phone?: string | null;
+          message?: string | null;
+          image_urls?: string[];
+          is_read?: boolean;
         };
       };
     };

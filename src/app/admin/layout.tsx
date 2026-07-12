@@ -19,22 +19,24 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   const isDark = (profile as { theme_preference?: string | null } | null)?.theme_preference === "dark";
 
   const serviceSupabase = createServiceClient();
-  const [{ count: unreadCount }, { count: pendingOffersCount }] = await Promise.all([
+  const [{ count: unreadCount }, { count: pendingOffersCount }, { count: pendingCollectionsCount }] = await Promise.all([
     serviceSupabase
       .from("admin_notifications")
       .select("*", { count: "exact", head: true })
       .is("read_at", null),
-    // Only "pending" needs admin action — "countered" offers are awaiting
-    // the customer's response, not the admin's.
     serviceSupabase
       .from("product_offers")
       .select("*", { count: "exact", head: true })
       .eq("status", "pending"),
+    serviceSupabase
+      .from("collection_requests")
+      .select("*", { count: "exact", head: true })
+      .eq("is_read", false),
   ]);
 
   return (
     <div data-admin-theme={isDark ? "dark" : "light"} className="flex h-screen flex-col lg:flex-row overflow-hidden bg-gray-50 text-gray-900" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
-      <AdminSidebar unreadNotifications={unreadCount ?? 0} pendingOffers={pendingOffersCount ?? 0} isDark={isDark} />
+      <AdminSidebar unreadNotifications={unreadCount ?? 0} pendingOffers={pendingOffersCount ?? 0} pendingCollections={pendingCollectionsCount ?? 0} isDark={isDark} />
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6 lg:p-8">{children}</div>
       </main>
