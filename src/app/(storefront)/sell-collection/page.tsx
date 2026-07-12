@@ -44,7 +44,7 @@ export default async function SellCollectionPage() {
           }}
         />
 
-        <div className="relative max-w-4xl mx-auto px-6 pt-20 pb-16 text-center">
+        <div className="relative max-w-4xl mx-auto px-6 pt-10 pb-8 text-center">
           {/* Eyebrow */}
           <p className="text-xs font-bold tracking-[0.35em] uppercase mb-4 opacity-50">
             {siteTitle}
@@ -69,12 +69,6 @@ export default async function SellCollectionPage() {
             We&apos;ll review everything and reach out with a fair offer.
           </p>
 
-          {/* Divider */}
-          <div className="flex items-center justify-center gap-4 mt-8">
-            <div className="h-px w-16 opacity-20" style={{ backgroundColor: "var(--site-fg)" }} />
-            <div className="h-1.5 w-1.5 rounded-full opacity-40" style={{ backgroundColor: "var(--site-fg)" }} />
-            <div className="h-px w-16 opacity-20" style={{ backgroundColor: "var(--site-fg)" }} />
-          </div>
         </div>
       </div>
 
