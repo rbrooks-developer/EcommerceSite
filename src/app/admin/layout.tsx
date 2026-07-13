@@ -35,7 +35,7 @@ export default async function AdminLayout({ children }: { children: React.ReactN
   ]);
 
   return (
-    <div data-admin-theme={isDark ? "dark" : "light"} className="flex h-screen flex-col lg:flex-row overflow-hidden bg-gray-50 text-gray-900" style={{ fontFamily: "var(--font-geist-sans), sans-serif" }}>
+    <div data-admin-theme={isDark ? "dark" : "light"} className="flex h-screen flex-col lg:flex-row overflow-hidden bg-gray-50 text-gray-900" style={{ fontFamily: "var(--font-geist-sans), sans-serif", fontSize: "14px" }}>
       <AdminSidebar unreadNotifications={unreadCount ?? 0} pendingOffers={pendingOffersCount ?? 0} pendingCollections={pendingCollectionsCount ?? 0} isDark={isDark} />
       <main className="flex-1 overflow-y-auto">
         <div className="p-4 md:p-6 lg:p-8">{children}</div>
