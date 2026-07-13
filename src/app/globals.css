@@ -8,6 +8,22 @@
 /* Scoped dark variant — activates dark: classes inside [data-admin-theme="dark"] */
 @custom-variant dark (&:where([data-admin-theme="dark"], [data-admin-theme="dark"] *));
 
+/* Admin font isolation — pin text sizes to px so storefront rem/font settings can't bleed in */
+[data-admin-theme] {
+  font-family: var(--font-geist-sans), system-ui, -apple-system, sans-serif;
+
+  .text-xs   { font-size: 12px; }
+  .text-sm   { font-size: 14px; }
+  .text-base { font-size: 16px; }
+  .text-lg   { font-size: 18px; }
+  .text-xl   { font-size: 20px; }
+  .text-2xl  { font-size: 24px; }
+  .text-3xl  { font-size: 30px; }
+  .text-4xl  { font-size: 36px; }
+  .text-5xl  { font-size: 48px; }
+  .text-6xl  { font-size: 60px; }
+}
+
 /* Admin dark mode — override common Tailwind utilities for page content */
 [data-admin-theme="dark"] {
   color-scheme: dark;
