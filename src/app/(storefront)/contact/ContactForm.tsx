@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { submitContactForm, subscribeToNewsletter } from "@/lib/actions/contact";
 import { SiInstagram, SiYoutube, SiTiktok, SiFacebook, SiX, SiEbay } from "react-icons/si";
@@ -59,6 +59,8 @@ function SocialIcon({ platform }: { platform: string }) {
 }
 
 export function ContactForm({ heading, subheading, bodyText, email, social }: Props) {
+  const loadedAt = useRef(Date.now());
+  const [honeypot, setHoneypot] = useState("");
   const [firstName, setFirstName] = useState("");
   const [lastName, setLastName] = useState("");
   const [formEmail, setFormEmail] = useState("");
@@ -74,9 +76,14 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    // Timing check — bots submit instantly; humans take at least 3 seconds
+    if (Date.now() - loadedAt.current < 3000) {
+      setFormSuccess(true);
+      return;
+    }
     setFormPending(true);
     setFormError(null);
-    const result = await submitContactForm({ firstName, lastName, email: formEmail, message });
+    const result = await submitContactForm({ firstName, lastName, email: formEmail, message, honeypot });
     setFormPending(false);
     if (result.ok) {
       setFormSuccess(true);
@@ -164,6 +171,17 @@ export function ContactForm({ heading, subheading, bodyText, email, social }: Pr
             </div>
           ) : (
             <form onSubmit={handleSubmit} className="space-y-4">
+              {/* Honeypot — visually hidden, only bots fill this in */}
+              <input
+                type="text"
+                name="website"
+                value={honeypot}
+                onChange={(e) => setHoneypot(e.target.value)}
+                tabIndex={-1}
+                aria-hidden="true"
+                autoComplete="off"
+                style={{ position: "absolute", left: "-9999px", width: "1px", height: "1px", opacity: 0 }}
+              />
               {/* First + Last Name */}
               <div className="flex gap-4">
                 <div className="flex-1">

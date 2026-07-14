@@ -5,19 +5,42 @@ import { getSettings } from "@/lib/data/settings";
 import { createServiceClient } from "@/lib/supabase/server";
 import type { FooterConfig } from "@/types";
 
+function isLikelySpam(text: string): boolean {
+  const trimmed = text.trim();
+  if (!trimmed) return false;
+  const letters = trimmed.replace(/[^a-zA-Z]/g, "");
+  if (letters.length < 6) return false;
+  const vowels = letters.replace(/[^aeiouAEIOU]/g, "");
+  // Real words have >15% vowels — below 10% is almost certainly random chars
+  if (vowels.length / letters.length < 0.1) return true;
+  // Long unbroken string with no spaces is suspicious
+  if (trimmed.length > 25 && !/\s/.test(trimmed)) return true;
+  return false;
+}
+
 export async function submitContactForm({
   firstName,
   lastName,
   email,
   message,
+  honeypot,
 }: {
   firstName: string;
   lastName: string;
   email: string;
   message: string;
+  honeypot?: string;
 }): Promise<{ ok?: boolean; error?: string }> {
+  // Honeypot — bots fill hidden fields, humans don't; silent ok so bots don't adapt
+  if (honeypot && honeypot.trim().length > 0) return { ok: true };
+
   if (!firstName.trim() || !email.trim() || !message.trim()) {
     return { error: "First name, email, and message are required." };
+  }
+
+  // Entropy check — random-character names/messages get silently dropped
+  if (isLikelySpam(firstName) || isLikelySpam(lastName) || isLikelySpam(message)) {
+    return { ok: true };
   }
 
   const settings = await getSettings();
