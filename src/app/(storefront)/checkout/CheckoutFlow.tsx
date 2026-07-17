@@ -182,9 +182,10 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
           paymentMethods: {
             applePay: "auto",
             googlePay: "auto",
-            link: "never",      // Link S badge was overlapping Amazon Pay; Link still shows in tabs
-            klarna: "never",    // Klarna tab renders cleanly below; express button forces "Pay with" text
+            link: "never",
+            klarna: "never",
             amazonPay: "auto",
+            paypal: "never",
           },
         }}
       />
