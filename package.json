@@ -10,6 +10,8 @@
   },
   "dependencies": {
     "@easypost/api": "^8.8.0",
+    "@stripe/react-stripe-js": "^6.8.0",
+    "@stripe/stripe-js": "^9.10.0",
     "@supabase/ssr": "^0.12.0",
     "@supabase/supabase-js": "^2.108.2",
     "@vercel/functions": "^3.7.4",

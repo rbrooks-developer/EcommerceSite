@@ -8,29 +8,37 @@ import type { Order, OrderItem, Product } from "@/types";
 export default async function CheckoutSuccessPage({
   searchParams,
 }: {
-  searchParams: Promise<{ session_id?: string }>;
+  searchParams: Promise<{ session_id?: string; payment_intent?: string }>;
 }) {
-  const { session_id } = await searchParams;
+  const { session_id, payment_intent } = await searchParams;
 
   let order: Order | null = null;
   let orderItems: (OrderItem & { products: { name: string; images: unknown } | null })[] = [];
 
-  if (session_id) {
-    const supabase = await createClient();
+  const supabase = await createClient();
+
+  if (payment_intent) {
+    const { data: orderRaw } = await supabase
+      .from("orders")
+      .select("*")
+      .eq("stripe_payment_intent_id", payment_intent)
+      .maybeSingle();
+    if (orderRaw) order = orderRaw as Order;
+  } else if (session_id) {
     const { data: orderRaw } = await supabase
       .from("orders")
       .select("*")
       .eq("stripe_session_id", session_id)
       .maybeSingle();
+    if (orderRaw) order = orderRaw as Order;
+  }
 
-    if (orderRaw) {
-      order = orderRaw as Order;
-      const { data: itemsRaw } = await supabase
-        .from("order_items")
-        .select("*, products(name, images)")
-        .eq("order_id", order.id);
-      orderItems = (itemsRaw ?? []) as (OrderItem & { products: { name: string; images: unknown } | null })[];
-    }
+  if (order) {
+    const { data: itemsRaw } = await supabase
+      .from("order_items")
+      .select("*, products(name, images)")
+      .eq("order_id", order.id);
+    orderItems = (itemsRaw ?? []) as (OrderItem & { products: { name: string; images: unknown } | null })[];
   }
 
   const panelStyle: React.CSSProperties = {
@@ -59,7 +67,7 @@ export default async function CheckoutSuccessPage({
       </div>
 
       {order && (
-        <div className="rounded-lg p-6 space-y-5" style={panelStyle}>
+        <div className="rounded-xl p-6 space-y-5" style={panelStyle}>
           {orderItems.length > 0 && (
             <div>
               <h2 className="text-sm font-semibold mb-3">Items Ordered</h2>
@@ -115,7 +123,13 @@ export default async function CheckoutSuccessPage({
                 <span>{formatPrice(Number(order.tax_amount) * 100)}</span>
               </div>
             )}
-            <div className="flex justify-between font-semibold pt-1.5" style={dividerStyle}>
+            {Number((order as any).surcharge_amount) > 0 && (
+              <div className="flex justify-between" style={{ opacity: 0.7 }}>
+                <span>Credit card surcharge ({Number((order as any).surcharge_percentage)}%)</span>
+                <span>{formatPrice(Number((order as any).surcharge_amount) * 100)}</span>
+              </div>
+            )}
+            <div className="flex justify-between font-semibold text-base pt-2" style={dividerStyle}>
               <span>Total</span>
               <span>{formatPrice(Number(order.total_price) * 100)}</span>
             </div>
@@ -123,7 +137,7 @@ export default async function CheckoutSuccessPage({
 
           {order.shipping_address_line1 && (
             <div className="pt-4" style={dividerStyle}>
-              <p className="text-xs font-medium uppercase tracking-wide mb-1" style={{ opacity: 0.45 }}>Shipping to</p>
+              <p className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ opacity: 0.4 }}>Shipped to</p>
               <p className="text-sm" style={{ opacity: 0.75 }}>
                 {order.shipping_name}<br />
                 {order.shipping_address_line1}
@@ -137,9 +151,16 @@ export default async function CheckoutSuccessPage({
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
         <Link
-          href="/products"
-          className="rounded-md px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-80 text-center"
+          href="/account/orders"
+          className="rounded-lg px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-85 text-center"
           style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)" }}
+        >
+          View My Orders
+        </Link>
+        <Link
+          href="/products"
+          className="rounded-lg px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-80 text-center"
+          style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 30%, transparent)" }}
         >
           Continue Shopping
         </Link>
