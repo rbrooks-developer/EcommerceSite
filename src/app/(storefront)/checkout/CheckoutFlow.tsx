@@ -51,9 +51,6 @@ const stripeAppearance = {
     ".TabIcon": { height: "24px" },
     ".TabIcon--selected": { height: "24px" },
     ".Block": { border: "1.5px solid #e5e7eb" },
-    ".AccordionItem": { border: "1.5px solid #e5e7eb", borderRadius: "8px", padding: "14px 16px", marginBottom: "8px" },
-    ".AccordionItem--selected": { border: "1.5px solid #18181b", backgroundColor: "#f9fafb" },
-    ".AccordionItemIcon": { height: "28px", width: "auto" },
   },
 };
 
@@ -98,13 +95,16 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
+  const [redirectLoading, setRedirectLoading] = useState<"klarna" | "amazonPay" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [surcharge, setSurcharge] = useState<{ amount: number; percent: number } | null>(null);
   const [hasExpress, setHasExpress] = useState(false);
 
   const displayTotal = surcharge ? baseTotal + surcharge.amount : baseTotal;
+  const dividerColor = "color-mix(in srgb, var(--site-fg) 15%, transparent)";
+  const anyLoading = loading || !!redirectLoading;
 
-  // Express checkout (Apple Pay, Google Pay, Link, Klarna, Amazon Pay branded buttons)
+  // Express checkout (Apple Pay, Google Pay) — main card-only intent so no S badge
   async function handleExpressConfirm() {
     if (!stripe || !elements) return;
     setError(null);
@@ -118,7 +118,55 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
     }
   }
 
-  // Regular card / bank payment
+  // Klarna — creates a dedicated Klarna intent then redirects
+  async function handleKlarna() {
+    if (!stripe || anyLoading) return;
+    setRedirectLoading("klarna");
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout/create-redirect-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, method: "klarna" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to initiate Klarna.");
+      const { error: confirmError } = await (stripe as any).confirmKlarnaPayment(data.clientSecret, {
+        payment_method: { billing_details: { address: { country: shippingCountry } } },
+        return_url: `${window.location.origin}/checkout/success`,
+      });
+      if (confirmError) throw new Error(confirmError.message ?? "Klarna payment failed.");
+    } catch (err: any) {
+      setError(err.message);
+      setRedirectLoading(null);
+    }
+  }
+
+  // Amazon Pay — creates a dedicated Amazon Pay intent then redirects
+  async function handleAmazonPay() {
+    if (!stripe || anyLoading) return;
+    setRedirectLoading("amazonPay");
+    setError(null);
+    try {
+      const res = await fetch("/api/checkout/create-redirect-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ orderId, method: "amazon_pay" }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? "Failed to initiate Amazon Pay.");
+      const { error: confirmError } = await stripe.confirmPayment({
+        clientSecret: data.clientSecret,
+        confirmParams: { return_url: `${window.location.origin}/checkout/success` },
+      });
+      if (confirmError) throw new Error(confirmError.message ?? "Amazon Pay failed.");
+    } catch (err: any) {
+      setError(err.message);
+      setRedirectLoading(null);
+    }
+  }
+
+  // Regular card payment with optional surcharge detection
   async function handlePay() {
     if (!stripe || !elements) return;
     setLoading(true);
@@ -138,7 +186,6 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
       return;
     }
 
-    // Credit card surcharge detection
     if (paymentMethod.card?.funding === "credit" && surchargeConfig?.surcharge_active) {
       const intentId = clientSecret.split("_secret_")[0];
       const res = await fetch("/api/checkout/update-intent", {
@@ -171,12 +218,10 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
     }
   }
 
-  const dividerColor = "color-mix(in srgb, var(--site-fg) 15%, transparent)";
-
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
 
-      {/* Express checkout — Apple Pay, Google Pay, Amazon Pay */}
+      {/* Express checkout — Apple Pay and Google Pay (card-only intent = no S badge) */}
       <ExpressCheckoutElement
         onReady={(e) => setHasExpress(!!(e as any).availablePaymentMethods)}
         onConfirm={handleExpressConfirm}
@@ -193,19 +238,64 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         }}
       />
 
-      {/* "or" divider — only rendered after express buttons confirm they exist */}
       {hasExpress && (
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
-          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or pay another way</span>
+          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or</span>
           <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
         </div>
       )}
 
-      {/* Card / bank form — country and zip pre-filled from shipping address */}
+      {/* Klarna — full-color branded button */}
+      <button
+        onClick={handleKlarna}
+        disabled={anyLoading}
+        className="w-full rounded-xl flex items-center justify-center transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{ height: 52, backgroundColor: "#FFB3C7", border: "none", cursor: "pointer" }}
+        aria-label="Pay with Klarna"
+      >
+        {redirectLoading === "klarna" ? (
+          <Spinner className="h-5 w-5 text-zinc-800" />
+        ) : (
+          <svg viewBox="0 0 120 36" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            <text x="60" y="28" textAnchor="middle" fontFamily="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" fontSize="30" fontWeight="700" fill="#17120E" letterSpacing="-0.5">klarna</text>
+          </svg>
+        )}
+      </button>
+
+      {/* Amazon Pay — full-color branded button */}
+      <button
+        onClick={handleAmazonPay}
+        disabled={anyLoading}
+        className="w-full rounded-xl flex items-center justify-center transition-opacity hover:opacity-90 disabled:opacity-50"
+        style={{ height: 52, backgroundColor: "#FFD814", border: "none", cursor: "pointer" }}
+        aria-label="Pay with Amazon Pay"
+      >
+        {redirectLoading === "amazonPay" ? (
+          <Spinner className="h-5 w-5 text-black" />
+        ) : (
+          <div className="flex flex-col items-center" style={{ gap: 3 }}>
+            <span style={{ fontFamily: "Arial, 'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 400, color: "#000", lineHeight: 1, letterSpacing: 0.2 }}>
+              amazon <strong style={{ fontWeight: 700 }}>pay</strong>
+            </span>
+            <svg width="58" height="9" viewBox="0 0 58 9" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+              <path d="M2 5 Q29 10.5 56 5" stroke="#FF9900" strokeWidth="2.2" fill="none" strokeLinecap="round" />
+              <path d="M52.5 2.5 L56 5 L53 7.5" stroke="#FF9900" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
+            </svg>
+          </div>
+        )}
+      </button>
+
+      {/* Divider before card form */}
+      <div className="flex items-center gap-3">
+        <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
+        <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or pay with card</span>
+        <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
+      </div>
+
+      {/* Card form — country and zip pre-filled from shipping address */}
       <PaymentElement
         options={{
-          layout: { type: "accordion", spacedAccordionItems: true },
           fields: {
             billingDetails: {
               address: {
@@ -241,7 +331,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
 
       <button
         onClick={handlePay}
-        disabled={!stripe || !elements || loading}
+        disabled={!stripe || !elements || anyLoading}
         className="w-full rounded-lg py-4 text-sm font-semibold transition-opacity hover:opacity-85 disabled:opacity-50 flex items-center justify-center gap-2"
         style={btnPrimaryStyle}
       >
@@ -260,7 +350,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
 
       <button
         onClick={onBack}
-        disabled={loading}
+        disabled={anyLoading}
         className="w-full text-sm transition-opacity hover:opacity-70 py-1"
         style={{ opacity: 0.45 }}
       >
