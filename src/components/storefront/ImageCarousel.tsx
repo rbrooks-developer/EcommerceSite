@@ -99,13 +99,10 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
             boxSizing: "border-box",
           };
           const innerRadius = image_padding > 0 ? Math.max(0, border_radius - image_padding) : undefined;
-          const carouselSrc = item.url.includes("/storage/v1/object/public/")
-            ? item.url.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") + `?height=${Math.round(height * 2)}&quality=80`
-            : item.url;
           const imgEl = (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={carouselSrc}
+              src={item.url}
               alt=""
               loading="lazy"
               decoding="async"
