@@ -175,7 +175,16 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack
       <ExpressCheckoutElement
         onReady={(e) => setHasExpress(!!(e as any).availablePaymentMethods)}
         onConfirm={handleExpressConfirm}
-        options={{ buttonHeight: 52 }}
+        options={{
+          buttonHeight: 52,
+          paymentMethods: {
+            applePay: "auto",
+            googlePay: "auto",
+            link: "auto",
+            klarna: "auto",
+            amazonPay: "auto",
+          },
+        }}
       />
 
       {/* "or" divider — only rendered after express buttons confirm they exist */}
