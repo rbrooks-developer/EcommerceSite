@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import { Elements, ExpressCheckoutElement, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
 import { useCart } from "@/lib/cart/store";
 import { validateAndSyncCart } from "@/lib/actions/cart";
 import { applyPromoCode, removePromoCode } from "@/lib/actions/promos";
@@ -95,9 +95,25 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [surcharge, setSurcharge] = useState<{ amount: number; percent: number } | null>(null);
+  const [hasExpress, setHasExpress] = useState(false);
 
   const displayTotal = surcharge ? baseTotal + surcharge.amount : baseTotal;
 
+  // Express checkout (Apple Pay, Google Pay, Link, Klarna, Amazon Pay branded buttons)
+  async function handleExpressConfirm() {
+    if (!stripe || !elements) return;
+    setError(null);
+    const { error: confirmError } = await stripe.confirmPayment({
+      elements,
+      clientSecret,
+      confirmParams: { return_url: `${window.location.origin}/checkout/success` },
+    });
+    if (confirmError) {
+      setError(confirmError.message ?? "Payment failed. Please try again.");
+    }
+  }
+
+  // Regular card / bank payment
   async function handlePay() {
     if (!stripe || !elements) return;
     setLoading(true);
@@ -150,9 +166,29 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack
     }
   }
 
+  const dividerColor = "color-mix(in srgb, var(--site-fg) 15%, transparent)";
+
   return (
     <div className="space-y-5">
-      <PaymentElement options={{ layout: "auto" }} />
+
+      {/* Express checkout — Apple Pay, Google Pay, Link, Klarna, Amazon Pay */}
+      <ExpressCheckoutElement
+        onReady={(e) => setHasExpress(!!(e as any).availablePaymentMethods)}
+        onConfirm={handleExpressConfirm}
+        options={{ buttonHeight: 52 }}
+      />
+
+      {/* "or" divider — only rendered after express buttons confirm they exist */}
+      {hasExpress && (
+        <div className="flex items-center gap-3">
+          <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
+          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or pay with card</span>
+          <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
+        </div>
+      )}
+
+      {/* Card / bank form */}
+      <PaymentElement options={{ layout: "tabs" }} />
 
       {surcharge && (
         <div className="rounded-lg px-4 py-3 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
