@@ -51,42 +51,21 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
       style={{ backgroundColor: bgColor, color: fontColor }}
     >
       {striationImageUrl && (
-        striationPosition === "tile" ? (
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-              backgroundImage: `url(${striationImageUrl})`,
-              backgroundSize: "auto",
-              backgroundRepeat: "repeat",
-              opacity: striationOpacity / 100,
-              mixBlendMode: striationBlendMode,
-            }}
-          />
-        ) : (
-          <div
-            aria-hidden="true"
-            style={{
-              position: "absolute",
-              inset: 0,
-              pointerEvents: "none",
-              opacity: striationOpacity / 100,
-              mixBlendMode: striationBlendMode,
-            }}
-          >
-            <Image
-              src={striationImageUrl}
-              alt=""
-              fill
-              style={{
-                objectFit: striationPosition === "stretch" ? "fill" : striationPosition === "contain" ? "contain" : "cover",
-                objectPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
-              }}
-            />
-          </div>
-        )
+        <div
+          aria-hidden="true"
+          style={{
+            position: "absolute",
+            inset: 0,
+            pointerEvents: "none",
+            backgroundImage: `url(${striationImageUrl})`,
+            backgroundAttachment: "fixed",
+            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
+            backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
+            backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
+            opacity: striationOpacity / 100,
+            mixBlendMode: striationBlendMode,
+          }}
+        />
       )}
       <div style={{ position: "relative" }}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
