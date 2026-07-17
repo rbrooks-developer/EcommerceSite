@@ -51,6 +51,9 @@ const stripeAppearance = {
     ".TabIcon": { height: "24px" },
     ".TabIcon--selected": { height: "24px" },
     ".Block": { border: "1.5px solid #e5e7eb" },
+    ".AccordionItem": { border: "1.5px solid #e5e7eb", borderRadius: "8px", padding: "14px 16px", marginBottom: "8px" },
+    ".AccordionItem--selected": { border: "1.5px solid #18181b", backgroundColor: "#f9fafb" },
+    ".AccordionItemIcon": { height: "28px", width: "auto" },
   },
 };
 
@@ -184,7 +187,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
             googlePay: "auto",
             link: "never",
             klarna: "never",
-            amazonPay: "auto",
+            amazonPay: "never",
             paypal: "never",
           },
         }}
@@ -194,7 +197,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
       {hasExpress && (
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
-          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or pay with card</span>
+          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or pay another way</span>
           <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
         </div>
       )}
@@ -202,7 +205,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
       {/* Card / bank form — country and zip pre-filled from shipping address */}
       <PaymentElement
         options={{
-          layout: "tabs",
+          layout: { type: "accordion", spacedAccordionItems: true },
           fields: {
             billingDetails: {
               address: {
