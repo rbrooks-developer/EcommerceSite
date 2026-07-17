@@ -76,7 +76,7 @@ export function CartProvider({ userId, children }: { userId?: string | null; chi
         } catch {}
 
         // Fetch DB cart
-        const { data } = await sb.from("cart_items").select("*").eq("user_id", userId);
+        const { data } = await sb.from("cart_items").select("product_id, slug, name, price, quantity, image, weight_oz, length_in, width_in, height_in, offer_id").eq("user_id", userId);
         if (cancelled || clearedDuringFetch.current) return;
 
         const dbItems: CartItem[] = (data ?? []).map(toCartItem);
@@ -173,7 +173,7 @@ export function CartProvider({ userId, children }: { userId?: string | null; chi
 
   const reloadCart = useCallback(async () => {
     if (!userId) return;
-    const { data } = await sb.from("cart_items").select("*").eq("user_id", userId);
+    const { data } = await sb.from("cart_items").select("product_id, slug, name, price, quantity, image, weight_oz, length_in, width_in, height_in, offer_id").eq("user_id", userId);
     setItems((data ?? []).map(toCartItem));
   }, [userId, sb]);
 

@@ -96,40 +96,26 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   let offersUsed = 0;
 
   if (user && product.inventory > 0) {
-    const [blockingResult, declinedResult, countResult] = await Promise.all([
-      supabase
-        .from("product_offers")
-        .select("status")
-        .eq("user_id", user.id)
-        .eq("product_id", product.id)
-        .in("status", ["pending", "approved", "countered"])
-        .maybeSingle(),
-      supabase
-        .from("product_offers")
-        .select("decline_reason")
-        .eq("user_id", user.id)
-        .eq("product_id", product.id)
-        .eq("status", "declined")
-        .order("created_at", { ascending: false })
-        .limit(1)
-        .maybeSingle(),
-      supabase
-        .from("product_offers")
-        .select("user_counter_count")
-        .eq("user_id", user.id)
-        .eq("product_id", product.id)
-        .in("status", ["pending", "approved", "declined", "purchased", "out_of_stock", "countered"]),
-    ]);
+    const { data: offerRows } = await supabase
+      .from("product_offers")
+      .select("status, decline_reason, user_counter_count")
+      .eq("user_id", user.id)
+      .eq("product_id", product.id)
+      .in("status", ["pending", "approved", "countered", "declined", "purchased", "out_of_stock"])
+      .order("created_at", { ascending: false });
 
-    offersUsed = (countResult.data ?? []).reduce(
-      (sum: number, r: any) => sum + 1 + (r.user_counter_count ?? 0), 0
-    );
+    const rows = (offerRows ?? []) as { status: string; decline_reason: string | null; user_counter_count: number | null }[];
+    offersUsed = rows.reduce((sum, r) => sum + 1 + (r.user_counter_count ?? 0), 0);
 
-    if (blockingResult.data) {
-      existingOfferStatus = (blockingResult.data as { status: string }).status;
-    } else if (declinedResult.data) {
-      existingOfferStatus = "declined";
-      existingDeclineReason = (declinedResult.data as { decline_reason: string | null }).decline_reason;
+    const blockingOffer = rows.find(r => ["pending", "approved", "countered"].includes(r.status));
+    if (blockingOffer) {
+      existingOfferStatus = blockingOffer.status;
+    } else {
+      const declinedOffer = rows.find(r => r.status === "declined");
+      if (declinedOffer) {
+        existingOfferStatus = "declined";
+        existingDeclineReason = declinedOffer.decline_reason;
+      }
     }
   }
 

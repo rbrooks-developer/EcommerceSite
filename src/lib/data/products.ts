@@ -16,7 +16,7 @@ export const getProducts = unstable_cache(
     return (data ?? []) as ProductListRow[];
   },
   ["all-products"],
-  { tags: ["products"], revalidate: false }
+  { tags: ["products"], revalidate: 3600 }
 );
 
 export const getCategories = unstable_cache(
@@ -29,5 +29,5 @@ export const getCategories = unstable_cache(
     return (data ?? []) as CategoryRow[];
   },
   ["all-categories"],
-  { tags: ["categories"], revalidate: false }
+  { tags: ["categories"], revalidate: 3600 }
 );
