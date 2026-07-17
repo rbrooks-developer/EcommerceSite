@@ -86,10 +86,12 @@ interface PaymentFormProps {
   orderId: string;
   baseTotal: number;
   surchargeConfig?: SurchargeConfig | null;
+  shippingCountry: string;
+  shippingZip: string;
   onBack: () => void;
 }
 
-function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack }: PaymentFormProps) {
+function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippingCountry, shippingZip, onBack }: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
@@ -171,7 +173,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack
   return (
     <div className="space-y-5">
 
-      {/* Express checkout — Apple Pay, Google Pay, Link, Klarna, Amazon Pay */}
+      {/* Express checkout — Apple Pay, Google Pay, Amazon Pay */}
       <ExpressCheckoutElement
         onReady={(e) => setHasExpress(!!(e as any).availablePaymentMethods)}
         onConfirm={handleExpressConfirm}
@@ -180,8 +182,8 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack
           paymentMethods: {
             applePay: "auto",
             googlePay: "auto",
-            link: "auto",
-            klarna: "auto",
+            link: "never",      // Link S badge was overlapping Amazon Pay; Link still shows in tabs
+            klarna: "never",    // Klarna tab renders cleanly below; express button forces "Pay with" text
             amazonPay: "auto",
           },
         }}
@@ -196,8 +198,28 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, onBack
         </div>
       )}
 
-      {/* Card / bank form */}
-      <PaymentElement options={{ layout: "tabs" }} />
+      {/* Card / bank form — country and zip pre-filled from shipping address */}
+      <PaymentElement
+        options={{
+          layout: "tabs",
+          fields: {
+            billingDetails: {
+              address: {
+                country: "never",
+                postalCode: "never",
+              },
+            },
+          },
+          defaultValues: {
+            billingDetails: {
+              address: {
+                country: shippingCountry,
+                postal_code: shippingZip,
+              },
+            },
+          },
+        }}
+      />
 
       {surcharge && (
         <div className="rounded-lg px-4 py-3 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
@@ -767,6 +789,8 @@ export function CheckoutFlow({
                   orderId={orderIdForPayment}
                   baseTotal={baseTotal}
                   surchargeConfig={surchargeConfig}
+                  shippingCountry={address.country}
+                  shippingZip={address.zip}
                   onBack={goBackFromPayment}
                 />
               </Elements>
