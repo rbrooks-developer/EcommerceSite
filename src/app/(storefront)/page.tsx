@@ -5,6 +5,8 @@ import { getProducts, getCategories } from "@/lib/data/products";
 import { ogImageUrl } from "@/lib/utils";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ImageCarousel } from "@/components/storefront/ImageCarousel";
+import { FoundAndCreatorHero } from "@/components/storefront/heroes/FoundAndCreatorHero";
+import { WidescreenHero } from "@/components/storefront/heroes/WidescreenHero";
 import type { HomepageConfig, FooterConfig, CarouselConfig } from "@/types";
 import type { Metadata } from "next";
 
@@ -61,89 +63,26 @@ export default async function HomePage() {
     ? featuredCategoryIds.map((id) => allCategories.find((c) => c.id === id)).filter((c) => c !== undefined)
     : [];
 
+  const heroTemplate = homepage?.hero_template ?? "founder-and-creator";
+
   return (
     <div>
       {/* ── Hero ── */}
-      <section
-        aria-labelledby="hero-heading"
-        className="relative flex flex-col items-center justify-center overflow-hidden"
-        style={{ minHeight: "100svh", backgroundColor: bgColor }}
-      >
-        {/* Radial gold glow */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
-          }}
-          aria-hidden="true"
+      {heroTemplate === "widescreen" ? (
+        <WidescreenHero />
+      ) : (
+        <FoundAndCreatorHero
+          bgColor={bgColor}
+          fontColor={fontColor}
+          heroFont={heroFont}
+          logoUrl={logoUrl}
+          logoSpin={logoSpin}
+          siteTitle={siteTitle}
+          displayName={displayName}
+          tagline={tagline}
+          goldGradient={goldGradient}
         />
-
-        {/* Content */}
-        <div className="relative z-10 flex flex-col items-center gap-6 px-4 text-center">
-          {/* Logo */}
-          {logoUrl && (
-            <div
-              className="relative w-28 h-28 md:w-36 md:h-36"
-              style={{ filter: `drop-shadow(0 0 24px color-mix(in srgb, ${fontColor} 35%, transparent))` }}
-            >
-              <Image
-                src={logoUrl}
-                alt={siteTitle}
-                fill
-                sizes="(min-width: 768px) 144px, 112px"
-                className="object-contain"
-                style={logoSpin ? { animation: "logo-spin-3d 3s linear infinite" } : undefined}
-              />
-            </div>
-          )}
-
-          {/* Title */}
-          <h1
-            id="hero-heading"
-            className="tracking-[0.2em] text-5xl md:text-7xl lg:text-8xl leading-none uppercase"
-            style={{
-              fontFamily: `'${heroFont}', serif`,
-              background: goldGradient,
-              WebkitBackgroundClip: "text",
-              WebkitTextFillColor: "transparent",
-              backgroundClip: "text",
-            }}
-          >
-            {displayName}
-          </h1>
-
-          {/* Divider */}
-          <div
-            className="w-24 h-px"
-            style={{ backgroundColor: fontColor, opacity: 0.6 }}
-            aria-hidden="true"
-          />
-
-          {/* Tagline */}
-          {tagline && (
-            <p
-              className="text-sm md:text-base tracking-[0.25em] uppercase"
-              style={{ color: "#9ca3af", WebkitTextFillColor: "#9ca3af" }}
-            >
-              {tagline}
-            </p>
-          )}
-
-          {/* CTA button */}
-          <div className="mt-4">
-            <Link href="/products" className="btn-hero">
-              Shop Our Products
-            </Link>
-          </div>
-        </div>
-
-        {/* Bottom fade to background */}
-        <div
-          className="pointer-events-none absolute bottom-0 left-0 right-0 h-24"
-          style={{ background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
-          aria-hidden="true"
-        />
-      </section>
+      )}
 
       {/* Carousel — only rendered when images are configured */}
       {carousel && carousel.images.length > 0 && (

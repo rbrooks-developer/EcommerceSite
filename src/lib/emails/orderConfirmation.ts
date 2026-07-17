@@ -21,6 +21,8 @@ interface SendOrderConfirmationOptions {
   promoCode?: string | null;
   discountAmount?: number;
   shippingDiscount?: number;
+  surchargeAmount?: number;
+  surchargePercentage?: number;
 }
 
 export async function sendOrderConfirmation(opts: SendOrderConfirmationOptions) {
@@ -76,6 +78,7 @@ export async function sendOrderConfirmation(opts: SendOrderConfirmationOptions) 
           <span>${shippingDisplay}</span>
         </div>
         ${opts.taxAmount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:#6b7280">Tax</span><span>$${opts.taxAmount.toFixed(2)}</span></div>` : ""}
+        ${opts.surchargeAmount && opts.surchargeAmount > 0 ? `<div style="display:flex;justify-content:space-between;margin-bottom:6px"><span style="color:#6b7280">Surcharge (${opts.surchargePercentage ?? 0}%)</span><span>$${opts.surchargeAmount.toFixed(2)}</span></div>` : ""}
         <div style="display:flex;justify-content:space-between;font-weight:600;font-size:15px;margin-top:8px;padding-top:8px;border-top:1px solid #e5e7eb">
           <span>Total</span>
           <span>$${opts.totalPrice.toFixed(2)}</span>

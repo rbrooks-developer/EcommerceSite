@@ -44,3 +44,6 @@ supabase-migration.sql
 next-env.d.ts
 
 .env*
+
+.vercel
+.env*

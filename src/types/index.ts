@@ -87,6 +87,7 @@ export type HomepageConfig = {
   striation_opacity?: number;
   striation_blend_mode?: string;
   striation_position?: string;
+  hero_template?: string;
   carousel?: CarouselConfig;
 };
 
@@ -212,6 +213,13 @@ export type CheckoutConfig = {
   restocking_fee_percent: number;
   restocking_fee_disclaimer: string;
   processing_fee_flat: number;
+};
+
+export type SurchargeConfig = {
+  surcharge_active: boolean;
+  surcharge_percent: number;
+  surcharge_min_order: number;
+  surcharge_message: string;
 };
 
 export type ContactConfig = {

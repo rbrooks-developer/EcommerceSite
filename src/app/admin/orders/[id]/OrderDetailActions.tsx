@@ -8,6 +8,8 @@ import type { Order } from "@/types";
 function CancelModal({
   orderNumber,
   totalPrice,
+  surchargeAmount,
+  surchargePercentage,
   restockingFeePercent,
   processingFeeFlat,
   onConfirm,
@@ -16,6 +18,8 @@ function CancelModal({
 }: {
   orderNumber: string;
   totalPrice: number;
+  surchargeAmount: number;
+  surchargePercentage: number;
   restockingFeePercent: number;
   processingFeeFlat: number;
   onConfirm: (restoreInventory: boolean) => void;
@@ -28,13 +32,20 @@ function CancelModal({
   const flatCents = Math.round(processingFeeFlat * 100);
   const totalDeductionCents = restockCents + flatCents;
   const refundCents = totalCents - totalDeductionCents;
+  const surchargeCents = Math.round(surchargeAmount * 100);
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="w-full max-w-sm rounded-lg bg-white shadow-xl p-6 space-y-4 mx-4">
         <h2 className="text-base font-semibold text-gray-900">Cancel Order #{orderNumber}?</h2>
-        {totalDeductionCents > 0 ? (
+        {(totalDeductionCents > 0 || surchargeCents > 0) ? (
           <div className="text-sm text-gray-600 space-y-1">
+            {surchargeCents > 0 && (
+              <div className="flex justify-between text-gray-400">
+                <span>Surcharge ({surchargePercentage}%) included in total</span>
+                <span>${(surchargeCents / 100).toFixed(2)}</span>
+              </div>
+            )}
             {restockCents > 0 && (
               <div className="flex justify-between">
                 <span>Restocking fee ({restockingFeePercent}%)</span>
@@ -90,7 +101,7 @@ function CancelModal({
   );
 }
 
-export function OrderDetailActions({ order, restockingFeePercent = 0, processingFeeFlat = 0 }: { order: Order; restockingFeePercent?: number; processingFeeFlat?: number }) {
+export function OrderDetailActions({ order, restockingFeePercent = 0, processingFeeFlat = 0 }: { order: Order & { surcharge_amount?: number; surcharge_percentage?: number }; restockingFeePercent?: number; processingFeeFlat?: number }) {
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState<string | null>(null);
   const [voidEasypostFailed, setVoidEasypostFailed] = useState(false);
@@ -181,6 +192,8 @@ export function OrderDetailActions({ order, restockingFeePercent = 0, processing
         <CancelModal
           orderNumber={order.id.slice(0, 8).toUpperCase()}
           totalPrice={Number(order.total_price)}
+          surchargeAmount={Number(order.surcharge_amount ?? 0)}
+          surchargePercentage={Number(order.surcharge_percentage ?? 0)}
           restockingFeePercent={restockingFeePercent}
           processingFeeFlat={processingFeeFlat}
           onConfirm={handleCancelConfirm}

@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { X } from "lucide-react";
 import { SUBDIVISIONS, getSubdivisionLabel, getCountryName } from "@/lib/data/countries";
 import type { Country } from "@/lib/data/countries";
-import type { EasyPostRate, ShippingAddress, UserAddress, CheckoutConfig } from "@/types";
+import type { EasyPostRate, ShippingAddress, UserAddress, CheckoutConfig, SurchargeConfig } from "@/types";
 import { EASYPOST_MAX_INSURABLE_VALUE } from "@/lib/easypost/protection";
 
 type Step = "address" | "shipping" | "review";
@@ -40,11 +40,12 @@ const btnPrimaryStyle: React.CSSProperties = {
 
 const inputClass = "w-full rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-current";
 
-export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo, checkoutConfig }: {
+export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo, checkoutConfig, surchargeConfig }: {
   allowedCountries: Country[];
   defaultShipping: UserAddress | null;
   initialPromo?: AppliedPromo | null;
   checkoutConfig?: CheckoutConfig | null;
+  surchargeConfig?: SurchargeConfig | null;
 }) {
   const router = useRouter();
   const { items, subtotal, clearCart, reloadCart } = useCart();
@@ -422,6 +423,11 @@ export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo, 
                   ))}
                 </ul>
               </div>
+              {surchargeConfig?.surcharge_active && surchargeConfig.surcharge_message && (
+                <p className="text-sm leading-relaxed" style={{ opacity: 0.65 }}>
+                  {surchargeConfig.surcharge_message}
+                </p>
+              )}
               {error && <p className="text-sm text-red-400 rounded-md px-3 py-2" style={{ backgroundColor: "rgba(239,68,68,0.1)" }}>{error}</p>}
               <button onClick={startPayment} disabled={loading}
                 className="w-full rounded-md py-3.5 text-sm font-semibold transition-opacity hover:opacity-80 disabled:opacity-60 flex items-center justify-center gap-2"
@@ -456,7 +462,19 @@ export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo, 
                 displayInsurance = Math.max(0, insuranceFee - leftoverAfterBase);
               }
 
-              const effectiveTotal = (subtotal - (d?.discountAmount ?? 0)) + (shippingCost - (d?.shippingDiscount ?? 0));
+              // Estimate surcharge on discounted subtotal
+              const discountedSubtotalForSurcharge = subtotal - (d?.discountAmount ?? 0);
+              let estimatedSurcharge = 0;
+              let surchargePercent = 0;
+              if (surchargeConfig?.surcharge_active && (surchargeConfig.surcharge_percent ?? 0) > 0 && selectedRate) {
+                const minOrder = surchargeConfig.surcharge_min_order ?? 0;
+                if (minOrder === 0 || discountedSubtotalForSurcharge >= minOrder) {
+                  surchargePercent = Math.min(surchargeConfig.surcharge_percent, 4);
+                  estimatedSurcharge = Math.round(discountedSubtotalForSurcharge * surchargePercent / 100 * 100) / 100;
+                }
+              }
+
+              const effectiveTotal = (subtotal - (d?.discountAmount ?? 0)) + (shippingCost - (d?.shippingDiscount ?? 0)) + estimatedSurcharge;
               const shippingDiscountApplied = baseShipping - displayBaseShipping;
               const insuranceDiscountApplied = insuranceFee - displayInsurance;
 
@@ -506,6 +524,12 @@ export function CheckoutFlow({ allowedCountries, defaultShipping, initialPromo, 
                           </span>
                         : <span style={{ opacity: 0.7 }}>{formatPrice(displayInsurance * 100)}</span>
                       }
+                    </div>
+                  )}
+                  {estimatedSurcharge > 0 && (
+                    <div className="flex justify-between" style={{ opacity: 0.7 }}>
+                      <span>Surcharge ({surchargePercent}%)</span>
+                      <span>{formatPrice(estimatedSurcharge * 100)}</span>
                     </div>
                   )}
                   <div className="flex justify-between font-semibold pt-1" style={dividerStyle}>

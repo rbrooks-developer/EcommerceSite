@@ -188,6 +188,12 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
               <span>{formatPrice(Number(order.tax_amount) * 100)}</span>
             </div>
           )}
+          {Number((order as any).surcharge_amount) > 0 && (
+            <div className="flex justify-between text-gray-600">
+              <span>Surcharge ({Number((order as any).surcharge_percentage)}%)</span>
+              <span>{formatPrice(Number((order as any).surcharge_amount) * 100)}</span>
+            </div>
+          )}
           <div className="flex justify-between font-semibold text-gray-900 text-base pt-2 border-t border-gray-100">
             <span>Total</span>
             <span>{formatPrice(Number(order.total_price) * 100)}</span>

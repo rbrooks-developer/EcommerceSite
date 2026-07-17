@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -209,6 +209,13 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [restockingFeeDisclaimer, setRestockingFeeDisclaimer] = useState(checkoutCfg?.restocking_fee_disclaimer ?? "");
   const [processingFeeFlat, setProcessingFeeFlat] = useState(checkoutCfg?.processing_fee_flat ?? 0);
 
+  const surchargeCfg = (defaultValues as any)?.surcharge_config as SurchargeConfig | null;
+  const DEFAULT_SURCHARGE_MESSAGE = "A processing surcharge may apply to certain credit card payments. If applicable, it will be calculated and displayed in your order summary before you place your order.";
+  const [surchargeActive, setSurchargeActive] = useState(surchargeCfg?.surcharge_active ?? false);
+  const [surchargePercent, setSurchargePercent] = useState(surchargeCfg?.surcharge_percent ?? 0);
+  const [surchargeMinOrder, setSurchargeMinOrder] = useState(surchargeCfg?.surcharge_min_order ?? 0);
+  const [surchargeMessage, setSurchargeMessage] = useState(surchargeCfg?.surcharge_message ?? DEFAULT_SURCHARGE_MESSAGE);
+
   const contactCfg = (defaultValues as any)?.contact_config as ContactConfig | null;
   const [contactHeading, setContactHeading] = useState(contactCfg?.heading ?? "Get in Touch");
   const [contactSubheading, setContactSubheading] = useState(contactCfg?.subheading ?? "I'd like to hear from you!");
@@ -313,6 +320,12 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         restocking_fee_percent: restockingFeePercent,
         restocking_fee_disclaimer: restockingFeeDisclaimer,
         processing_fee_flat: processingFeeFlat,
+      },
+      surcharge_config: {
+        surcharge_active: surchargeActive,
+        surcharge_percent: surchargePercent,
+        surcharge_min_order: surchargeMinOrder,
+        surcharge_message: surchargeMessage,
       },
       about_config: {
         heading1: aboutHeading1,
@@ -863,6 +876,78 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           </label>
           {(!restockingFeeDisclaimer.trim() || restockingFeePercent <= 0) && (
             <p className="text-xs text-gray-400 -mt-2">Fill in both the percentage and disclaimer text above to enable.</p>
+          )}
+        </div>
+      </Section>
+
+      <Section title="Surcharge">
+        <p className="text-sm text-gray-500">
+          Optionally add a credit card processing surcharge to orders. When enabled, the surcharge is added as a line item on the Stripe checkout page and shown in all order summaries and emails.
+        </p>
+
+        <div className="space-y-4 border-t border-gray-100 pt-4">
+          <div>
+            <Label htmlFor="surcharge_percent">Surcharge %</Label>
+            <div className="mt-1 flex items-center gap-2">
+              <input
+                id="surcharge_percent"
+                type="number"
+                min={0}
+                max={10}
+                step={0.01}
+                value={surchargePercent}
+                onChange={(e) => {
+                  const v = Math.max(0, Math.min(10, parseFloat(e.target.value) || 0));
+                  setSurchargePercent(v);
+                  if (surchargeActive && v <= 0) setSurchargeActive(false);
+                }}
+                className="w-24 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              />
+              <span className="text-sm text-gray-500">% (max 4% recommended; varies by state)</span>
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="surcharge_min_order">Minimum Order Amount <span className="text-gray-400 font-normal">(0 = apply to all orders)</span></Label>
+            <div className="mt-1 flex items-center gap-2">
+              <span className="text-sm text-gray-500">$</span>
+              <input
+                id="surcharge_min_order"
+                type="number"
+                min={0}
+                step={0.01}
+                value={surchargeMinOrder}
+                onChange={(e) => setSurchargeMinOrder(Math.max(0, parseFloat(e.target.value) || 0))}
+                className="w-24 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+              />
+            </div>
+          </div>
+
+          <div>
+            <Label htmlFor="surcharge_message">Customer Notice</Label>
+            <Textarea
+              id="surcharge_message"
+              value={surchargeMessage}
+              onChange={(e) => setSurchargeMessage(e.target.value)}
+              placeholder={DEFAULT_SURCHARGE_MESSAGE}
+              rows={3}
+              className="mt-1"
+            />
+            <p className="text-xs text-gray-400 mt-1">Shown to customers before they enter payment info.</p>
+          </div>
+
+          <label className={`flex items-center gap-3 w-fit ${surchargePercent <= 0 ? "opacity-40 cursor-not-allowed" : "cursor-pointer"}`}>
+            <input
+              type="checkbox"
+              checked={surchargeActive}
+              disabled={surchargePercent <= 0}
+              onChange={(e) => setSurchargeActive(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500 disabled:opacity-50"
+            />
+            <span className="text-sm font-medium text-gray-700">Enable surcharge on checkout</span>
+          </label>
+          {surchargePercent <= 0 && (
+            <p className="text-xs text-gray-400 -mt-2">Enter a surcharge percentage above to enable.</p>
           )}
         </div>
       </Section>

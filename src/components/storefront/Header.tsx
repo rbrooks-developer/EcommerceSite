@@ -1,7 +1,7 @@
+/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
-import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, ShoppingCart, CircleUser, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -59,7 +59,7 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
             pointerEvents: "none",
             backgroundImage: `url(${striationImageUrl})`,
             backgroundAttachment: "fixed",
-            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "tile" ? "auto" : "auto 100%",
+            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
             backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
             backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
             opacity: striationOpacity / 100,
@@ -72,13 +72,10 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
         <div className="flex h-16 items-center justify-between pt-2">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg" style={{ color: fontColor }}>
             {logoUrl ? (
-              <Image
+              <img
                 src={logoUrl}
                 alt={siteTitle}
-                width={48}
-                height={48}
-                className="object-contain"
-                style={logoSpin ? { animation: "logo-spin-3d 3s linear infinite" } : undefined}
+                style={{ height: "48px", width: "auto", ...(logoSpin ? { animation: "logo-spin-3d 3s linear infinite" } : {}) }}
               />
             ) : (
               siteTitle

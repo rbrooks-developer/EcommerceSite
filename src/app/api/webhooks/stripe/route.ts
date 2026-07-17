@@ -256,6 +256,8 @@ export async function POST(request: NextRequest) {
           promoCode: (order as any).promo_code ?? null,
           discountAmount: Number((order as any).discount_amount ?? 0),
           shippingDiscount: Number((order as any).shipping_discount ?? 0),
+          surchargeAmount: Number((order as any).surcharge_amount ?? 0) || undefined,
+          surchargePercentage: Number((order as any).surcharge_percentage ?? 0) || undefined,
         }).then(() => console.log("[webhook] confirmation email sent successfully"))
           .catch((err) => console.error("[webhook] failed to send confirmation email:", err.message, err));
       }

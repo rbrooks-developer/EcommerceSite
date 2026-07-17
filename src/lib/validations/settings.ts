@@ -82,6 +82,7 @@ export const siteSettingsSchema = z.object({
     striation_opacity: z.number().min(0).max(100).default(30),
     striation_blend_mode: z.string().default("screen"),
     striation_position: z.string().default("full"),
+    hero_template: z.enum(["founder-and-creator", "widescreen"]).default("founder-and-creator"),
     carousel: carouselConfigSchema.optional(),
   }),
   nav_config: z.object({
@@ -114,6 +115,12 @@ export const siteSettingsSchema = z.object({
     restocking_fee_percent: z.number().min(0).max(100).default(0),
     restocking_fee_disclaimer: z.string().default(""),
     processing_fee_flat: z.number().min(0).default(0),
+  }).optional(),
+  surcharge_config: z.object({
+    surcharge_active: z.boolean().default(false),
+    surcharge_percent: z.number().min(0).max(10).default(0),
+    surcharge_min_order: z.number().min(0).default(0),
+    surcharge_message: z.string().default("A processing surcharge may apply to certain credit card payments. If applicable, it will be calculated and displayed in your order summary before you place your order."),
   }).optional(),
   about_config: z.object({
     heading1: z.string().default("About Us"),

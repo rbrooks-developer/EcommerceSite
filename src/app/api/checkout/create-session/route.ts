@@ -6,7 +6,7 @@ import { getSettings } from "@/lib/data/settings";
 import { resolveShippingProtection } from "@/lib/easypost/protection";
 import { validatePromoCode } from "@/lib/promos/validate";
 import { calculatePromoDiscount } from "@/lib/promos/calculate";
-import type { Product } from "@/types";
+import type { Product, SurchargeConfig } from "@/types";
 
 const requestSchema = z.object({
   items: z.array(
@@ -163,7 +163,19 @@ export async function POST(request: NextRequest) {
     taxAmount = discountedSubtotal * (taxFlatRate / 100);
   }
 
-  const totalPrice = discountedSubtotal + effectiveShipping + taxAmount;
+  // Surcharge on discounted subtotal (excluding shipping and tax)
+  const surchargeCfg = (settings as any)?.surcharge_config as SurchargeConfig | null;
+  let surchargeAmount = 0;
+  let surchargePercentage = 0;
+  if (surchargeCfg?.surcharge_active && (surchargeCfg.surcharge_percent ?? 0) > 0) {
+    const minOrder = surchargeCfg.surcharge_min_order ?? 0;
+    if (minOrder === 0 || discountedSubtotal >= minOrder) {
+      surchargePercentage = Math.min(surchargeCfg.surcharge_percent, 4);
+      surchargeAmount = Math.round(discountedSubtotal * surchargePercentage / 100 * 100) / 100;
+    }
+  }
+
+  const totalPrice = discountedSubtotal + effectiveShipping + taxAmount + surchargeAmount;
 
   // Create pending order in DB
   const { data: orderData, error: orderError } = await supabase
@@ -182,6 +194,8 @@ export async function POST(request: NextRequest) {
       selected_shipping_rate: shippingRate,
       insurance_required: insuranceRequired,
       signature_required: signatureRequired,
+      surcharge_amount: surchargeAmount,
+      surcharge_percentage: surchargePercentage,
       shipping_name: shippingAddress.name,
       shipping_address_line1: shippingAddress.address_line1,
       shipping_address_line2: shippingAddress.address_line2 ?? null,
@@ -284,6 +298,17 @@ export async function POST(request: NextRequest) {
         currency: "usd",
         product_data: { name: `Tax (${taxFlatRate}%)` },
         unit_amount: Math.round(taxAmount * 100),
+      },
+      quantity: 1,
+    });
+  }
+
+  if (surchargeAmount > 0) {
+    lineItems.push({
+      price_data: {
+        currency: "usd",
+        product_data: { name: `Surcharge (${surchargePercentage}%)` },
+        unit_amount: Math.round(surchargeAmount * 100),
       },
       quantity: 1,
     });

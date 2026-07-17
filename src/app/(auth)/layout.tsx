@@ -40,7 +40,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             zIndex: 45,
             pointerEvents: "none",
             backgroundImage: `url(${striationImageUrl})`,
-            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "tile" ? "auto" : "auto 100%",
+            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
             backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
             backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
             opacity: striationOpacity / 100,
