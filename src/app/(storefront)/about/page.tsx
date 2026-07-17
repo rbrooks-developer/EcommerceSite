@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { getSettings } from "@/lib/data/settings";
 import type { HomepageConfig, AboutConfig } from "@/types";
 
@@ -40,12 +41,13 @@ export default async function AboutPage() {
                 )}
               </div>
               {about?.image1_url && (
-                <div className="flex-1 w-full relative z-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div className="flex-1 w-full relative z-50 h-52 md:h-60">
+                  <Image
                     src={about.image1_url}
                     alt={about.heading1 ?? "About us"}
-                    className="w-full h-52 md:h-60 object-cover rounded-xl"
+                    fill
+                    className="object-cover rounded-xl"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
               )}
@@ -56,12 +58,13 @@ export default async function AboutPage() {
           {hasBlock2 && (
             <div className="flex flex-col md:flex-row items-center gap-6 md:gap-10">
               {about?.image2_url && (
-                <div className="flex-1 w-full order-2 md:order-1 relative z-50">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
+                <div className="flex-1 w-full order-2 md:order-1 relative z-50 h-52 md:h-60">
+                  <Image
                     src={about.image2_url}
                     alt={about.heading2 ?? "Our mission"}
-                    className="w-full h-52 md:h-60 object-cover rounded-xl"
+                    fill
+                    className="object-cover rounded-xl"
+                    sizes="(max-width: 768px) 100vw, 50vw"
                   />
                 </div>
               )}
