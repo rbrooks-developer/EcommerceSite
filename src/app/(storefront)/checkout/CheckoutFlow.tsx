@@ -44,10 +44,12 @@ const stripeAppearance = {
     },
     ".Input--invalid": { border: "1.5px solid #dc2626" },
     ".Label": { fontWeight: "500", color: "#374151", marginBottom: "6px" },
-    ".Tab": { border: "1.5px solid #e5e7eb", boxShadow: "none" },
+    ".Tab": { border: "1.5px solid #e5e7eb", boxShadow: "none", padding: "10px 16px", minHeight: "52px" },
     ".Tab:hover": { borderColor: "#d1d5db", backgroundColor: "#f9fafb" },
     ".Tab--selected": { border: "1.5px solid #18181b", backgroundColor: "#f9fafb" },
     ".Tab--selected:hover": { backgroundColor: "#f3f4f6" },
+    ".TabIcon": { height: "24px" },
+    ".TabIcon--selected": { height: "24px" },
     ".Block": { border: "1.5px solid #e5e7eb" },
   },
 };
