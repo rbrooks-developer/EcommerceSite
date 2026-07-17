@@ -1,5 +1,6 @@
 import React from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { SiInstagram, SiYoutube, SiTiktok, SiFacebook, SiX, SiEbay } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
 import type { FooterConfig, ContactInfo } from "@/types";
@@ -37,12 +38,11 @@ export function Footer({
           {/* Logo */}
           <Link href="/" aria-label={`${siteTitle} — home`}>
             {logoUrl ? (
-              // eslint-disable-next-line @next/next/no-img-element
-              <img
+              <Image
                 src={logoUrl}
                 alt={siteTitle}
-                loading="lazy"
-                decoding="async"
+                width={200}
+                height={64}
                 className="h-16 w-auto opacity-90 hover:opacity-100 transition-opacity"
                 style={logoSpin ? { animation: "logo-spin-3d 3s linear infinite" } : undefined}
               />

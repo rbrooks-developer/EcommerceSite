@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -127,10 +128,9 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
           {items.map((item) => (
             <li key={item.id} className="flex items-center gap-4 px-5 py-4">
               {((item.products?.images as string[]) ?? [])[0] ? (
-                <div
-                  className="h-12 w-12 rounded-md bg-cover bg-center shrink-0"
-                  style={{ backgroundImage: `url(${((item.products!.images as string[]))[0]})` }}
-                />
+                <div className="relative h-12 w-12 rounded-md overflow-hidden shrink-0">
+                  <Image src={((item.products!.images as string[]))[0]} alt="" fill className="object-cover" sizes="48px" />
+                </div>
               ) : (
                 <div className="h-12 w-12 rounded-md bg-gray-100 shrink-0" />
               )}

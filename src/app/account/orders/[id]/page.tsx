@@ -1,3 +1,4 @@
+import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
@@ -95,10 +96,9 @@ export default async function AccountOrderPage({
             return (
               <li key={item.id} className="flex items-center gap-4 px-5 py-4">
                 {image ? (
-                  <div
-                    className="h-14 w-14 rounded-md bg-cover bg-center shrink-0 bg-gray-100"
-                    style={{ backgroundImage: `url(${image})` }}
-                  />
+                  <div className="relative h-14 w-14 rounded-md overflow-hidden shrink-0 bg-gray-100">
+                    <Image src={image} alt="" fill className="object-cover" sizes="56px" />
+                  </div>
                 ) : (
                   <div className="h-14 w-14 rounded-md bg-gray-100 shrink-0" />
                 )}

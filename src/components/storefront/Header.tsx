@@ -1,7 +1,7 @@
-/* eslint-disable @next/next/no-img-element */
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, ShoppingCart, CircleUser, UserRound } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -51,30 +51,53 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
       style={{ backgroundColor: bgColor, color: fontColor }}
     >
       {striationImageUrl && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: "absolute",
-            inset: 0,
-            pointerEvents: "none",
-            backgroundImage: `url(${striationImageUrl})`,
-            backgroundAttachment: "fixed",
-            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
-            backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
-            backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
-            opacity: striationOpacity / 100,
-            mixBlendMode: striationBlendMode,
-          }}
-        />
+        striationPosition === "tile" ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              backgroundImage: `url(${striationImageUrl})`,
+              backgroundSize: "auto",
+              backgroundRepeat: "repeat",
+              opacity: striationOpacity / 100,
+              mixBlendMode: striationBlendMode,
+            }}
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "absolute",
+              inset: 0,
+              pointerEvents: "none",
+              opacity: striationOpacity / 100,
+              mixBlendMode: striationBlendMode,
+            }}
+          >
+            <Image
+              src={striationImageUrl}
+              alt=""
+              fill
+              style={{
+                objectFit: striationPosition === "stretch" ? "fill" : striationPosition === "contain" ? "contain" : "cover",
+                objectPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
+              }}
+            />
+          </div>
+        )
       )}
       <div style={{ position: "relative" }}>
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
         <div className="flex h-16 items-center justify-between pt-2">
           <Link href="/" className="flex items-center gap-2 font-bold text-lg" style={{ color: fontColor }}>
             {logoUrl ? (
-              <img
+              <Image
                 src={logoUrl}
                 alt={siteTitle}
+                width={200}
+                height={48}
                 style={{ height: "48px", width: "auto", ...(logoSpin ? { animation: "logo-spin-3d 3s linear infinite" } : {}) }}
               />
             ) : (
@@ -118,10 +141,11 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
               {isLoggedIn ? (
                 <span className="relative inline-flex">
                   {avatarUrl ? (
-                    // eslint-disable-next-line @next/next/no-img-element
-                    <img
+                    <Image
                       src={avatarUrl}
                       alt="My account"
+                      width={40}
+                      height={40}
                       className="h-10 w-10 rounded-full object-cover"
                       style={{ border: `2px solid ${fontColor}` }}
                     />

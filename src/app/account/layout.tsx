@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Header } from "@/components/storefront/Header";
 import { Footer } from "@/components/storefront/Footer";
 import { CartProvider } from "@/lib/cart/store";
 import { getSettings } from "@/lib/data/settings";
+import { getCachedUserSidebarData } from "@/lib/data/users";
 import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
 import { checkSitePassword } from "@/lib/sitePasswordGate";
@@ -17,14 +19,10 @@ export default async function AccountLayout({ children }: { children: React.Reac
   await checkSitePassword(settings);
   const { data: { user } } = await supabase.auth.getUser();
 
-  const [profileResult, approvedOffersResult] = await Promise.all([
-    user ? supabase.from("profiles").select("role, avatar_url").eq("id", user.id).maybeSingle() : Promise.resolve({ data: null }),
-    user ? supabase.from("product_offers").select("*", { count: "exact", head: true }).eq("user_id", user.id).in("status", ["approved", "countered"]) : Promise.resolve({ count: 0 }),
-  ]);
-
-  const isAdmin = ((profileResult.data as { role: string } | null)?.role === "admin");
-  const avatarUrl = (profileResult.data as { avatar_url?: string | null } | null)?.avatar_url ?? null;
-  const approvedOffersCount = approvedOffersResult.count ?? 0;
+  const sidebarData = user ? await getCachedUserSidebarData(user.id) : null;
+  const isAdmin = sidebarData?.role === "admin";
+  const avatarUrl = sidebarData?.avatarUrl ?? null;
+  const approvedOffersCount = sidebarData?.approvedOffersCount ?? 0;
 
   const homepage = settings?.homepage_config as HomepageConfig | null;
   const bgColor = homepage?.bg_color ?? "#ffffff";
@@ -37,21 +35,45 @@ export default async function AccountLayout({ children }: { children: React.Reac
   return (
     <CartProvider userId={user?.id}>
       {striationImageUrl && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 45,
-            pointerEvents: "none",
-            backgroundImage: `url(${striationImageUrl})`,
-            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
-            backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
-            backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
-            opacity: striationOpacity / 100,
-            mixBlendMode: striationBlendMode,
-          }}
-        />
+        striationPosition === "tile" ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 45,
+              pointerEvents: "none",
+              backgroundImage: `url(${striationImageUrl})`,
+              backgroundSize: "auto",
+              backgroundRepeat: "repeat",
+              opacity: striationOpacity / 100,
+              mixBlendMode: striationBlendMode,
+            }}
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 45,
+              pointerEvents: "none",
+              opacity: striationOpacity / 100,
+              mixBlendMode: striationBlendMode,
+            }}
+          >
+            <Image
+              src={striationImageUrl}
+              alt=""
+              fill
+              priority
+              style={{
+                objectFit: striationPosition === "stretch" ? "fill" : striationPosition === "contain" ? "contain" : "cover",
+                objectPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
+              }}
+            />
+          </div>
+        )
       )}
       <Header
         siteTitle={settings?.site_title ?? "My Store"}

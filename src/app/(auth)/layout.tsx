@@ -1,8 +1,10 @@
 import type { Metadata } from "next";
+import Image from "next/image";
 import { Header } from "@/components/storefront/Header";
 import { Footer } from "@/components/storefront/Footer";
 import { CartProvider } from "@/lib/cart/store";
 import { getSettings } from "@/lib/data/settings";
+import { getCachedUserSidebarData } from "@/lib/data/users";
 import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
 import { checkSitePassword } from "@/lib/sitePasswordGate";
@@ -16,10 +18,8 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   await checkSitePassword(settings);
   const { data: { user } } = await supabase.auth.getUser();
 
-  const isAdmin = user
-    ? ((await supabase.from("profiles").select("role").eq("id", user.id).maybeSingle())
-        .data as { role: string } | null)?.role === "admin"
-    : false;
+  const sidebarData = user ? await getCachedUserSidebarData(user.id) : null;
+  const isAdmin = sidebarData?.role === "admin";
 
   const homepage = settings?.homepage_config as HomepageConfig | null;
   const bgColor = homepage?.bg_color ?? "#ffffff";
@@ -32,21 +32,45 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
   return (
     <CartProvider userId={user?.id}>
       {striationImageUrl && (
-        <div
-          aria-hidden="true"
-          style={{
-            position: "fixed",
-            inset: 0,
-            zIndex: 45,
-            pointerEvents: "none",
-            backgroundImage: `url(${striationImageUrl})`,
-            backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
-            backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
-            backgroundRepeat: striationPosition === "tile" ? "repeat" : "no-repeat",
-            opacity: striationOpacity / 100,
-            mixBlendMode: striationBlendMode,
-          }}
-        />
+        striationPosition === "tile" ? (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 45,
+              pointerEvents: "none",
+              backgroundImage: `url(${striationImageUrl})`,
+              backgroundSize: "auto",
+              backgroundRepeat: "repeat",
+              opacity: striationOpacity / 100,
+              mixBlendMode: striationBlendMode,
+            }}
+          />
+        ) : (
+          <div
+            aria-hidden="true"
+            style={{
+              position: "fixed",
+              inset: 0,
+              zIndex: 45,
+              pointerEvents: "none",
+              opacity: striationOpacity / 100,
+              mixBlendMode: striationBlendMode,
+            }}
+          >
+            <Image
+              src={striationImageUrl}
+              alt=""
+              fill
+              priority
+              style={{
+                objectFit: striationPosition === "stretch" ? "fill" : striationPosition === "contain" ? "contain" : "cover",
+                objectPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
+              }}
+            />
+          </div>
+        )
       )}
       <Header
         siteTitle={settings?.site_title ?? "My Store"}
