@@ -47,26 +47,34 @@ export async function POST(request: NextRequest) {
   const { items, shippingAddress, shippingRate } = parsed.data;
 
   const productIds = items.map((i) => i.productId);
-  const { data: rawProducts } = await supabase
-    .from("products")
-    .select("id, name, price, images, inventory, is_published")
-    .in("id", productIds);
-
-  const products = (rawProducts ?? []) as Pick<Product, "id" | "name" | "price" | "images" | "inventory" | "is_published">[];
-
   const offerIds = items.map((i) => i.offerId).filter(Boolean) as string[];
-  type OfferRow = { id: string; user_id: string; product_id: string; quantity: number; offer_price: number; status: string };
-  let offerMap: Record<string, OfferRow> = {};
+  const sb = createServiceClient();
+  const stripe = getStripeClient();
 
-  if (offerIds.length > 0) {
-    const { data: rawOffers } = await supabase
-      .from("product_offers")
-      .select("id, user_id, product_id, quantity, offer_price, status")
-      .in("id", offerIds)
-      .eq("user_id", user.id)
-      .eq("status", "approved");
-    offerMap = Object.fromEntries(((rawOffers ?? []) as OfferRow[]).map((o) => [o.id, o]));
-  }
+  // Fetch everything in parallel
+  const [
+    { data: rawProducts },
+    { data: rawOffers },
+    { data: cartPromo },
+    settings,
+    { data: pendingOrders },
+  ] = await Promise.all([
+    supabase.from("products").select("id, name, price, images, inventory, is_published").in("id", productIds),
+    offerIds.length > 0
+      ? supabase.from("product_offers").select("id, user_id, product_id, quantity, offer_price, status")
+          .in("id", offerIds).eq("user_id", user.id).eq("status", "approved")
+      : Promise.resolve({ data: [] }),
+    sb.from("cart_promos").select("promo_code").eq("user_id", user.id).maybeSingle(),
+    getSettings(),
+    supabase.from("orders").select("id, stripe_payment_intent_id")
+      .eq("user_id", user.id).eq("status", "pending").not("stripe_payment_intent_id", "is", null),
+  ]);
+
+  type OfferRow = { id: string; user_id: string; product_id: string; quantity: number; offer_price: number; status: string };
+  const products = (rawProducts ?? []) as Pick<Product, "id" | "name" | "price" | "images" | "inventory" | "is_published">[];
+  const offerMap: Record<string, OfferRow> = Object.fromEntries(
+    ((rawOffers ?? []) as OfferRow[]).map((o) => [o.id, o])
+  );
 
   for (const item of items) {
     const product = products.find((p) => p.id === item.productId);
@@ -83,13 +91,11 @@ export async function POST(request: NextRequest) {
   const subtotal = items.reduce((sum, item) => sum + resolvePrice(item) * item.quantity, 0);
   const shippingCost = parseFloat(shippingRate.rate);
 
-  const sb = createServiceClient();
   let promoCode: string | null = null;
   let promoId: string | null = null;
   let discountAmount = 0;
   let shippingDiscount = 0;
 
-  const { data: cartPromo } = await sb.from("cart_promos").select("promo_code").eq("user_id", user.id).maybeSingle();
   if (cartPromo) {
     const promoResult = await validatePromoCode(sb, (cartPromo as { promo_code: string }).promo_code, user.id, subtotal);
     if (promoResult.valid) {
@@ -104,8 +110,6 @@ export async function POST(request: NextRequest) {
 
   const discountedSubtotal = subtotal - discountAmount;
   const effectiveShipping = shippingCost - shippingDiscount;
-
-  const settings = await getSettings();
   const taxMode = settings?.tax_mode ?? "none";
   const taxFlatRate = Number(settings?.tax_flat_rate ?? 0);
   const { insuranceRequired, signatureRequired } = resolveShippingProtection(subtotal, settings);
@@ -118,21 +122,15 @@ export async function POST(request: NextRequest) {
   // Total WITHOUT surcharge — deferred until card type is known after Payment Element
   const totalPrice = discountedSubtotal + effectiveShipping + taxAmount;
 
-  // Cancel any abandoned pending PaymentIntent orders for this user
-  const stripe = getStripeClient();
-  const { data: pendingOrders } = await supabase
-    .from("orders")
-    .select("id, stripe_payment_intent_id")
-    .eq("user_id", user.id)
-    .eq("status", "pending")
-    .not("stripe_payment_intent_id", "is", null);
-
+  // Cancel stale pending orders: mark DB immediately, fire-and-forget the Stripe cancellations
   if (pendingOrders && pendingOrders.length > 0) {
-    await Promise.all(
-      (pendingOrders as { id: string; stripe_payment_intent_id: string }[]).map(async (o) => {
-        try { await stripe.paymentIntents.cancel(o.stripe_payment_intent_id); } catch {}
-        await supabase.from("orders").update({ status: "cancelled" }).eq("id", o.id);
-      })
+    const oldIds = (pendingOrders as { id: string; stripe_payment_intent_id: string }[]).map((o) => o.id);
+    await supabase.from("orders").update({ status: "cancelled" }).in("id", oldIds);
+    // Stripe cancellations don't need to block the user — fire and forget
+    Promise.all(
+      (pendingOrders as { id: string; stripe_payment_intent_id: string }[]).map((o) =>
+        stripe.paymentIntents.cancel(o.stripe_payment_intent_id).catch(() => {})
+      )
     );
   }
 
@@ -171,20 +169,12 @@ export async function POST(request: NextRequest) {
   }
 
   const orderId = (orderData as { id: string }).id;
-
-  await supabase.from("order_items").insert(
-    items.map((item) => ({
-      order_id: orderId,
-      product_id: item.productId,
-      quantity: item.quantity,
-      price: resolvePrice(item),
-    }))
-  );
-
   const resolvedOfferIds = items.map((i) => i.offerId).filter((id): id is string => !!id && !!offerMap[id]);
 
+  // Create Stripe PI (the slow external call)
+  let intent: Awaited<ReturnType<typeof stripe.paymentIntents.create>>;
   try {
-    const intent = await stripe.paymentIntents.create({
+    intent = await stripe.paymentIntents.create({
       amount: Math.round(totalPrice * 100),
       currency: "usd",
       automatic_payment_methods: { enabled: true },
@@ -194,13 +184,24 @@ export async function POST(request: NextRequest) {
         ...(resolvedOfferIds.length > 0 ? { offer_ids: resolvedOfferIds.join(",") } : {}),
       },
     });
-
-    await supabase.from("orders").update({ stripe_payment_intent_id: intent.id }).eq("id", orderId);
-
-    return Response.json({ clientSecret: intent.client_secret, orderId, totalPrice });
   } catch (err: any) {
     console.error("Stripe error:", err);
     await supabase.from("orders").delete().eq("id", orderId);
     return Response.json({ error: err?.message ?? "Failed to create payment intent" }, { status: 502 });
   }
+
+  // Persist order_items and PI id in parallel (both needed for fulfillment + refund webhook)
+  await Promise.all([
+    supabase.from("order_items").insert(
+      items.map((item) => ({
+        order_id: orderId,
+        product_id: item.productId,
+        quantity: item.quantity,
+        price: resolvePrice(item),
+      }))
+    ),
+    supabase.from("orders").update({ stripe_payment_intent_id: intent.id }).eq("id", orderId),
+  ]);
+
+  return Response.json({ clientSecret: intent.client_secret, orderId, totalPrice });
 }

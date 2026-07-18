@@ -419,6 +419,9 @@ export function CheckoutFlow({
   const [billLoading, setBillLoading] = useState(false);
   const [billError, setBillError] = useState<string | null>(null);
 
+  // Address used for the last successful rate fetch (to skip re-calc when nothing changed)
+  const [ratesForAddress, setRatesForAddress] = useState<ShippingAddress | null>(null);
+
   // Section 3 — Shipping Method
   const [rates, setRates] = useState<EasyPostRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<EasyPostRate | null>(null);
@@ -507,10 +510,30 @@ export function CheckoutFlow({
   }
 
   // ── Section 1: Continue to Billing ──────────────────────────────────────────
-  // Validates address, fetches shipping rates (shows error if fails), then advances
+  // Validates address, fetches shipping rates (shows error if fails), then advances.
+  // Skips rate re-fetch if the shipping-relevant fields haven't changed since last fetch.
+
+  function shippingFieldsChanged(a: ShippingAddress, b: ShippingAddress) {
+    return (
+      a.address_line1 !== b.address_line1 ||
+      (a.address_line2 ?? "") !== (b.address_line2 ?? "") ||
+      a.city !== b.city ||
+      a.state !== b.state ||
+      a.zip !== b.zip ||
+      a.country !== b.country
+    );
+  }
 
   async function continueFromAddress() {
     if (!validateAddr(address, setAddrErrors)) return;
+
+    // If nothing changed since the last successful rate fetch, just advance
+    if (ratesForAddress && !shippingFieldsChanged(address, ratesForAddress) && rates.length > 0 && selectedRate) {
+      if (sameAsShipping) setBillingAddress(address);
+      setPhase("billing");
+      return;
+    }
+
     setAddrLoading(true);
     setAddrError(null);
     try {
@@ -536,10 +559,10 @@ export function CheckoutFlow({
       if (sorted.length === 0) throw new Error("No shipping options available for this address.");
       setRates(sorted);
       setSelectedRate(sorted[0]);
+      setRatesForAddress(address);
       setInsuranceRequired(!!data.insuranceRequired);
       setSignatureRequired(!!data.signatureRequired);
       setInsuranceFee(parseFloat(data.insuranceFee ?? "0"));
-      // sync billing if same-as-shipping is checked
       if (sameAsShipping) setBillingAddress(address);
       setPhase("billing");
     } catch (err: any) {
@@ -557,14 +580,6 @@ export function CheckoutFlow({
     setBillLoading(true);
     setBillError(null);
     try {
-      const { valid, issues } = await validateAndSyncCart();
-      if (!valid) {
-        await reloadCart();
-        setBillError(issues.map(i =>
-          i.issue === "removed" ? `"${i.name}" is no longer available.` : `"${i.name}" reduced to qty ${i.newQuantity}.`
-        ).join(" "));
-        return;
-      }
       const res = await fetch("/api/checkout/create-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -630,6 +645,7 @@ export function CheckoutFlow({
     setShippingEditOpen(false);
     setRates([]);
     setSelectedRate(null);
+    setRatesForAddress(null);
     setClientSecret(null);
     setOrderIdForPayment(null);
     setBaseTotal(0);
