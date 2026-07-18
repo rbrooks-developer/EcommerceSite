@@ -38,7 +38,7 @@ const stripeAppearance = {
     ".Input:focus": { border: "1.5px solid #18181b", boxShadow: "0 0 0 2px rgba(24,24,27,0.08)", outline: "none" },
     ".Input--invalid": { border: "1.5px solid #dc2626" },
     ".Label": { fontWeight: "500", color: "#374151", marginBottom: "6px" },
-    ".Tab": { border: "1.5px solid #e5e7eb", boxShadow: "none", padding: "10px 16px", minHeight: "52px" },
+    ".Tab": { border: "1.5px solid #e5e7eb", boxShadow: "none", padding: "10px 16px", minHeight: "52px", flex: "1" },
     ".Tab:hover": { borderColor: "#d1d5db", backgroundColor: "#f9fafb" },
     ".Tab--selected": { border: "1.5px solid #18181b", backgroundColor: "#f9fafb" },
     ".Tab--selected:hover": { backgroundColor: "#f3f4f6" },
@@ -706,6 +706,115 @@ export function CheckoutFlow({
     );
   }
 
+  // ── Order summary card (rendered in two places: mobile inline + desktop sidebar) ──
+
+  const orderSummaryCard = (
+    <div style={cardStyle} className="overflow-hidden">
+      <div className="px-5 py-4">
+        <h3 className="font-bold text-sm tracking-wide">Order Summary</h3>
+      </div>
+
+      {/* Items */}
+      <div className="px-5 pb-4 space-y-3" style={{ borderTop: divider, paddingTop: "16px" }}>
+        {items.map(item => (
+          <div key={item.productId} className="flex gap-3 items-start">
+            {item.image && (
+              <div className="h-12 w-12 shrink-0 rounded-lg"
+                style={{ backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center", backgroundColor: mix(8) }} />
+            )}
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-medium leading-snug" style={{ opacity: 0.85 }}>{item.name}</p>
+              <p className="text-xs mt-0.5" style={{ opacity: 0.4 }}>Qty {item.quantity}</p>
+            </div>
+            <span className="text-xs font-semibold shrink-0 mt-0.5">{formatPrice(item.price * item.quantity * 100)}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Promo */}
+      <div className="px-5 py-4 space-y-2" style={{ borderTop: divider }}>
+        {appliedPromo ? (
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-1.5">
+              <Tag className="h-3.5 w-3.5 text-green-500 shrink-0" />
+              <span className="text-xs font-semibold text-green-600 dark:text-green-400">{appliedPromo.code} applied</span>
+            </div>
+            <button onClick={handleRemovePromo} disabled={promoLoading}
+              className="flex items-center gap-0.5 text-xs transition-opacity hover:opacity-100" style={{ opacity: 0.4 }}>
+              <X className="h-3 w-3" /> Remove
+            </button>
+          </div>
+        ) : (
+          <div className="space-y-1.5">
+            <div className="flex gap-2">
+              <input type="text" value={promoInput}
+                onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                onKeyDown={e => e.key === "Enter" && handleApplyPromo()}
+                placeholder="Promo code"
+                className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-current"
+                style={inputStyle} />
+              <button onClick={handleApplyPromo} disabled={promoLoading || !promoInput.trim()}
+                className="rounded-lg px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-80 disabled:opacity-35 flex items-center gap-1"
+                style={btnPrimary}>
+                {promoLoading ? <Spinner className="h-3 w-3" /> : "Apply"}
+              </button>
+            </div>
+            {promoError && <p className="text-xs text-red-400">{promoError}</p>}
+          </div>
+        )}
+      </div>
+
+      {/* Price breakdown */}
+      <div className="px-5 pb-5 space-y-2" style={{ borderTop: divider, paddingTop: "16px" }}>
+        <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
+          <span>Subtotal</span>
+          <span>{formatPrice(subtotal * 100)}</span>
+        </div>
+        {d && d.discountAmount > 0 && (
+          <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+            <span>Promo ({appliedPromo!.code})</span>
+            <span>−{formatPrice(d.discountAmount * 100)}</span>
+          </div>
+        )}
+        {selectedRate && (
+          <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
+            <span>Shipping</span>
+            <span>
+              {displayBaseShipping === 0 && shippingDiscountApplied > 0
+                ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                : formatPrice(displayBaseShipping * 100)
+              }
+            </span>
+          </div>
+        )}
+        {insuranceFee > 0 && (
+          <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
+            <span>Insurance</span>
+            <span>{displayInsurance === 0
+              ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+              : formatPrice(displayInsurance * 100)}
+            </span>
+          </div>
+        )}
+        {actualSurcharge ? (
+          <div className="flex justify-between text-sm text-green-700 dark:text-green-400">
+            <span>Surcharge ({actualSurcharge.percent}%)</span>
+            <span>+{formatPrice(actualSurcharge.amount * 100)}</span>
+          </div>
+        ) : estimatedSurcharge > 0 && phase === "payment" ? (
+          <div className="flex justify-between text-sm" style={{ opacity: 0.4 }}>
+            <span>Surcharge (credit card only)</span>
+            <span>~{formatPrice(estimatedSurcharge * 100)}</span>
+          </div>
+        ) : null}
+        <div className="flex justify-between font-bold text-base pt-2.5" style={{ borderTop: divider }}>
+          <span>Total</span>
+          <span>{formatPrice(Math.max(0, displayedTotal) * 100)}</span>
+        </div>
+      </div>
+    </div>
+  );
+
   // ── Render ───────────────────────────────────────────────────────────────────
 
   return (
@@ -835,6 +944,9 @@ export function CheckoutFlow({
               </button>
             </Section>
 
+            {/* Order summary — mobile only, sits between shipping method and payment */}
+            <div className="block lg:hidden">{orderSummaryCard}</div>
+
             {/* 4 — Payment */}
             <Section num={4} title="Payment" state={s4}>
               {checkoutConfig?.restocking_fee_active && checkoutConfig.restocking_fee_disclaimer && (
@@ -868,112 +980,9 @@ export function CheckoutFlow({
 
           </div>
 
-          {/* ── Right: Order Summary ─────────────────────────────── */}
-          <div className="w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-6">
-            <div style={cardStyle} className="overflow-hidden">
-              <div className="px-5 py-4">
-                <h3 className="font-bold text-sm tracking-wide">Order Summary</h3>
-              </div>
-
-              {/* Items */}
-              <div className="px-5 pb-4 space-y-3" style={{ borderTop: divider, paddingTop: "16px" }}>
-                {items.map(item => (
-                  <div key={item.productId} className="flex gap-3 items-start">
-                    {item.image && (
-                      <div className="h-12 w-12 shrink-0 rounded-lg"
-                        style={{ backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center", backgroundColor: mix(8) }} />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium leading-snug" style={{ opacity: 0.85 }}>{item.name}</p>
-                      <p className="text-xs mt-0.5" style={{ opacity: 0.4 }}>Qty {item.quantity}</p>
-                    </div>
-                    <span className="text-xs font-semibold shrink-0 mt-0.5">{formatPrice(item.price * item.quantity * 100)}</span>
-                  </div>
-                ))}
-              </div>
-
-              {/* Promo */}
-              <div className="px-5 py-4 space-y-2" style={{ borderTop: divider }}>
-                {appliedPromo ? (
-                  <div className="flex items-center justify-between gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <Tag className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                      <span className="text-xs font-semibold text-green-600 dark:text-green-400">{appliedPromo.code} applied</span>
-                    </div>
-                    <button onClick={handleRemovePromo} disabled={promoLoading}
-                      className="flex items-center gap-0.5 text-xs transition-opacity hover:opacity-100" style={{ opacity: 0.4 }}>
-                      <X className="h-3 w-3" /> Remove
-                    </button>
-                  </div>
-                ) : (
-                  <div className="space-y-1.5">
-                    <div className="flex gap-2">
-                      <input type="text" value={promoInput}
-                        onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
-                        onKeyDown={e => e.key === "Enter" && handleApplyPromo()}
-                        placeholder="Promo code"
-                        className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-current"
-                        style={inputStyle} />
-                      <button onClick={handleApplyPromo} disabled={promoLoading || !promoInput.trim()}
-                        className="rounded-lg px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-80 disabled:opacity-35 flex items-center gap-1"
-                        style={btnPrimary}>
-                        {promoLoading ? <Spinner className="h-3 w-3" /> : "Apply"}
-                      </button>
-                    </div>
-                    {promoError && <p className="text-xs text-red-400">{promoError}</p>}
-                  </div>
-                )}
-              </div>
-
-              {/* Price breakdown */}
-              <div className="px-5 pb-5 space-y-2" style={{ borderTop: divider, paddingTop: "16px" }}>
-                <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
-                  <span>Subtotal</span>
-                  <span>{formatPrice(subtotal * 100)}</span>
-                </div>
-                {d && d.discountAmount > 0 && (
-                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
-                    <span>Promo ({appliedPromo!.code})</span>
-                    <span>−{formatPrice(d.discountAmount * 100)}</span>
-                  </div>
-                )}
-                {selectedRate && (
-                  <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
-                    <span>Shipping</span>
-                    <span>
-                      {displayBaseShipping === 0 && shippingDiscountApplied > 0
-                        ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
-                        : formatPrice(displayBaseShipping * 100)
-                      }
-                    </span>
-                  </div>
-                )}
-                {insuranceFee > 0 && (
-                  <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
-                    <span>Insurance</span>
-                    <span>{displayInsurance === 0
-                      ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
-                      : formatPrice(displayInsurance * 100)}
-                    </span>
-                  </div>
-                )}
-                {actualSurcharge ? (
-                  <div className="flex justify-between text-sm text-green-700 dark:text-green-400">
-                    <span>Surcharge ({actualSurcharge.percent}%)</span>
-                    <span>+{formatPrice(actualSurcharge.amount * 100)}</span>
-                  </div>
-                ) : estimatedSurcharge > 0 && phase === "payment" ? (
-                  <div className="flex justify-between text-sm" style={{ opacity: 0.4 }}>
-                    <span>Surcharge (credit card only)</span>
-                    <span>~{formatPrice(estimatedSurcharge * 100)}</span>
-                  </div>
-                ) : null}
-                <div className="flex justify-between font-bold text-base pt-2.5" style={{ borderTop: divider }}>
-                  <span>Total</span>
-                  <span>{formatPrice(Math.max(0, displayedTotal) * 100)}</span>
-                </div>
-              </div>
-            </div>
+          {/* ── Right: Order Summary — desktop sidebar only ──────── */}
+          <div className="hidden lg:block lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-6">
+            {orderSummaryCard}
           </div>
 
         </div>
