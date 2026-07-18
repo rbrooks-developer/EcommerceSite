@@ -191,3 +191,10 @@ select,
 textarea {
   min-height: 44px;
 }
+
+/* Reset touch-target override inside the lightbox — YARL manages its own sizing */
+.yarl__root button,
+.yarl__root [role="button"],
+.yarl__root input {
+  min-height: unset;
+}
