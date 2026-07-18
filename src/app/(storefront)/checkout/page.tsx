@@ -18,15 +18,18 @@ export default async function CheckoutPage() {
 
   const { data: { user } } = await supabase.auth.getUser();
   let defaultShipping: UserAddress | null = null;
+  let defaultBilling: UserAddress | null = null;
   let initialPromo: AppliedPromo | null = null;
 
   if (user) {
     const sb = createServiceClient();
-    const [addrResult, promoResult] = await Promise.all([
+    const [addrResult, billingResult, promoResult] = await Promise.all([
       supabase.from("user_addresses").select("*").eq("user_id", user.id).eq("label", "shipping").eq("is_default_shipping", true).maybeSingle(),
+      supabase.from("user_addresses").select("*").eq("user_id", user.id).eq("label", "billing").maybeSingle(),
       sb.from("cart_promos").select("promo_code").eq("user_id", user.id).maybeSingle(),
     ]);
     defaultShipping = (addrResult.data as UserAddress | null) ?? null;
+    defaultBilling = (billingResult.data as UserAddress | null) ?? null;
 
     if (promoResult.data) {
       const { data: promoData } = await sb
@@ -42,5 +45,5 @@ export default async function CheckoutPage() {
   const checkoutConfig = (settings as any)?.checkout_config as CheckoutConfig | null;
   const surchargeConfig = (settings as any)?.surcharge_config as SurchargeConfig | null;
 
-  return <CheckoutFlow allowedCountries={allowedCountries} defaultShipping={defaultShipping} initialPromo={initialPromo} checkoutConfig={checkoutConfig} surchargeConfig={surchargeConfig} />;
+  return <CheckoutFlow allowedCountries={allowedCountries} defaultShipping={defaultShipping} defaultBilling={defaultBilling} initialPromo={initialPromo} checkoutConfig={checkoutConfig} surchargeConfig={surchargeConfig} />;
 }
