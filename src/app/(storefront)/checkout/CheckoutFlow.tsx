@@ -246,7 +246,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         </div>
       )}
 
-      {/* Klarna — brand image contained, centered on matching pink background */}
+      {/* Klarna — CSS/SVG branded button */}
       <button
         onClick={handleKlarna}
         disabled={anyLoading}
@@ -257,22 +257,43 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         {redirectLoading === "klarna" ? (
           <Spinner className="h-5 w-5 text-zinc-800" />
         ) : (
-          <img src="/klarna-logo.png" alt="Klarna" style={{ height: 44, width: "auto", display: "block" }} />
+          <svg viewBox="0 0 160 44" height="28" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* K */}
+            <path d="M6 6h8v12.5l10-12.5h9.5L22 20.5 34 38h-9.5L16 25.5 14 28V38H6Z" fill="#17120E"/>
+            {/* l */}
+            <rect x="37" y="6" width="7" height="32" rx="1" fill="#17120E"/>
+            {/* a */}
+            <path d="M58 16c-7.5 0-12 4.5-12 11s4.5 11 12 11c3 0 5.5-1 7-2.5V38h7V16h-7v2c-1.5-1.5-4-2-7-2Zm1 6c3.5 0 6 2.3 6 5s-2.5 5-6 5-6-2.3-6-5 2.5-5 6-5Z" fill="#17120E"/>
+            {/* r */}
+            <path d="M77 16h7v3.5c1.5-2.5 4-4 7.5-4V23c-4.5 0-7.5 2-7.5 7V38h-7Z" fill="#17120E"/>
+            {/* n */}
+            <path d="M96 16h7v2.5c1.5-2 4-3 7-3 5.5 0 9 3.5 9 9.5V38h-7V27c0-3.5-1.5-5-4-5s-5 1.5-5 5V38h-7Z" fill="#17120E"/>
+            {/* a */}
+            <path d="M133 16c-7.5 0-12 4.5-12 11s4.5 11 12 11c3 0 5.5-1 7-2.5V38h7V16h-7v2c-1.5-1.5-4-2-7-2Zm1 6c3.5 0 6 2.3 6 5s-2.5 5-6 5-6-2.3-6-5 2.5-5 6-5Z" fill="#17120E"/>
+          </svg>
         )}
       </button>
 
-      {/* Amazon Pay — brand image scaled to fill white button */}
+      {/* Amazon Pay — CSS/SVG branded button */}
       <button
         onClick={handleAmazonPay}
         disabled={anyLoading}
         className="w-full rounded-xl flex items-center justify-center transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ height: 52, backgroundColor: "#ffffff", border: "1.5px solid #e5e7eb", cursor: "pointer" }}
+        style={{ height: 52, backgroundColor: "#ffffff", border: "1.5px solid #d1d5db", cursor: "pointer" }}
         aria-label="Pay with Amazon Pay"
       >
         {redirectLoading === "amazonPay" ? (
           <Spinner className="h-5 w-5 text-black" />
         ) : (
-          <img src="/amazon-pay-logo.png" alt="Amazon Pay" style={{ width: "60%", maxHeight: 46, height: "auto", display: "block" }} />
+          <svg viewBox="0 0 200 52" height="36" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+            {/* "amazon" wordmark */}
+            <text x="56" y="22" textAnchor="middle" fontFamily="'Arial', 'Helvetica Neue', sans-serif" fontSize="18" fontWeight="400" fill="#232F3E" letterSpacing="0.3">amazon</text>
+            {/* orange smile arrow */}
+            <path d="M18 30 Q56 42 94 30" stroke="#FF9900" strokeWidth="2.5" fill="none" strokeLinecap="round"/>
+            <path d="M89 26.5 L94 30 L90 33.5" stroke="#FF9900" strokeWidth="2.5" fill="none" strokeLinecap="round" strokeLinejoin="round"/>
+            {/* "pay" wordmark */}
+            <text x="138" y="22" textAnchor="middle" fontFamily="'Arial', 'Helvetica Neue', sans-serif" fontSize="18" fontWeight="700" fill="#232F3E" letterSpacing="0.3">pay</text>
+          </svg>
         )}
       </button>
 
