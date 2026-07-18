@@ -56,11 +56,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
     );
   }
 
-  const slides = images.map((src) => ({
-    src: src.includes("/storage/v1/object/public/")
-      ? src.replace("/storage/v1/object/public/", "/storage/v1/render/image/public/") + "?width=1920&quality=85"
-      : src,
-  }));
+  const slides = images.map((src) => ({ src }));
 
   return (
     <div className="space-y-3">
