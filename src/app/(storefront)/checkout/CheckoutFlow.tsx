@@ -2,7 +2,10 @@
 
 import { useState } from "react";
 import { loadStripe } from "@stripe/stripe-js";
-import { Elements, ExpressCheckoutElement, PaymentElement, useStripe, useElements } from "@stripe/react-stripe-js";
+import {
+  Elements, ExpressCheckoutElement, PaymentElement,
+  useStripe, useElements,
+} from "@stripe/react-stripe-js";
 import { useCart } from "@/lib/cart/store";
 import { validateAndSyncCart } from "@/lib/actions/cart";
 import { applyPromoCode, removePromoCode } from "@/lib/actions/promos";
@@ -10,7 +13,7 @@ import type { AppliedPromo } from "@/lib/actions/promos";
 import { calculatePromoDiscount } from "@/lib/promos/calculate";
 import { formatPrice } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
-import { X, Lock, ShieldCheck, ChevronRight } from "lucide-react";
+import { X, Lock, ShieldCheck, Check, Pencil, Tag } from "lucide-react";
 import { SUBDIVISIONS, getSubdivisionLabel, getCountryName } from "@/lib/data/countries";
 import type { Country } from "@/lib/data/countries";
 import type { EasyPostRate, ShippingAddress, UserAddress, CheckoutConfig, SurchargeConfig } from "@/types";
@@ -31,17 +34,9 @@ const stripeAppearance = {
     fontSizeBase: "14px",
   },
   rules: {
-    ".Input": {
-      border: "1.5px solid #e5e7eb",
-      boxShadow: "none",
-      padding: "10px 14px",
-    },
+    ".Input": { border: "1.5px solid #e5e7eb", boxShadow: "none", padding: "10px 14px" },
     ".Input:hover": { borderColor: "#d1d5db" },
-    ".Input:focus": {
-      border: "1.5px solid #18181b",
-      boxShadow: "0 0 0 2px rgba(24,24,27,0.08)",
-      outline: "none",
-    },
+    ".Input:focus": { border: "1.5px solid #18181b", boxShadow: "0 0 0 2px rgba(24,24,27,0.08)", outline: "none" },
     ".Input--invalid": { border: "1.5px solid #dc2626" },
     ".Label": { fontWeight: "500", color: "#374151", marginBottom: "6px" },
     ".Tab": { border: "1.5px solid #e5e7eb", boxShadow: "none", padding: "10px 16px", minHeight: "52px" },
@@ -54,32 +49,75 @@ const stripeAppearance = {
   },
 };
 
-type Step = "address" | "shipping" | "review" | "payment";
-
-const panelStyle: React.CSSProperties = {
-  border: "1px solid color-mix(in srgb, var(--site-fg) 20%, transparent)",
-  backgroundColor: "var(--checkout-section-bg, color-mix(in srgb, var(--site-fg) 5%, var(--site-bg)))",
-};
+// ── Shared style constants ─────────────────────────────────────────────────────
 
 const inputStyle: React.CSSProperties = {
-  backgroundColor: "var(--checkout-input-bg, color-mix(in srgb, var(--site-fg) 8%, var(--site-bg)))",
+  backgroundColor: "color-mix(in srgb, var(--site-fg) 5%, var(--site-bg))",
   color: "var(--site-fg)",
-  border: "1px solid color-mix(in srgb, var(--site-fg) 25%, transparent)",
+  border: "1px solid color-mix(in srgb, var(--site-fg) 18%, transparent)",
 };
-
-const inputErrorStyle: React.CSSProperties = {
-  ...inputStyle,
-  border: "1px solid rgb(248 113 113)",
+const inputErrorStyle: React.CSSProperties = { ...inputStyle, border: "1px solid rgb(248 113 113)" };
+const btnPrimaryStyle: React.CSSProperties = { backgroundColor: "var(--site-fg)", color: "var(--site-bg)" };
+const cardStyle: React.CSSProperties = {
+  backgroundColor: "color-mix(in srgb, var(--site-fg) 4%, var(--site-bg))",
+  border: "1px solid color-mix(in srgb, var(--site-fg) 12%, transparent)",
+  borderRadius: "14px",
 };
-
-const btnPrimaryStyle: React.CSSProperties = {
-  backgroundColor: "var(--site-fg)",
-  color: "var(--site-bg)",
+const innerCardStyle: React.CSSProperties = {
+  backgroundColor: "color-mix(in srgb, var(--site-fg) 6%, var(--site-bg))",
+  border: "1px solid color-mix(in srgb, var(--site-fg) 10%, transparent)",
+  borderRadius: "10px",
 };
+const dividerBorder = "1px solid color-mix(in srgb, var(--site-fg) 10%, transparent)";
+const inputClass = "w-full rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-current transition-colors";
 
-const inputClass = "w-full rounded-md px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-current";
+// ── Section card ───────────────────────────────────────────────────────────────
 
-// ── Inner payment form — must be inside <Elements> to use Stripe hooks ──────
+function Section({
+  num, title, locked, summary, onEdit, children,
+}: {
+  num: number;
+  title: string;
+  locked?: boolean;
+  summary?: string;
+  onEdit?: () => void;
+  children?: React.ReactNode;
+}) {
+  return (
+    <div style={cardStyle}>
+      <div className="flex items-center justify-between px-5 py-4">
+        <div className="flex items-center gap-3 min-w-0">
+          <div
+            className="h-7 w-7 rounded-full flex items-center justify-center shrink-0 text-xs font-bold"
+            style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)" }}
+          >
+            {locked ? <Check className="h-3.5 w-3.5" /> : num}
+          </div>
+          <span className="font-semibold text-sm">{title}</span>
+          {locked && summary && (
+            <span className="text-xs truncate" style={{ opacity: 0.5 }}>{summary}</span>
+          )}
+        </div>
+        {locked && onEdit && (
+          <button
+            onClick={onEdit}
+            className="flex items-center gap-1 text-xs font-medium shrink-0 ml-3 transition-opacity hover:opacity-100"
+            style={{ opacity: 0.45 }}
+          >
+            <Pencil className="h-3 w-3" /> Edit
+          </button>
+        )}
+      </div>
+      {!locked && children && (
+        <div className="px-5 pb-5 pt-4 space-y-4" style={{ borderTop: dividerBorder }}>
+          {children}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── PaymentForm (must be inside <Elements>) ────────────────────────────────────
 
 interface PaymentFormProps {
   clientSecret: string;
@@ -88,31 +126,41 @@ interface PaymentFormProps {
   surchargeConfig?: SurchargeConfig | null;
   shippingCountry: string;
   shippingZip: string;
-  onBack: () => void;
+  onPaymentTypeChange: (type: string) => void;
+  onSurchargeApplied: (s: { amount: number; percent: number } | null) => void;
 }
 
-function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippingCountry, shippingZip, onBack }: PaymentFormProps) {
+function PaymentForm({
+  clientSecret, orderId, baseTotal, surchargeConfig,
+  shippingCountry, shippingZip, onPaymentTypeChange, onSurchargeApplied,
+}: PaymentFormProps) {
   const stripe = useStripe();
   const elements = useElements();
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [surcharge, setSurcharge] = useState<{ amount: number; percent: number } | null>(null);
   const [hasExpress, setHasExpress] = useState(false);
-  const [selectedType, setSelectedType] = useState<string>("card");
+  const [selectedType, setSelectedType] = useState("card");
 
   const displayTotal = surcharge ? baseTotal + surcharge.amount : baseTotal;
-  const dividerColor = "color-mix(in srgb, var(--site-fg) 15%, transparent)";
   const isRedirectMethod = selectedType === "klarna" || selectedType === "amazon_pay";
+
+  function handleTypeChange(type: string) {
+    setSelectedType(type);
+    onPaymentTypeChange(type);
+    if (type !== "card" && surcharge) {
+      setSurcharge(null);
+      onSurchargeApplied(null);
+    }
+  }
 
   async function handleExpressConfirm() {
     if (!stripe || !elements) return;
-    setError(null);
-    const { error: confirmError } = await stripe.confirmPayment({
-      elements,
-      clientSecret,
+    const { error: err } = await stripe.confirmPayment({
+      elements, clientSecret,
       confirmParams: { return_url: `${window.location.origin}/checkout/success` },
     });
-    if (confirmError) setError(confirmError.message ?? "Payment failed. Please try again.");
+    if (err) setError(err.message ?? "Payment failed. Please try again.");
   }
 
   async function handlePay() {
@@ -120,31 +168,25 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
     setLoading(true);
     setError(null);
 
-    const { error: submitError } = await elements.submit();
-    if (submitError) {
-      setError(submitError.message ?? "Please check your payment details.");
+    const { error: submitErr } = await elements.submit();
+    if (submitErr) {
+      setError(submitErr.message ?? "Please check your payment details.");
       setLoading(false);
       return;
     }
 
-    // Klarna and Amazon Pay redirect — no surcharge detection needed
     if (isRedirectMethod) {
-      const { error: confirmError } = await stripe.confirmPayment({
-        elements,
-        clientSecret,
+      const { error: confirmErr } = await stripe.confirmPayment({
+        elements, clientSecret,
         confirmParams: { return_url: `${window.location.origin}/checkout/success` },
       });
-      if (confirmError) {
-        setError(confirmError.message ?? "Payment failed. Please try again.");
-        setLoading(false);
-      }
+      if (confirmErr) { setError(confirmErr.message ?? "Payment failed."); setLoading(false); }
       return;
     }
 
-    // Card — detect funding type for optional surcharge
-    const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({ elements });
-    if (pmError || !paymentMethod) {
-      setError(pmError?.message ?? "Unable to process payment method.");
+    const { paymentMethod, error: pmErr } = await stripe.createPaymentMethod({ elements });
+    if (pmErr || !paymentMethod) {
+      setError(pmErr?.message ?? "Unable to process payment method.");
       setLoading(false);
       return;
     }
@@ -163,72 +205,61 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         return;
       }
       if ((data.surchargeAmount ?? 0) > 0) {
-        setSurcharge({ amount: data.surchargeAmount, percent: data.surchargePercentage });
+        const s = { amount: data.surchargeAmount, percent: data.surchargePercentage };
+        setSurcharge(s);
+        onSurchargeApplied(s);
       }
     }
 
-    const { error: confirmError } = await stripe.confirmPayment({
+    const { error: confirmErr } = await stripe.confirmPayment({
       clientSecret,
       confirmParams: {
         return_url: `${window.location.origin}/checkout/success`,
         payment_method: paymentMethod.id,
       },
     });
-    if (confirmError) {
-      setError(confirmError.message ?? "Payment failed. Please try again.");
+    if (confirmErr) {
+      setError(confirmErr.message ?? "Payment failed. Please try again.");
       setLoading(false);
     }
   }
 
   return (
     <div className="space-y-4">
-
-      {/* Express — Apple Pay / Google Pay only (device-dependent) */}
       <ExpressCheckoutElement
         onReady={(e) => setHasExpress(!!(e as any).availablePaymentMethods)}
         onConfirm={handleExpressConfirm}
         options={{
-          buttonHeight: 52,
+          buttonHeight: 50,
           paymentMethods: { applePay: "auto", googlePay: "auto", link: "never", klarna: "never", amazonPay: "never", paypal: "never" },
         }}
       />
 
       {hasExpress && (
         <div className="flex items-center gap-3">
-          <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
-          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or</span>
-          <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
+          <div className="flex-1 h-px" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, transparent)" }} />
+          <span className="text-xs uppercase tracking-widest" style={{ opacity: 0.35 }}>or pay with</span>
+          <div className="flex-1 h-px" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, transparent)" }} />
         </div>
       )}
 
-      {/* Payment method selector — tabs layout with official Stripe-rendered logos */}
       <PaymentElement
-        onChange={(e) => setSelectedType(e.value.type)}
+        onChange={(e) => handleTypeChange(e.value.type)}
         options={{
           layout: "tabs",
-          fields: {
-            billingDetails: {
-              address: {
-                country: "never",
-                postalCode: "never",
-              },
-            },
-          },
-          defaultValues: {
-            billingDetails: {
-              address: {
-                country: shippingCountry,
-                postal_code: shippingZip,
-              },
-            },
-          },
+          fields: { billingDetails: { address: { country: "never", postalCode: "never" } } },
+          defaultValues: { billingDetails: { address: { country: shippingCountry, postal_code: shippingZip } } },
         }}
       />
+
+      {surchargeConfig?.surcharge_active && surchargeConfig.surcharge_message && !surcharge && selectedType === "card" && (
+        <p className="text-xs px-1" style={{ opacity: 0.5 }}>{surchargeConfig.surcharge_message}</p>
+      )}
 
       {surcharge && (
         <div className="rounded-lg px-4 py-3 text-sm" style={{ backgroundColor: "rgba(34,197,94,0.08)", border: "1px solid rgba(34,197,94,0.25)" }}>
           <p className="text-green-700 dark:text-green-400">
-            A {surcharge.percent}% credit card surcharge of {formatPrice(surcharge.amount * 100)} has been added.
+            A {surcharge.percent}% credit card surcharge of {formatPrice(surcharge.amount * 100)} has been applied.
           </p>
         </div>
       )}
@@ -242,44 +273,27 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
       <button
         onClick={handlePay}
         disabled={!stripe || !elements || loading}
-        className="w-full rounded-lg py-4 text-sm font-semibold transition-opacity hover:opacity-85 disabled:opacity-50 flex items-center justify-center gap-2"
+        className="w-full rounded-xl py-4 text-sm font-bold tracking-wide transition-opacity hover:opacity-85 disabled:opacity-40 flex items-center justify-center gap-2"
         style={btnPrimaryStyle}
       >
         {loading ? (
-          <>
-            <Spinner className="h-4 w-4" />
-            Processing payment…
-          </>
+          <><Spinner className="h-4 w-4" /> Processing…</>
         ) : isRedirectMethod ? (
-          <>
-            Continue with {selectedType === "klarna" ? "Klarna" : "Amazon Pay"} →
-          </>
+          <>Continue with {selectedType === "klarna" ? "Klarna" : "Amazon Pay"} →</>
         ) : (
-          <>
-            <Lock className="h-3.5 w-3.5" />
-            Pay {formatPrice(Math.round(displayTotal * 100))}
-          </>
+          <><Lock className="h-3.5 w-3.5" /> Pay {formatPrice(Math.round(displayTotal * 100))}</>
         )}
       </button>
 
-      <button
-        onClick={onBack}
-        disabled={loading}
-        className="w-full text-sm transition-opacity hover:opacity-70 py-1"
-        style={{ opacity: 0.45 }}
-      >
-        ← Back to review
-      </button>
-
-      <div className="flex items-center justify-center gap-1.5 pt-1">
-        <ShieldCheck className="h-3.5 w-3.5" style={{ opacity: 0.35 }} />
-        <span className="text-xs" style={{ opacity: 0.35 }}>Payments secured by Stripe</span>
+      <div className="flex items-center justify-center gap-1.5">
+        <ShieldCheck className="h-3.5 w-3.5" style={{ opacity: 0.28 }} />
+        <span className="text-xs" style={{ opacity: 0.28 }}>Payments secured by Stripe</span>
       </div>
     </div>
   );
 }
 
-// ── Main checkout flow ────────────────────────────────────────────────────────
+// ── Main checkout ──────────────────────────────────────────────────────────────
 
 export function CheckoutFlow({
   allowedCountries,
@@ -295,10 +309,9 @@ export function CheckoutFlow({
   surchargeConfig?: SurchargeConfig | null;
 }) {
   const { items, subtotal, reloadCart } = useCart();
-
   const defaultCountry = allowedCountries[0]?.code ?? "US";
 
-  const [step, setStep] = useState<Step>("address");
+  // Address
   const [address, setAddress] = useState<ShippingAddress>({
     name: defaultShipping ? `${defaultShipping.first_name} ${defaultShipping.last_name}`.trim() : "",
     address_line1: defaultShipping?.address_line1 ?? "",
@@ -309,42 +322,82 @@ export function CheckoutFlow({
     country: defaultShipping?.country ?? defaultCountry,
   });
   const [fieldErrors, setFieldErrors] = useState<Partial<Record<keyof ShippingAddress, string>>>({});
+  const [addressLocked, setAddressLocked] = useState(false);
+
+  // Shipping
   const [rates, setRates] = useState<EasyPostRate[]>([]);
   const [selectedRate, setSelectedRate] = useState<EasyPostRate | null>(null);
-  const [loading, setLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [shippingLocked, setShippingLocked] = useState(false);
   const [insuranceRequired, setInsuranceRequired] = useState(false);
+  const [signatureRequired, setSignatureRequired] = useState(false);
+  const [insuranceFee, setInsuranceFee] = useState(0);
+
+  // Promo
   const [appliedPromo, setAppliedPromo] = useState<AppliedPromo | null>(initialPromo ?? null);
   const [promoInput, setPromoInput] = useState("");
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
-  const [signatureRequired, setSignatureRequired] = useState(false);
-  const [insuranceFee, setInsuranceFee] = useState(0);
 
-  // Payment Element state
+  // Payment
   const [clientSecret, setClientSecret] = useState<string | null>(null);
   const [orderIdForPayment, setOrderIdForPayment] = useState<string | null>(null);
   const [baseTotal, setBaseTotal] = useState(0);
+  const [selectedPaymentType, setSelectedPaymentType] = useState("card");
+  const [actualSurcharge, setActualSurcharge] = useState<{ amount: number; percent: number } | null>(null);
 
+  // Global loading / error
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  // Derived values
   const subdivisions = SUBDIVISIONS[address.country] ?? [];
   const hasSubdivisions = subdivisions.length > 0;
   const shippingCost = selectedRate ? parseFloat(selectedRate.rate) : 0;
 
-  const addressSummary = [
+  const d = appliedPromo ? calculatePromoDiscount(appliedPromo, subtotal, shippingCost, address.country) : null;
+  const discountAmount = d?.discountAmount ?? 0;
+  const rawBaseShipping = selectedRate ? parseFloat(selectedRate.rate) - insuranceFee : 0;
+  const shippingDiscount = d?.shippingDiscount ?? 0;
+  const displayBaseShipping = Math.max(0, rawBaseShipping - shippingDiscount);
+  const shippingDiscountApplied = rawBaseShipping - displayBaseShipping;
+  const insuranceDiscountApplied = Math.min(insuranceFee, Math.max(0, shippingDiscount - rawBaseShipping));
+  const displayInsurance = Math.max(0, insuranceFee - insuranceDiscountApplied);
+  const discountedSubtotal = subtotal - discountAmount;
+
+  // Estimated surcharge (card tab selected, before payment)
+  const isCardSelected = selectedPaymentType === "card";
+  let estimatedSurcharge = 0;
+  let surchargePercent = 0;
+  if (isCardSelected && surchargeConfig?.surcharge_active && (surchargeConfig.surcharge_percent ?? 0) > 0 && selectedRate && !actualSurcharge) {
+    const minOrder = surchargeConfig.surcharge_min_order ?? 0;
+    if (minOrder === 0 || discountedSubtotal >= minOrder) {
+      surchargePercent = Math.min(surchargeConfig.surcharge_percent, 4);
+      estimatedSurcharge = Math.round(discountedSubtotal * surchargePercent / 100 * 100) / 100;
+    }
+  }
+
+  const effectiveTotal = discountedSubtotal + displayBaseShipping + displayInsurance;
+  const displayedTotal = clientSecret
+    ? baseTotal + (actualSurcharge?.amount ?? 0)
+    : effectiveTotal + (estimatedSurcharge);
+
+  const addressSummaryLine = [
     address.address_line1,
     address.city,
     [address.state, address.zip].filter(Boolean).join(" "),
     address.country !== defaultCountry ? getCountryName(address.country) : null,
   ].filter(Boolean).join(", ");
 
-  const dividerStyle: React.CSSProperties = { borderTop: "1px solid color-mix(in srgb, var(--site-fg) 15%, transparent)" };
+  const shippingSummaryLine = selectedRate
+    ? `${selectedRate.carrier} ${selectedRate.service} · ${formatPrice(parseFloat(selectedRate.rate) * 100)}`
+    : "";
 
   if (items.length === 0) {
     return (
       <div className="mx-auto max-w-lg px-4 py-16 text-center">
         <p className="mb-6" style={{ opacity: 0.5 }}>Your cart is empty.</p>
         <a href="/products"
-          className="inline-block rounded-md px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-80"
+          className="inline-block rounded-xl px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-80"
           style={btnPrimaryStyle}>
           Browse Products
         </a>
@@ -352,10 +405,10 @@ export function CheckoutFlow({
     );
   }
 
-  function validate() {
+  function validateAddress() {
     const errs: Partial<Record<keyof ShippingAddress, string>> = {};
     if (!address.name.trim()) errs.name = "Full name is required";
-    if (!address.address_line1.trim()) errs.address_line1 = "Address is required";
+    if (!address.address_line1.trim()) errs.address_line1 = "Street address is required";
     if (!address.city.trim()) errs.city = "City is required";
     if (hasSubdivisions && !address.state) errs.state = `${getSubdivisionLabel(address.country)} is required`;
     if (!address.zip.trim()) errs.zip = "Postal code is required";
@@ -364,7 +417,7 @@ export function CheckoutFlow({
   }
 
   async function fetchRates() {
-    if (!validate()) return;
+    if (!validateAddress()) return;
     setLoading(true);
     setError(null);
     try {
@@ -376,7 +429,6 @@ export function CheckoutFlow({
             ? `"${i.name}" is no longer available and was removed.`
             : `"${i.name}" quantity reduced to ${i.newQuantity}.`
         ).join(" "));
-        setLoading(false);
         return;
       }
       const res = await fetch("/api/shipping/rates", {
@@ -384,7 +436,7 @@ export function CheckoutFlow({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           address,
-          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, offerId: i.offerId ?? null })),
+          items: items.map(i => ({ productId: i.productId, quantity: i.quantity, offerId: i.offerId ?? null })),
         }),
       });
       const data = await res.json();
@@ -395,7 +447,7 @@ export function CheckoutFlow({
       setInsuranceRequired(!!data.insuranceRequired);
       setSignatureRequired(!!data.signatureRequired);
       setInsuranceFee(parseFloat(data.insuranceFee ?? "0"));
-      setStep("review");
+      setAddressLocked(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -415,15 +467,14 @@ export function CheckoutFlow({
           i.issue === "removed"
             ? `"${i.name}" is no longer available and was removed.`
             : `"${i.name}" quantity reduced to ${i.newQuantity}.`
-        ).join(" ") + " Please review your cart before continuing.");
-        setLoading(false);
+        ).join(" ") + " Please review before continuing.");
         return;
       }
       const res = await fetch("/api/checkout/create-intent", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
-          items: items.map((i) => ({ productId: i.productId, quantity: i.quantity, offerId: i.offerId ?? null })),
+          items: items.map(i => ({ productId: i.productId, quantity: i.quantity, offerId: i.offerId ?? null })),
           shippingAddress: address,
           shippingRate: selectedRate,
         }),
@@ -433,7 +484,7 @@ export function CheckoutFlow({
       setClientSecret(data.clientSecret);
       setOrderIdForPayment(data.orderId);
       setBaseTotal(data.totalPrice);
-      setStep("payment");
+      setShippingLocked(true);
     } catch (err: any) {
       setError(err.message);
     } finally {
@@ -441,11 +492,24 @@ export function CheckoutFlow({
     }
   }
 
-  function goBackFromPayment() {
-    setStep("review");
+  function editAddress() {
+    setAddressLocked(false);
+    setShippingLocked(false);
+    setRates([]);
+    setSelectedRate(null);
     setClientSecret(null);
     setOrderIdForPayment(null);
     setBaseTotal(0);
+    setActualSurcharge(null);
+    setError(null);
+  }
+
+  function editShipping() {
+    setShippingLocked(false);
+    setClientSecret(null);
+    setOrderIdForPayment(null);
+    setBaseTotal(0);
+    setActualSurcharge(null);
     setError(null);
   }
 
@@ -473,434 +537,290 @@ export function CheckoutFlow({
     setPromoLoading(false);
   }
 
-  // ── Order summary calculations ──────────────────────────────────────────────
-  const d = appliedPromo ? calculatePromoDiscount(appliedPromo, subtotal, shippingCost, address.country) : null;
-  const rawBaseShipping = selectedRate ? parseFloat(selectedRate.rate) - insuranceFee : 0;
-  let displayBaseShipping = rawBaseShipping;
-  let displayInsurance = insuranceFee;
-  if (d && d.shippingDiscount > 0) {
-    const leftover = Math.max(0, d.shippingDiscount - rawBaseShipping);
-    displayBaseShipping = Math.max(0, rawBaseShipping - d.shippingDiscount);
-    displayInsurance = Math.max(0, insuranceFee - leftover);
-  }
-  const shippingDiscountApplied = rawBaseShipping - displayBaseShipping;
-  const insuranceDiscountApplied = insuranceFee - displayInsurance;
-  const discountedSubtotalForSurcharge = subtotal - (d?.discountAmount ?? 0);
-  let estimatedSurcharge = 0;
-  let surchargePercent = 0;
-  if (surchargeConfig?.surcharge_active && (surchargeConfig.surcharge_percent ?? 0) > 0 && selectedRate) {
-    const minOrder = surchargeConfig.surcharge_min_order ?? 0;
-    if (minOrder === 0 || discountedSubtotalForSurcharge >= minOrder) {
-      surchargePercent = Math.min(surchargeConfig.surcharge_percent, 4);
-      estimatedSurcharge = Math.round(discountedSubtotalForSurcharge * surchargePercent / 100 * 100) / 100;
-    }
-  }
-  const effectiveTotal = discountedSubtotalForSurcharge + (shippingCost - (d?.shippingDiscount ?? 0));
-
-  const breadcrumbSteps: { key: Step; label: string }[] = [
-    { key: "address", label: "Address" },
-    { key: "review", label: "Review" },
-    { key: "payment", label: "Payment" },
-  ];
-
   return (
-    <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
+    // z-index 50 puts checkout content above the fixed striation overlay (z-index 45)
+    <div className="relative min-h-screen" style={{ backgroundColor: "var(--site-bg)", zIndex: 50 }}>
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8 lg:py-10">
 
-      {/* Header */}
-      <div className="mb-8">
-        <div className="flex items-center gap-2 mb-4">
-          <Lock className="h-4 w-4" style={{ opacity: 0.4 }} />
-          <h1 className="text-2xl font-bold">Secure Checkout</h1>
+        {/* Page title */}
+        <div className="flex items-center gap-2.5 mb-8">
+          <Lock className="h-4 w-4" style={{ opacity: 0.35 }} />
+          <h1 className="text-xl font-bold tracking-tight">Secure Checkout</h1>
         </div>
 
-        {/* Step breadcrumb */}
-        <div className="flex items-center gap-1 text-sm">
-          {breadcrumbSteps.map((s, i) => {
-            const isActive = step === s.key || (s.key === "review" && step === "shipping");
-            const isPast = (
-              (s.key === "address" && (step === "review" || step === "shipping" || step === "payment")) ||
-              (s.key === "review" && step === "payment")
-            );
-            return (
-              <span key={s.key} className="flex items-center gap-1">
-                {i > 0 && <ChevronRight className="h-3.5 w-3.5" style={{ opacity: 0.3 }} />}
-                <span
-                  className={isActive ? "font-semibold" : ""}
-                  style={isActive ? {} : isPast ? { opacity: 0.55 } : { opacity: 0.3 }}
-                >
-                  {s.label}
-                </span>
-              </span>
-            );
-          })}
-        </div>
-      </div>
+        <div className="flex flex-col lg:flex-row gap-5 lg:gap-8 items-start">
 
-      <div className="flex flex-col lg:flex-row gap-8">
+          {/* ── Left column: steps ──────────────────────────────── */}
+          <div className="w-full lg:flex-1 min-w-0 space-y-4">
 
-        {/* ── Left column: step content ──────────────────────────────────── */}
-        <div className="flex-1 min-w-0">
-
-          {/* Step 1: Address */}
-          {step === "address" && (
-            <div className="rounded-xl p-6 space-y-4" style={panelStyle}>
-              <h2 className="text-base font-semibold">Shipping Address</h2>
-
+            {/* Step 1 — Shipping Address */}
+            <Section
+              num={1}
+              title="Shipping Address"
+              locked={addressLocked}
+              summary={addressSummaryLine}
+              onEdit={editAddress}
+            >
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ opacity: 0.7 }}>Full Name</label>
-                <input value={address.name} onChange={(e) => setAddress((a) => ({ ...a, name: e.target.value }))}
-                  placeholder="Jane Smith" autoComplete="name"
-                  className={inputClass} style={fieldErrors.name ? inputErrorStyle : inputStyle} />
+                <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>Full Name</label>
+                <input
+                  value={address.name}
+                  onChange={e => setAddress(a => ({ ...a, name: e.target.value }))}
+                  placeholder="Jane Smith"
+                  autoComplete="name"
+                  className={inputClass}
+                  style={fieldErrors.name ? inputErrorStyle : inputStyle}
+                />
                 {fieldErrors.name && <p className="mt-1 text-xs text-red-400">{fieldErrors.name}</p>}
               </div>
 
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ opacity: 0.7 }}>Country</label>
-                <select value={address.country}
-                  onChange={(e) => {
-                    const newCountry = e.target.value;
-                    setAddress((a) => ({ ...a, country: newCountry, state: "" }));
-                    if (appliedPromo?.discount_type === "free_shipping" && appliedPromo.allow_international === false && newCountry !== "US") {
+                <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>Country</label>
+                <select
+                  value={address.country}
+                  onChange={e => {
+                    const c = e.target.value;
+                    setAddress(a => ({ ...a, country: c, state: "" }));
+                    if (appliedPromo?.discount_type === "free_shipping" && !appliedPromo.allow_international && c !== "US") {
                       removePromoCode().then(() => {
                         setAppliedPromo(null);
                         setPromoError("This promo code is not valid for international orders and has been removed.");
                       });
                     }
                   }}
-                  className={inputClass} style={inputStyle}>
-                  {allowedCountries.map((c) => (
-                    <option key={c.code} value={c.code}>{c.name}</option>
-                  ))}
+                  className={inputClass}
+                  style={inputStyle}
+                >
+                  {allowedCountries.map(c => <option key={c.code} value={c.code}>{c.name}</option>)}
                 </select>
               </div>
 
-              {[
-                { key: "address_line1" as const, label: "Street Address", placeholder: "123 Main St", autoComplete: "address-line1" },
-                { key: "address_line2" as const, label: "Apt, Suite, etc. (optional)", placeholder: "", autoComplete: "address-line2" },
-              ].map(({ key, label, placeholder, autoComplete }) => (
-                <div key={key}>
-                  <label className="block text-sm font-medium mb-1" style={{ opacity: 0.7 }}>{label}</label>
-                  <input type="text" value={address[key] ?? ""}
-                    onChange={(e) => setAddress((a) => ({ ...a, [key]: e.target.value }))}
-                    placeholder={placeholder} autoComplete={autoComplete}
-                    className={inputClass} style={fieldErrors[key] ? inputErrorStyle : inputStyle} />
-                  {fieldErrors[key] && <p className="mt-1 text-xs text-red-400">{fieldErrors[key]}</p>}
-                </div>
-              ))}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>Street Address</label>
+                <input
+                  value={address.address_line1}
+                  onChange={e => setAddress(a => ({ ...a, address_line1: e.target.value }))}
+                  placeholder="123 Main St"
+                  autoComplete="address-line1"
+                  className={inputClass}
+                  style={fieldErrors.address_line1 ? inputErrorStyle : inputStyle}
+                />
+                {fieldErrors.address_line1 && <p className="mt-1 text-xs text-red-400">{fieldErrors.address_line1}</p>}
+              </div>
 
-              <div className={`grid gap-4 ${hasSubdivisions ? "grid-cols-2 sm:grid-cols-3" : "grid-cols-2"}`}>
-                <div className={hasSubdivisions ? "col-span-2 sm:col-span-1" : ""}>
-                  <label className="block text-sm font-medium mb-1" style={{ opacity: 0.7 }}>City</label>
-                  <input value={address.city} onChange={(e) => setAddress((a) => ({ ...a, city: e.target.value }))}
+              <div>
+                <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>Apt, Suite, etc. <span style={{ opacity: 0.5 }}>(optional)</span></label>
+                <input
+                  value={address.address_line2 ?? ""}
+                  onChange={e => setAddress(a => ({ ...a, address_line2: e.target.value }))}
+                  autoComplete="address-line2"
+                  className={inputClass}
+                  style={inputStyle}
+                />
+              </div>
+
+              <div className={`grid gap-3 ${hasSubdivisions ? "grid-cols-3" : "grid-cols-2"}`}>
+                <div className={hasSubdivisions ? "col-span-1" : ""}>
+                  <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>City</label>
+                  <input
+                    value={address.city}
+                    onChange={e => setAddress(a => ({ ...a, city: e.target.value }))}
                     autoComplete="address-level2"
-                    className={inputClass} style={fieldErrors.city ? inputErrorStyle : inputStyle} />
+                    className={inputClass}
+                    style={fieldErrors.city ? inputErrorStyle : inputStyle}
+                  />
                   {fieldErrors.city && <p className="mt-1 text-xs text-red-400">{fieldErrors.city}</p>}
                 </div>
 
                 {hasSubdivisions && (
                   <div>
-                    <label className="block text-sm font-medium mb-1" style={{ opacity: 0.7 }}>
+                    <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>
                       {getSubdivisionLabel(address.country)}
                     </label>
-                    <select value={address.state}
-                      onChange={(e) => setAddress((a) => ({ ...a, state: e.target.value }))}
-                      className={inputClass} style={fieldErrors.state ? inputErrorStyle : inputStyle}>
+                    <select
+                      value={address.state}
+                      onChange={e => setAddress(a => ({ ...a, state: e.target.value }))}
+                      className={inputClass}
+                      style={fieldErrors.state ? inputErrorStyle : inputStyle}
+                    >
                       <option value="">Select…</option>
-                      {subdivisions.map((s) => (
-                        <option key={s.code} value={s.code}>{s.code} — {s.name}</option>
-                      ))}
+                      {subdivisions.map(s => <option key={s.code} value={s.code}>{s.code} — {s.name}</option>)}
                     </select>
                     {fieldErrors.state && <p className="mt-1 text-xs text-red-400">{fieldErrors.state}</p>}
                   </div>
                 )}
 
                 <div>
-                  <label className="block text-sm font-medium mb-1" style={{ opacity: 0.7 }}>
-                    {address.country === "GB" ? "Postcode" : "ZIP / Postal Code"}
+                  <label className="block text-xs font-medium mb-1.5" style={{ opacity: 0.6 }}>
+                    {address.country === "GB" ? "Postcode" : "ZIP Code"}
                   </label>
-                  <input value={address.zip} onChange={(e) => setAddress((a) => ({ ...a, zip: e.target.value }))}
+                  <input
+                    value={address.zip}
+                    onChange={e => setAddress(a => ({ ...a, zip: e.target.value }))}
                     autoComplete="postal-code"
-                    className={inputClass} style={fieldErrors.zip ? inputErrorStyle : inputStyle} />
+                    className={inputClass}
+                    style={fieldErrors.zip ? inputErrorStyle : inputStyle}
+                  />
                   {fieldErrors.zip && <p className="mt-1 text-xs text-red-400">{fieldErrors.zip}</p>}
                 </div>
               </div>
 
-              {error && <p className="text-sm text-red-400 rounded-lg px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>{error}</p>}
-
-              <button onClick={fetchRates} disabled={loading}
-                className="w-full rounded-lg py-3.5 text-sm font-semibold transition-opacity hover:opacity-85 disabled:opacity-50 flex items-center justify-center gap-2"
-                style={btnPrimaryStyle}>
-                {loading && <Spinner className="h-4 w-4" />}
-                {loading ? "Getting rates…" : "Continue to Shipping"}
-              </button>
-            </div>
-          )}
-
-          {/* Step: Edit shipping (modal-like sub-step) */}
-          {step === "shipping" && (
-            <div className="rounded-xl p-6 space-y-4" style={panelStyle}>
-              <div className="flex items-center justify-between">
-                <h2 className="text-base font-semibold">Shipping Method</h2>
-                <button onClick={() => setStep("review")} className="text-xs transition-opacity hover:opacity-70" style={{ opacity: 0.45 }}>
-                  ← Back to review
-                </button>
-              </div>
-              <p className="text-sm" style={{ opacity: 0.55 }}>{address.name} · {addressSummary}</p>
-              {rates.length === 0 ? (
-                <p className="text-sm" style={{ opacity: 0.4 }}>No rates available for this address.</p>
-              ) : (
-                <div className="space-y-2">
-                  {rates.map((rate) => (
-                    <label key={rate.id}
-                      className="flex items-center gap-3 rounded-lg p-3.5 cursor-pointer transition-all"
-                      style={selectedRate?.id === rate.id
-                        ? { border: "1.5px solid var(--site-fg)", backgroundColor: "color-mix(in srgb, var(--site-fg) 8%, var(--site-bg))" }
-                        : { border: "1px solid color-mix(in srgb, var(--site-fg) 18%, transparent)" }
-                      }>
-                      <input type="radio" name="shipping_rate" value={rate.id}
-                        checked={selectedRate?.id === rate.id} onChange={() => setSelectedRate(rate)} className="shrink-0" />
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium">{rate.carrier} {rate.service}</p>
-                        {rate.delivery_days != null && (
-                          <p className="text-xs" style={{ opacity: 0.45 }}>
-                            {rate.delivery_days} business {rate.delivery_days === 1 ? "day" : "days"}
-                          </p>
-                        )}
-                      </div>
-                      <span className="font-semibold text-sm shrink-0">{formatPrice(parseFloat(rate.rate) * 100)}</span>
-                    </label>
-                  ))}
-                </div>
+              {error && (
+                <p className="text-sm text-red-400 rounded-lg px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                  {error}
+                </p>
               )}
-              <button onClick={() => setStep("review")} disabled={!selectedRate}
-                className="w-full rounded-lg py-3.5 text-sm font-semibold transition-opacity hover:opacity-85 disabled:opacity-50"
-                style={btnPrimaryStyle}>
-                Confirm Shipping
+
+              <button
+                onClick={fetchRates}
+                disabled={loading}
+                className="w-full rounded-xl py-3.5 text-sm font-bold tracking-wide transition-opacity hover:opacity-85 disabled:opacity-40 flex items-center justify-center gap-2"
+                style={btnPrimaryStyle}
+              >
+                {loading ? <><Spinner className="h-4 w-4" /> Getting rates…</> : "Continue to Shipping"}
               </button>
-            </div>
-          )}
+            </Section>
 
-          {/* Step 2: Review */}
-          {step === "review" && (
-            <div className="rounded-xl p-6 space-y-5" style={panelStyle}>
-              <h2 className="text-base font-semibold">Order Review</h2>
-
-              {/* Shipping to */}
-              <div className="rounded-lg p-4 space-y-1" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 4%, var(--site-bg))", border: "1px solid color-mix(in srgb, var(--site-fg) 12%, transparent)" }}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ opacity: 0.4 }}>Ship to</p>
-                    <p className="text-sm" style={{ opacity: 0.85 }}>
-                      {address.name}<br />
-                      {address.address_line1}{address.address_line2 ? `, ${address.address_line2}` : ""}<br />
-                      {address.city}{address.state ? `, ${address.state}` : ""} {address.zip}
-                      {address.country !== defaultCountry && <><br />{getCountryName(address.country)}</>}
-                    </p>
+            {/* Step 2 — Shipping Method */}
+            {rates.length > 0 && (
+              <Section
+                num={2}
+                title="Shipping Method"
+                locked={shippingLocked}
+                summary={shippingSummaryLine}
+                onEdit={editShipping}
+              >
+                {rates.length === 0 ? (
+                  <p className="text-sm" style={{ opacity: 0.4 }}>No rates available for this address.</p>
+                ) : (
+                  <div className="space-y-2">
+                    {rates.map(rate => (
+                      <label
+                        key={rate.id}
+                        className="flex items-center gap-3 rounded-xl p-3.5 cursor-pointer transition-all"
+                        style={selectedRate?.id === rate.id
+                          ? { border: "1.5px solid var(--site-fg)", backgroundColor: "color-mix(in srgb, var(--site-fg) 7%, var(--site-bg))" }
+                          : innerCardStyle
+                        }
+                      >
+                        <input
+                          type="radio"
+                          name="shipping_rate"
+                          value={rate.id}
+                          checked={selectedRate?.id === rate.id}
+                          onChange={() => setSelectedRate(rate)}
+                          className="shrink-0 accent-current"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <p className="text-sm font-medium">{rate.carrier} {rate.service}</p>
+                          {rate.delivery_days != null && (
+                            <p className="text-xs mt-0.5" style={{ opacity: 0.45 }}>
+                              {rate.delivery_days} business {rate.delivery_days === 1 ? "day" : "days"}
+                            </p>
+                          )}
+                          {(insuranceRequired || signatureRequired) && selectedRate?.id === rate.id && (
+                            <div className="flex flex-wrap gap-1.5 mt-1.5">
+                              {insuranceRequired && (
+                                <span className="text-xs rounded-full px-2 py-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 10%, transparent)" }}>
+                                  Insured (+{formatPrice(insuranceFee * 100)})
+                                </span>
+                              )}
+                              {signatureRequired && (
+                                <span className="text-xs rounded-full px-2 py-0.5" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 10%, transparent)" }}>
+                                  Signature required
+                                </span>
+                              )}
+                            </div>
+                          )}
+                        </div>
+                        <span className="font-semibold text-sm shrink-0">{formatPrice(parseFloat(rate.rate) * 100)}</span>
+                      </label>
+                    ))}
                   </div>
-                  <button onClick={() => setStep("address")} className="text-xs shrink-0 transition-opacity hover:opacity-80 font-medium" style={{ opacity: 0.5 }}>
-                    Edit
-                  </button>
-                </div>
-              </div>
+                )}
 
-              {/* Shipping method */}
-              <div className="rounded-lg p-4 space-y-1" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 4%, var(--site-bg))", border: "1px solid color-mix(in srgb, var(--site-fg) 12%, transparent)" }}>
-                <div className="flex items-start justify-between gap-2">
-                  <div>
-                    <p className="text-xs font-semibold uppercase tracking-wider mb-1.5" style={{ opacity: 0.4 }}>Shipping</p>
-                    <p className="text-sm font-medium" style={{ opacity: 0.85 }}>
-                      {selectedRate?.carrier} {selectedRate?.service}
-                    </p>
-                    <p className="text-sm" style={{ opacity: 0.6 }}>
-                      {formatPrice(parseFloat(selectedRate?.rate ?? "0") * 100)}
-                      {selectedRate?.delivery_days != null && (
-                        <span className="ml-2">· {selectedRate.delivery_days} business {selectedRate.delivery_days === 1 ? "day" : "days"}</span>
-                      )}
-                    </p>
-                    {(insuranceRequired || signatureRequired) && (
-                      <div className="mt-2 flex flex-wrap gap-1.5">
-                        {insuranceRequired && (
-                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 10%, transparent)" }}>
-                            Insured up to {formatPrice(Math.min(subtotal, EASYPOST_MAX_INSURABLE_VALUE) * 100)} (+{formatPrice(insuranceFee * 100)})
-                          </span>
-                        )}
-                        {signatureRequired && (
-                          <span className="inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 10%, transparent)" }}>
-                            Signature required
-                          </span>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                  <button onClick={() => setStep("shipping")} className="text-xs shrink-0 transition-opacity hover:opacity-80 font-medium" style={{ opacity: 0.5 }}>
-                    Edit
-                  </button>
-                </div>
+                {error && (
+                  <p className="text-sm text-red-400 rounded-lg px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>
+                    {error}
+                  </p>
+                )}
+
+                {checkoutConfig?.restocking_fee_active && checkoutConfig.restocking_fee_disclaimer && (
+                  <p className="text-xs leading-relaxed" style={{ opacity: 0.5 }}>
+                    {checkoutConfig.restocking_fee_disclaimer}
+                  </p>
+                )}
+
+                <button
+                  onClick={preparePayment}
+                  disabled={loading || !selectedRate}
+                  className="w-full rounded-xl py-3.5 text-sm font-bold tracking-wide transition-opacity hover:opacity-85 disabled:opacity-40 flex items-center justify-center gap-2"
+                  style={btnPrimaryStyle}
+                >
+                  {loading ? <><Spinner className="h-4 w-4" /> Preparing payment…</> : <><Lock className="h-3.5 w-3.5" /> Continue to Payment</>}
+                </button>
+              </Section>
+            )}
+
+            {/* Step 3 — Payment */}
+            {clientSecret && orderIdForPayment && (
+              <Section num={3} title="Payment Details">
+                <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+                  <PaymentForm
+                    clientSecret={clientSecret}
+                    orderId={orderIdForPayment}
+                    baseTotal={baseTotal}
+                    surchargeConfig={surchargeConfig}
+                    shippingCountry={address.country}
+                    shippingZip={address.zip}
+                    onPaymentTypeChange={setSelectedPaymentType}
+                    onSurchargeApplied={setActualSurcharge}
+                  />
+                </Elements>
+              </Section>
+            )}
+
+          </div>
+
+          {/* ── Right column: Order Summary ──────────────────────── */}
+          <div className="w-full lg:w-72 xl:w-80 shrink-0 lg:sticky lg:top-6">
+            <div style={cardStyle} className="overflow-hidden">
+              <div className="px-5 py-4">
+                <h3 className="font-bold text-sm tracking-wide">Order Summary</h3>
               </div>
 
               {/* Items */}
-              <div>
-                <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ opacity: 0.4 }}>Items</p>
-                <ul className="space-y-1.5">
-                  {items.map((item) => (
-                    <li key={item.productId} className="flex justify-between text-sm" style={{ opacity: 0.8 }}>
-                      <span>{item.name} × {item.quantity}</span>
-                      <span className="font-medium">{formatPrice(item.price * item.quantity * 100)}</span>
-                    </li>
-                  ))}
-                </ul>
+              <div className="px-5 pb-4 space-y-3" style={{ borderTop: dividerBorder, paddingTop: "16px" }}>
+                {items.map(item => (
+                  <div key={item.productId} className="flex gap-3 items-start">
+                    {item.image && (
+                      <div
+                        className="h-12 w-12 shrink-0 rounded-lg overflow-hidden"
+                        style={{ backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center", backgroundColor: "color-mix(in srgb, var(--site-fg) 8%, var(--site-bg))" }}
+                      />
+                    )}
+                    <div className="flex-1 min-w-0">
+                      <p className="text-xs font-medium leading-snug" style={{ opacity: 0.85 }}>{item.name}</p>
+                      <p className="text-xs mt-0.5" style={{ opacity: 0.4 }}>Qty {item.quantity}</p>
+                    </div>
+                    <span className="text-xs font-semibold shrink-0">{formatPrice(item.price * item.quantity * 100)}</span>
+                  </div>
+                ))}
               </div>
 
-              {/* Surcharge disclosure */}
-              {surchargeConfig?.surcharge_active && surchargeConfig.surcharge_message && (
-                <div className="rounded-lg px-4 py-3 text-sm" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 5%, var(--site-bg))", border: "1px solid color-mix(in srgb, var(--site-fg) 15%, transparent)" }}>
-                  <p style={{ opacity: 0.7 }}>{surchargeConfig.surcharge_message}</p>
-                </div>
-              )}
-
-              {error && <p className="text-sm text-red-400 rounded-lg px-4 py-3" style={{ backgroundColor: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.2)" }}>{error}</p>}
-
-              <button onClick={preparePayment} disabled={loading}
-                className="w-full rounded-lg py-4 text-sm font-semibold transition-opacity hover:opacity-85 disabled:opacity-50 flex items-center justify-center gap-2"
-                style={btnPrimaryStyle}>
-                {loading ? (
-                  <>
-                    <Spinner className="h-4 w-4" />
-                    Preparing payment…
-                  </>
-                ) : (
-                  <>
-                    <Lock className="h-3.5 w-3.5" />
-                    Continue to Payment
-                  </>
-                )}
-              </button>
-
-              {checkoutConfig?.restocking_fee_active && checkoutConfig.restocking_fee_disclaimer && (
-                <p className="text-xs text-center leading-relaxed" style={{ opacity: 0.55 }}>
-                  {checkoutConfig.restocking_fee_disclaimer}
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Step 3: Payment */}
-          {step === "payment" && clientSecret && orderIdForPayment && (
-            <div className="rounded-xl p-6" style={panelStyle}>
-              <h2 className="text-base font-semibold mb-5">Payment Details</h2>
-              <Elements
-                stripe={stripePromise}
-                options={{ clientSecret, appearance: stripeAppearance }}
-              >
-                <PaymentForm
-                  clientSecret={clientSecret}
-                  orderId={orderIdForPayment}
-                  baseTotal={baseTotal}
-                  surchargeConfig={surchargeConfig}
-                  shippingCountry={address.country}
-                  shippingZip={address.zip}
-                  onBack={goBackFromPayment}
-                />
-              </Elements>
-            </div>
-          )}
-
-        </div>
-
-        {/* ── Right column: order summary sidebar ──────────────────────── */}
-        <div className="lg:w-72 shrink-0">
-          <div className="rounded-xl p-5 lg:sticky lg:top-24 space-y-3" style={panelStyle}>
-            <h3 className="font-semibold text-sm">Order Summary</h3>
-
-            <div className="space-y-1.5 text-sm">
-              <div className="flex justify-between" style={{ opacity: 0.7 }}>
-                <span>Subtotal</span>
-                <span>{formatPrice(subtotal * 100)}</span>
-              </div>
-
-              {d && d.discountAmount > 0 && (
-                <div className="flex justify-between text-green-600 dark:text-green-400">
-                  <span>Promo ({appliedPromo!.code})</span>
-                  <span>-{formatPrice(d.discountAmount * 100)}</span>
-                </div>
-              )}
-
-              {selectedRate && (
-                <div className="flex justify-between" style={d?.shippingDiscount ? {} : { opacity: 0.7 }}>
-                  <span>
-                    Shipping
-                    {d?.shippingDiscount ? <span className="ml-1 text-xs text-green-600 dark:text-green-400">({appliedPromo!.code})</span> : null}
-                  </span>
-                  {shippingDiscountApplied > 0
-                    ? <span>
-                        <span style={{ opacity: 0.45 }}>{formatPrice(rawBaseShipping * 100)}</span>
-                        {" "}<span className="text-green-600 dark:text-green-400">-{formatPrice(shippingDiscountApplied * 100)}</span>
-                        {" = "}
-                        {displayBaseShipping === 0
-                          ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
-                          : <span className="font-medium">{formatPrice(displayBaseShipping * 100)}</span>
-                        }
-                      </span>
-                    : <span style={{ opacity: 0.7 }}>{formatPrice(displayBaseShipping * 100)}</span>
-                  }
-                </div>
-              )}
-
-              {insuranceFee > 0 && (
-                <div className="flex justify-between" style={d?.shippingDiscount ? {} : { opacity: 0.7 }}>
-                  <span>Insurance (1%)</span>
-                  {insuranceDiscountApplied > 0
-                    ? <span>
-                        <span style={{ opacity: 0.45 }}>{formatPrice(insuranceFee * 100)}</span>
-                        {" "}<span className="text-green-600 dark:text-green-400">-{formatPrice(insuranceDiscountApplied * 100)}</span>
-                        {" = "}
-                        {displayInsurance === 0
-                          ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
-                          : <span className="font-medium">{formatPrice(displayInsurance * 100)}</span>
-                        }
-                      </span>
-                    : <span style={{ opacity: 0.7 }}>{formatPrice(displayInsurance * 100)}</span>
-                  }
-                </div>
-              )}
-
-              {/* Show estimated surcharge in review step; hide in payment step (actual surcharge applied after card detection) */}
-              {step !== "payment" && estimatedSurcharge > 0 && (
-                <div className="flex justify-between" style={{ opacity: 0.7 }}>
-                  <span>Surcharge ({surchargePercent}%)</span>
-                  <span>{formatPrice(estimatedSurcharge * 100)}</span>
-                </div>
-              )}
-
-              {step === "payment" && surchargeConfig?.surcharge_active && estimatedSurcharge > 0 && (
-                <div className="text-xs" style={{ opacity: 0.5 }}>
-                  Credit card surcharge may apply
-                </div>
-              )}
-
-              <div className="flex justify-between font-semibold text-base pt-2" style={dividerStyle}>
-                <span>Total</span>
-                <span>
-                  {step === "payment"
-                    ? formatPrice(Math.round(baseTotal * 100))
-                    : formatPrice(Math.max(0, effectiveTotal) * 100)
-                  }
-                </span>
-              </div>
-            </div>
-
-            {/* Promo code — hide on payment step */}
-            {step !== "payment" && (
-              <div className="pt-2" style={dividerStyle}>
+              {/* Promo code */}
+              <div className="px-5 py-4 space-y-2" style={{ borderTop: dividerBorder }}>
                 {appliedPromo ? (
                   <div className="flex items-center justify-between gap-2">
-                    <span className="text-xs text-green-600 dark:text-green-400 font-medium">
-                      ✓ {appliedPromo.code} applied
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <Tag className="h-3.5 w-3.5 text-green-500 shrink-0" />
+                      <span className="text-xs font-semibold text-green-600 dark:text-green-400">{appliedPromo.code} applied</span>
+                    </div>
                     <button
                       onClick={handleRemovePromo}
                       disabled={promoLoading}
-                      className="flex items-center gap-0.5 text-xs opacity-45 hover:opacity-100 transition-opacity"
+                      className="flex items-center gap-0.5 text-xs transition-opacity hover:opacity-100"
+                      style={{ opacity: 0.4 }}
                     >
                       <X className="h-3 w-3" /> Remove
                     </button>
@@ -911,16 +831,16 @@ export function CheckoutFlow({
                       <input
                         type="text"
                         value={promoInput}
-                        onChange={(e) => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
-                        onKeyDown={(e) => e.key === "Enter" && handleApplyPromo()}
+                        onChange={e => { setPromoInput(e.target.value.toUpperCase()); setPromoError(null); }}
+                        onKeyDown={e => e.key === "Enter" && handleApplyPromo()}
                         placeholder="Promo code"
-                        className="flex-1 rounded-md px-2.5 py-1.5 text-xs focus:outline-none focus:ring-1 focus:ring-current"
+                        className="flex-1 rounded-lg px-3 py-2 text-xs focus:outline-none focus:ring-1 focus:ring-current"
                         style={inputStyle}
                       />
                       <button
                         onClick={handleApplyPromo}
                         disabled={promoLoading || !promoInput.trim()}
-                        className="rounded-md px-3 py-1.5 text-xs font-semibold transition-opacity hover:opacity-80 disabled:opacity-40 flex items-center gap-1"
+                        className="rounded-lg px-3 py-2 text-xs font-semibold transition-opacity hover:opacity-80 disabled:opacity-35 flex items-center gap-1"
                         style={btnPrimaryStyle}
                       >
                         {promoLoading ? <Spinner className="h-3 w-3" /> : "Apply"}
@@ -930,27 +850,73 @@ export function CheckoutFlow({
                   </div>
                 )}
               </div>
-            )}
 
-            {/* Items list */}
-            {items.length > 0 && (
-              <div className="pt-2 space-y-2" style={dividerStyle}>
-                {items.map((item) => (
-                  <div key={item.productId} className="flex gap-3 items-start">
-                    {item.image && (
-                      <div className="h-10 w-10 shrink-0 rounded-md overflow-hidden bg-gray-100" style={{ backgroundImage: `url(${item.image})`, backgroundSize: "cover", backgroundPosition: "center" }} />
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium leading-tight truncate" style={{ opacity: 0.8 }}>{item.name}</p>
-                      <p className="text-xs" style={{ opacity: 0.45 }}>Qty {item.quantity} · {formatPrice(item.price * 100)}</p>
-                    </div>
+              {/* Price breakdown */}
+              <div className="px-5 pb-5 space-y-2.5" style={{ borderTop: dividerBorder, paddingTop: "16px" }}>
+                <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
+                  <span>Subtotal</span>
+                  <span>{formatPrice(subtotal * 100)}</span>
+                </div>
+
+                {d && d.discountAmount > 0 && (
+                  <div className="flex justify-between text-sm text-green-600 dark:text-green-400">
+                    <span>Promo ({appliedPromo!.code})</span>
+                    <span>−{formatPrice(d.discountAmount * 100)}</span>
                   </div>
-                ))}
-              </div>
-            )}
-          </div>
-        </div>
+                )}
 
+                {selectedRate && (
+                  <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
+                    <span>
+                      Shipping
+                      {d?.shippingDiscount ? <span className="ml-1 text-xs text-green-600 dark:text-green-400">({appliedPromo!.code})</span> : null}
+                    </span>
+                    {shippingDiscountApplied > 0
+                      ? <span>
+                          <span style={{ opacity: 0.4 }}>{formatPrice(rawBaseShipping * 100)}</span>
+                          {" "}
+                          {displayBaseShipping === 0
+                            ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span>
+                            : <><span className="text-green-600 dark:text-green-400">−{formatPrice(shippingDiscountApplied * 100)}</span></>
+                          }
+                        </span>
+                      : <span>{formatPrice(displayBaseShipping * 100)}</span>
+                    }
+                  </div>
+                )}
+
+                {insuranceFee > 0 && (
+                  <div className="flex justify-between text-sm" style={{ opacity: 0.65 }}>
+                    <span>Insurance</span>
+                    <span>{displayInsurance === 0 ? <span className="text-green-600 dark:text-green-400 font-medium">FREE</span> : formatPrice(displayInsurance * 100)}</span>
+                  </div>
+                )}
+
+                {/* Surcharge — estimated when card tab selected, actual after detection */}
+                {actualSurcharge ? (
+                  <div className="flex justify-between text-sm text-green-700 dark:text-green-400">
+                    <span>Credit card surcharge ({actualSurcharge.percent}%)</span>
+                    <span>+{formatPrice(actualSurcharge.amount * 100)}</span>
+                  </div>
+                ) : estimatedSurcharge > 0 && clientSecret ? (
+                  <div className="flex justify-between text-sm" style={{ opacity: 0.5 }}>
+                    <span>Surcharge (credit card only)</span>
+                    <span>~{formatPrice(estimatedSurcharge * 100)}</span>
+                  </div>
+                ) : null}
+
+                <div
+                  className="flex justify-between font-bold text-base pt-2.5"
+                  style={{ borderTop: dividerBorder }}
+                >
+                  <span>Total</span>
+                  <span>{formatPrice(Math.max(0, displayedTotal) * 100)}</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
       </div>
     </div>
   );
