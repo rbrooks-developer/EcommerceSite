@@ -4,6 +4,7 @@ import { useState, useRef } from "react";
 import Image from "next/image";
 import { cn } from "@/lib/utils";
 import Lightbox from "yet-another-react-lightbox";
+import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
 const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
@@ -140,7 +141,9 @@ export function ProductImages({ images, name }: { images: string[]; name: string
         close={() => setLightboxOpen(false)}
         index={selected}
         slides={slides}
+        plugins={[Zoom]}
         on={{ view: ({ index }) => setSelected(index) }}
+        zoom={{ maxZoomPixelRatio: 4 }}
         carousel={{ finite: images.length <= 1 }}
         styles={{ root: { "--yarl__color_backdrop": "rgba(0,0,0,0.92)" } }}
       />
