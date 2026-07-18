@@ -211,6 +211,7 @@ interface PaymentFormProps {
   clientSecret: string;
   orderId: string;
   baseTotal: number;
+  displayTotal: number;
   surchargeConfig?: SurchargeConfig | null;
   billingAddress: ShippingAddress;
   onPaymentTypeChange: (t: string) => void;
@@ -218,7 +219,7 @@ interface PaymentFormProps {
 }
 
 function PaymentForm({
-  clientSecret, orderId, baseTotal, surchargeConfig,
+  clientSecret, orderId, baseTotal, displayTotal, surchargeConfig,
   billingAddress, onPaymentTypeChange, onSurchargeApplied,
 }: PaymentFormProps) {
   const stripe = useStripe();
@@ -228,8 +229,6 @@ function PaymentForm({
   const [surcharge, setSurcharge] = useState<{ amount: number; percent: number } | null>(null);
   const [hasExpress, setHasExpress] = useState(false);
   const [selectedType, setSelectedType] = useState("card");
-
-  const displayTotal = surcharge ? baseTotal + surcharge.amount : baseTotal;
   const isRedirect = selectedType === "klarna" || selectedType === "amazon_pay";
 
   function handleTypeChange(type: string) {
@@ -857,6 +856,7 @@ export function CheckoutFlow({
                     clientSecret={clientSecret}
                     orderId={orderIdForPayment}
                     baseTotal={baseTotal}
+                    displayTotal={displayedTotal}
                     surchargeConfig={surchargeConfig}
                     billingAddress={effectiveBilling}
                     onPaymentTypeChange={setSelectedPaymentType}
