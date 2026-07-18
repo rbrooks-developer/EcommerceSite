@@ -306,7 +306,7 @@ function PaymentForm({
       <PaymentElement
         onChange={e => handleTypeChange(e.value.type)}
         options={{
-          layout: { type: "accordion", defaultCollapsed: false, radios: false, spacedAccordionItems: false },
+          layout: { type: "accordion", defaultCollapsed: false },
           fields: { billingDetails: { name: "never", address: "never" } },
           defaultValues: {
             billingDetails: {
