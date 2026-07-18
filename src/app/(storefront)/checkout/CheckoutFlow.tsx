@@ -38,12 +38,6 @@ const stripeAppearance = {
     ".Input:focus": { border: "1.5px solid #18181b", boxShadow: "0 0 0 2px rgba(24,24,27,0.08)", outline: "none" },
     ".Input--invalid": { border: "1.5px solid #dc2626" },
     ".Label": { fontWeight: "500", color: "#374151", marginBottom: "6px" },
-    ".Tab": { border: "1.5px solid #e5e7eb", boxShadow: "none", padding: "10px 16px", minHeight: "52px", flex: "1" },
-    ".Tab:hover": { borderColor: "#d1d5db", backgroundColor: "#f9fafb" },
-    ".Tab--selected": { border: "1.5px solid #18181b", backgroundColor: "#f9fafb" },
-    ".Tab--selected:hover": { backgroundColor: "#f3f4f6" },
-    ".TabIcon": { height: "24px" },
-    ".TabIcon--selected": { height: "24px" },
     ".Block": { border: "1.5px solid #e5e7eb" },
   },
 };
@@ -312,7 +306,7 @@ function PaymentForm({
       <PaymentElement
         onChange={e => handleTypeChange(e.value.type)}
         options={{
-          layout: "tabs",
+          layout: { type: "accordion", defaultCollapsed: false, radios: false, spacedAccordionItems: false },
           fields: { billingDetails: { name: "never", address: "never" } },
           defaultValues: {
             billingDetails: {
