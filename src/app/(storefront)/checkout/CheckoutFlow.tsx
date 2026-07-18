@@ -455,17 +455,16 @@ export function CheckoutFlow({
   const insuranceDiscountApplied = Math.min(insuranceFee, Math.max(0, shippingDiscount - rawBaseShipping));
   const displayInsurance = Math.max(0, insuranceFee - insuranceDiscountApplied);
   const discountedSubtotal = subtotal - discountAmount;
+  const effectiveTotal = discountedSubtotal + displayBaseShipping + displayInsurance;
 
   let estimatedSurcharge = 0;
   if (selectedPaymentType === "card" && surchargeConfig?.surcharge_active && (surchargeConfig.surcharge_percent ?? 0) > 0 && selectedRate && !actualSurcharge) {
     const minOrder = surchargeConfig.surcharge_min_order ?? 0;
-    if (minOrder === 0 || discountedSubtotal >= minOrder) {
+    if (minOrder === 0 || effectiveTotal >= minOrder) {
       const pct = Math.min(surchargeConfig.surcharge_percent, 4);
       estimatedSurcharge = Math.round(discountedSubtotal * pct / 100 * 100) / 100;
     }
   }
-
-  const effectiveTotal = discountedSubtotal + displayBaseShipping + displayInsurance;
   const displayedTotal = clientSecret
     ? baseTotal + (actualSurcharge?.amount ?? 0)
     : effectiveTotal + estimatedSurcharge;

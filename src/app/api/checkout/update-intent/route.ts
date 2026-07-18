@@ -53,9 +53,10 @@ export async function POST(request: NextRequest) {
   }
 
   const discountedSubtotal = Number(order.subtotal) - Number(order.discount_amount);
+  const orderTotal = Number(order.total_price); // subtotal + shipping + tax, before surcharge
   const minOrder = surchargeCfg.surcharge_min_order ?? 0;
-  if (minOrder > 0 && discountedSubtotal < minOrder) {
-    return Response.json({ surchargeAmount: 0, surchargePercentage: 0, newTotal: Number(order.total_price) });
+  if (minOrder > 0 && orderTotal < minOrder) {
+    return Response.json({ surchargeAmount: 0, surchargePercentage: 0, newTotal: orderTotal });
   }
 
   const surchargePercent = Math.min(surchargeCfg.surcharge_percent, 4);
