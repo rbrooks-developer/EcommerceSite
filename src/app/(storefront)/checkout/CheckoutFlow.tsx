@@ -465,9 +465,11 @@ export function CheckoutFlow({
       estimatedSurcharge = Math.round(discountedSubtotal * pct / 100 * 100) / 100;
     }
   }
+  // Always derive from live effectiveTotal so promos/surcharges reflect immediately.
+  // In payment phase, swap in actual surcharge once confirmed; otherwise use estimate.
   const displayedTotal = clientSecret
-    ? baseTotal + (actualSurcharge?.amount ?? 0)
-    : effectiveTotal + estimatedSurcharge;
+    ? effectiveTotal + (actualSurcharge?.amount ?? estimatedSurcharge)
+    : effectiveTotal;
 
   const effectiveBilling: ShippingAddress = sameAsShipping ? address : billingAddress;
 
@@ -602,38 +604,41 @@ export function CheckoutFlow({
     }
   }
 
+  // ── Recreate payment intent (rate change, promo change while in payment) ────────
+
+  async function recreatePaymentIntent(overrideRate?: EasyPostRate) {
+    const rate = overrideRate ?? selectedRate;
+    if (!rate) return;
+    setClientSecret(null);
+    setOrderIdForPayment(null);
+    setBaseTotal(0);
+    setActualSurcharge(null);
+    setPaymentLoading(true);
+    try {
+      const res = await fetch("/api/checkout/create-intent", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          items: items.map(i => ({ productId: i.productId, quantity: i.quantity, offerId: i.offerId ?? null })),
+          shippingAddress: address,
+          shippingRate: rate,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) return;
+      setClientSecret(data.clientSecret);
+      setOrderIdForPayment(data.orderId);
+      setBaseTotal(data.totalPrice);
+    } finally {
+      setPaymentLoading(false);
+    }
+  }
+
   // ── Section 3: Rate change while in payment phase ────────────────────────────
 
   async function handleRateChange(rate: EasyPostRate) {
     setSelectedRate(rate);
-    if (phase === "payment") {
-      // Recreate intent with new rate
-      setClientSecret(null);
-      setOrderIdForPayment(null);
-      setBaseTotal(0);
-      setActualSurcharge(null);
-      setPaymentLoading(true);
-      try {
-        const res = await fetch("/api/checkout/create-intent", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            items: items.map(i => ({ productId: i.productId, quantity: i.quantity, offerId: i.offerId ?? null })),
-            shippingAddress: address,
-            shippingRate: rate,
-          }),
-        });
-        const data = await res.json();
-        if (!res.ok) throw new Error(data.error ?? "Failed to update payment");
-        setClientSecret(data.clientSecret);
-        setOrderIdForPayment(data.orderId);
-        setBaseTotal(data.totalPrice);
-      } catch {
-        // leave payment section empty — user can try again
-      } finally {
-        setPaymentLoading(false);
-      }
-    }
+    if (phase === "payment") await recreatePaymentIntent(rate);
     setShippingEditOpen(false);
   }
 
@@ -669,15 +674,17 @@ export function CheckoutFlow({
     setPromoLoading(true);
     setPromoError(null);
     const result = await applyPromoCode(promoInput.trim());
-    setPromoLoading(false);
-    if (!result.ok) { setPromoError(result.error ?? "Invalid promo code."); return; }
+    if (!result.ok) { setPromoLoading(false); setPromoError(result.error ?? "Invalid promo code."); return; }
     if (result.promo!.discount_type === "free_shipping" && !result.promo!.allow_international && address.country !== "US") {
       await removePromoCode();
+      setPromoLoading(false);
       setPromoError("This promo code is not valid for international orders.");
       return;
     }
     setAppliedPromo(result.promo!);
     setPromoInput("");
+    setPromoLoading(false);
+    if (phase === "payment") await recreatePaymentIntent();
   }
 
   async function handleRemovePromo() {
@@ -686,6 +693,7 @@ export function CheckoutFlow({
     setAppliedPromo(null);
     setPromoError(null);
     setPromoLoading(false);
+    if (phase === "payment") await recreatePaymentIntent();
   }
 
   if (items.length === 0) {
