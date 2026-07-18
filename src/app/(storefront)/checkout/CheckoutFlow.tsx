@@ -246,43 +246,33 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         </div>
       )}
 
-      {/* Klarna — full-color branded button */}
+      {/* Klarna — official brand image fills the entire button */}
       <button
         onClick={handleKlarna}
         disabled={anyLoading}
-        className="w-full rounded-xl flex items-center justify-center transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ height: 52, backgroundColor: "#FFB3C7", border: "none", cursor: "pointer" }}
+        className="w-full rounded-xl overflow-hidden transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center"
+        style={{ height: 52, border: "none", cursor: "pointer", padding: 0, backgroundColor: "#FFB3C7" }}
         aria-label="Pay with Klarna"
       >
         {redirectLoading === "klarna" ? (
           <Spinner className="h-5 w-5 text-zinc-800" />
         ) : (
-          <svg viewBox="0 0 120 36" height="24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-            <text x="60" y="28" textAnchor="middle" fontFamily="-apple-system, BlinkMacSystemFont, 'Helvetica Neue', Arial, sans-serif" fontSize="30" fontWeight="700" fill="#17120E" letterSpacing="-0.5">klarna</text>
-          </svg>
+          <img src="/klarna-logo.png" alt="Klarna" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
         )}
       </button>
 
-      {/* Amazon Pay — full-color branded button */}
+      {/* Amazon Pay — official brand image on white button */}
       <button
         onClick={handleAmazonPay}
         disabled={anyLoading}
         className="w-full rounded-xl flex items-center justify-center transition-opacity hover:opacity-90 disabled:opacity-50"
-        style={{ height: 52, backgroundColor: "#FFD814", border: "none", cursor: "pointer" }}
+        style={{ height: 52, backgroundColor: "#ffffff", border: "1.5px solid #e5e7eb", cursor: "pointer" }}
         aria-label="Pay with Amazon Pay"
       >
         {redirectLoading === "amazonPay" ? (
           <Spinner className="h-5 w-5 text-black" />
         ) : (
-          <div className="flex flex-col items-center" style={{ gap: 3 }}>
-            <span style={{ fontFamily: "Arial, 'Helvetica Neue', sans-serif", fontSize: 13, fontWeight: 400, color: "#000", lineHeight: 1, letterSpacing: 0.2 }}>
-              amazon <strong style={{ fontWeight: 700 }}>pay</strong>
-            </span>
-            <svg width="58" height="9" viewBox="0 0 58 9" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-              <path d="M2 5 Q29 10.5 56 5" stroke="#FF9900" strokeWidth="2.2" fill="none" strokeLinecap="round" />
-              <path d="M52.5 2.5 L56 5 L53 7.5" stroke="#FF9900" strokeWidth="2.2" fill="none" strokeLinecap="round" strokeLinejoin="round" />
-            </svg>
-          </div>
+          <img src="/amazon-pay-logo.png" alt="Amazon Pay" style={{ height: 32, width: "auto", display: "block" }} />
         )}
       </button>
 
