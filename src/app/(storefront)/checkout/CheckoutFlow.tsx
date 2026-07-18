@@ -246,22 +246,22 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         </div>
       )}
 
-      {/* Klarna — official brand image fills the entire button */}
+      {/* Klarna — brand image contained, centered on matching pink background */}
       <button
         onClick={handleKlarna}
         disabled={anyLoading}
-        className="w-full rounded-xl overflow-hidden transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center"
-        style={{ height: 52, border: "none", cursor: "pointer", padding: 0, backgroundColor: "#FFB3C7" }}
+        className="w-full rounded-xl transition-opacity hover:opacity-90 disabled:opacity-50 flex items-center justify-center"
+        style={{ height: 52, border: "none", cursor: "pointer", backgroundColor: "#FFB3C7" }}
         aria-label="Pay with Klarna"
       >
         {redirectLoading === "klarna" ? (
           <Spinner className="h-5 w-5 text-zinc-800" />
         ) : (
-          <img src="/klarna-logo.png" alt="Klarna" style={{ width: "100%", height: "100%", objectFit: "cover", display: "block" }} />
+          <img src="/klarna-logo.png" alt="Klarna" style={{ height: 44, width: "auto", display: "block" }} />
         )}
       </button>
 
-      {/* Amazon Pay — official brand image on white button */}
+      {/* Amazon Pay — brand image scaled to fill white button */}
       <button
         onClick={handleAmazonPay}
         disabled={anyLoading}
@@ -272,7 +272,7 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         {redirectLoading === "amazonPay" ? (
           <Spinner className="h-5 w-5 text-black" />
         ) : (
-          <img src="/amazon-pay-logo.png" alt="Amazon Pay" style={{ height: 32, width: "auto", display: "block" }} />
+          <img src="/amazon-pay-logo.png" alt="Amazon Pay" style={{ width: "60%", maxHeight: 46, height: "auto", display: "block" }} />
         )}
       </button>
 
