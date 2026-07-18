@@ -35,9 +35,9 @@ export default async function AboutPage() {
                   <h1 className="text-2xl md:text-3xl font-bold leading-tight">{about.heading1}</h1>
                 )}
                 {about?.body1 && (
-                  <p className="text-sm md:text-base leading-relaxed" style={{ opacity: 0.8 }}>
-                    {about.body1}
-                  </p>
+                  <div className="about-body text-sm md:text-base leading-relaxed" style={{ opacity: 0.8 }}
+                    dangerouslySetInnerHTML={{ __html: about.body1 }}
+                  />
                 )}
               </div>
               {about?.image1_url && (
@@ -73,9 +73,9 @@ export default async function AboutPage() {
                   <h2 className="text-2xl md:text-3xl font-bold leading-tight">{about.heading2}</h2>
                 )}
                 {about?.body2 && (
-                  <p className="text-sm md:text-base leading-relaxed" style={{ opacity: 0.8 }}>
-                    {about.body2}
-                  </p>
+                  <div className="about-body text-sm md:text-base leading-relaxed" style={{ opacity: 0.8 }}
+                    dangerouslySetInnerHTML={{ __html: about.body2 }}
+                  />
                 )}
               </div>
             </div>

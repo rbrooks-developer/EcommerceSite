@@ -192,6 +192,20 @@ textarea {
   min-height: 44px;
 }
 
+/* About page HTML body content */
+.about-body p { margin-bottom: 0.75em; }
+.about-body p:last-child { margin-bottom: 0; }
+.about-body ul, .about-body ol { margin: 0.5em 0 0.75em 1.5em; }
+.about-body ul { list-style-type: disc; }
+.about-body ol { list-style-type: decimal; }
+.about-body li { margin-bottom: 0.25em; }
+.about-body strong, .about-body b { font-weight: 700; }
+.about-body em, .about-body i { font-style: italic; }
+.about-body a { text-decoration: underline; opacity: 1; }
+.about-body h3 { font-size: 1.15em; font-weight: 700; margin: 0.75em 0 0.35em; }
+.about-body h4 { font-size: 1em; font-weight: 700; margin: 0.75em 0 0.35em; }
+.about-body br { display: block; content: ""; margin-bottom: 0.5em; }
+
 /* Reset touch-target override inside the lightbox — YARL manages its own sizing */
 .yarl__root button,
 .yarl__root [role="button"],
