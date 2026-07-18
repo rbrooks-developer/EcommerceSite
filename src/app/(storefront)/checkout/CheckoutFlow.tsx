@@ -98,14 +98,12 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
   const [error, setError] = useState<string | null>(null);
   const [surcharge, setSurcharge] = useState<{ amount: number; percent: number } | null>(null);
   const [hasExpress, setHasExpress] = useState(false);
+  const [selectedType, setSelectedType] = useState<string>("card");
 
   const displayTotal = surcharge ? baseTotal + surcharge.amount : baseTotal;
   const dividerColor = "color-mix(in srgb, var(--site-fg) 15%, transparent)";
+  const isRedirectMethod = selectedType === "klarna" || selectedType === "amazon_pay";
 
-  // Express checkout — Apple Pay, Google Pay, Amazon Pay, Klarna
-  // Note: Stripe renders official branded buttons for all these methods.
-  // The S badge you may see while testing only appears because you are logged
-  // into your Stripe account in this browser — real customers will not see it.
   async function handleExpressConfirm() {
     if (!stripe || !elements) return;
     setError(null);
@@ -114,12 +112,9 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
       clientSecret,
       confirmParams: { return_url: `${window.location.origin}/checkout/success` },
     });
-    if (confirmError) {
-      setError(confirmError.message ?? "Payment failed. Please try again.");
-    }
+    if (confirmError) setError(confirmError.message ?? "Payment failed. Please try again.");
   }
 
-  // Regular card payment with optional surcharge detection
   async function handlePay() {
     if (!stripe || !elements) return;
     setLoading(true);
@@ -132,6 +127,21 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
       return;
     }
 
+    // Klarna and Amazon Pay redirect — no surcharge detection needed
+    if (isRedirectMethod) {
+      const { error: confirmError } = await stripe.confirmPayment({
+        elements,
+        clientSecret,
+        confirmParams: { return_url: `${window.location.origin}/checkout/success` },
+      });
+      if (confirmError) {
+        setError(confirmError.message ?? "Payment failed. Please try again.");
+        setLoading(false);
+      }
+      return;
+    }
+
+    // Card — detect funding type for optional surcharge
     const { paymentMethod, error: pmError } = await stripe.createPaymentMethod({ elements });
     if (pmError || !paymentMethod) {
       setError(pmError?.message ?? "Unable to process payment method.");
@@ -164,7 +174,6 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
         payment_method: paymentMethod.id,
       },
     });
-
     if (confirmError) {
       setError(confirmError.message ?? "Payment failed. Please try again.");
       setLoading(false);
@@ -174,39 +183,29 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
   return (
     <div className="space-y-4">
 
-      {/* Express checkout — Apple Pay, Google Pay, Amazon Pay, Klarna
-          Single-column layout so each gets its own full-width branded button row.
-          Link is excluded from paymentMethods and goes to overflow (hidden). */}
+      {/* Express — Apple Pay / Google Pay only (device-dependent) */}
       <ExpressCheckoutElement
         onReady={(e) => setHasExpress(!!(e as any).availablePaymentMethods)}
         onConfirm={handleExpressConfirm}
         options={{
           buttonHeight: 52,
-          layout: { maxColumns: 1, maxRows: 5, overflow: "never" },
-          paymentMethodOrder: ["applePay", "googlePay", "amazonPay", "klarna"],
-          paymentMethods: {
-            applePay: "auto",
-            googlePay: "auto",
-            link: "never",
-            klarna: "auto",
-            amazonPay: "auto",
-            paypal: "never",
-          },
+          paymentMethods: { applePay: "auto", googlePay: "auto", link: "never", klarna: "never", amazonPay: "never", paypal: "never" },
         }}
       />
 
-      {/* Divider before card form */}
       {hasExpress && (
         <div className="flex items-center gap-3">
           <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
-          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or pay with card</span>
+          <span className="text-xs uppercase tracking-wider" style={{ opacity: 0.4 }}>or</span>
           <div className="flex-1 h-px" style={{ backgroundColor: dividerColor }} />
         </div>
       )}
 
-      {/* Card form — country and zip pre-filled from shipping address */}
+      {/* Payment method selector — tabs layout with official Stripe-rendered logos */}
       <PaymentElement
+        onChange={(e) => setSelectedType(e.value.type)}
         options={{
+          layout: "tabs",
           fields: {
             billingDetails: {
               address: {
@@ -250,6 +249,10 @@ function PaymentForm({ clientSecret, orderId, baseTotal, surchargeConfig, shippi
           <>
             <Spinner className="h-4 w-4" />
             Processing payment…
+          </>
+        ) : isRedirectMethod ? (
+          <>
+            Continue with {selectedType === "klarna" ? "Klarna" : "Amazon Pay"} →
           </>
         ) : (
           <>
