@@ -792,13 +792,13 @@ export function CheckoutFlow({
         )}
         {actualSurcharge ? (
           <div className="flex justify-between text-sm text-green-700 dark:text-green-400">
-            <span>Surcharge ({actualSurcharge.percent}%)</span>
+            <span>Surcharge ({actualSurcharge.percent}%{surchargeConfig?.surcharge_flat ? ` + ${formatPrice(surchargeConfig.surcharge_flat * 100)}` : ""})</span>
             <span>+{formatPrice(actualSurcharge.amount * 100)}</span>
           </div>
         ) : estimatedSurcharge > 0 && phase === "payment" ? (
           <div className="flex justify-between text-sm" style={{ opacity: 0.4 }}>
-            <span>Surcharge (credit card only)</span>
-            <span>~{formatPrice(estimatedSurcharge * 100)}</span>
+            <span>Surcharge ({Math.min(surchargeConfig?.surcharge_percent ?? 0, 4)}%{surchargeConfig?.surcharge_flat ? ` + ${formatPrice(surchargeConfig.surcharge_flat * 100)}` : ""})</span>
+            <span>{formatPrice(estimatedSurcharge * 100)}</span>
           </div>
         ) : null}
         <div className="flex justify-between font-bold text-base pt-2.5" style={{ borderTop: divider }}>

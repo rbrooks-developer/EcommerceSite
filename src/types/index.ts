@@ -218,6 +218,7 @@ export type CheckoutConfig = {
 export type SurchargeConfig = {
   surcharge_active: boolean;
   surcharge_percent: number;
+  surcharge_flat?: number;
   surcharge_min_order: number;
   surcharge_message: string;
 };
