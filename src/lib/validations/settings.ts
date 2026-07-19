@@ -138,7 +138,7 @@ export const siteSettingsSchema = z.object({
   product_config: z.object({
     products_per_page: z.number().int().min(4).max(200).default(24),
     category_sidebar_style: z.enum(["standard", "glow-bar", "pill", "count-badges", "frosted-cards"]).optional(),
-    sidebar_item_opacity: z.number().min(0.3).max(1).optional(),
+    sidebar_item_opacity: z.number().min(0.2).max(2.5).optional(),
     sidebar_font_size: z.enum(["xs", "sm", "base", "lg"]).optional(),
     sidebar_glow: z.enum(["none", "subtle", "medium", "strong"]).optional(),
   }).optional(),

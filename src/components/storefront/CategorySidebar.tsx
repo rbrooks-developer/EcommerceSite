@@ -32,18 +32,19 @@ function nodeHasProducts(node: Node, withProducts: Set<string>): boolean {
   return node.children.some((child) => nodeHasProducts(child, withProducts));
 }
 
-// Opaque-enough dark bg blocks striation bleed-through; position+zIndex creates stacking context
-const FROSTED_CARD: React.CSSProperties = {
+// Single opaque wrapper used for the entire frosted-cards list — prevents striation bleed-through
+const FROSTED_WRAPPER: React.CSSProperties = {
   position: "relative",
   zIndex: 1,
   border: "1px solid rgba(255,255,255,0.14)",
   borderRadius: "0.5rem",
-  padding: "0.25rem",
-  background: "rgba(0, 0, 0, 0.55)",
-  backdropFilter: "blur(12px)",
-  WebkitBackdropFilter: "blur(12px)",
+  overflow: "hidden",
+  background: "rgba(0, 0, 0, 0.82)",
+  backdropFilter: "blur(16px)",
+  WebkitBackdropFilter: "blur(16px)",
 };
 
+// text-shadow glow using fontColor; "strong" has a white hot-core for true luminance
 function glowShadow(fontColor: string, glow: SidebarGlow, isActive: boolean): string | undefined {
   if (glow === "none") return undefined;
   if (glow === "subtle")
@@ -52,10 +53,15 @@ function glowShadow(fontColor: string, glow: SidebarGlow, isActive: boolean): st
     return isActive
       ? `0 0 10px ${fontColor}, 0 0 24px ${fontColor}80`
       : `0 0 6px ${fontColor}, 0 0 14px ${fontColor}50`;
-  // strong
+  // strong: white hot-core makes text appear to emit light
   return isActive
-    ? `0 0 10px ${fontColor}, 0 0 24px ${fontColor}, 0 0 48px ${fontColor}90`
-    : `0 0 8px ${fontColor}, 0 0 20px ${fontColor}80`;
+    ? `0 0 3px #ffffff, 0 0 10px ${fontColor}, 0 0 28px ${fontColor}, 0 0 56px ${fontColor}90`
+    : `0 0 2px #ffffffc0, 0 0 8px ${fontColor}, 0 0 20px ${fontColor}80`;
+}
+
+// filter: brightness() lets values > 1.0 make text brighter than the theme color
+function brightnessFilter(value: number): string | undefined {
+  return value === 1 ? undefined : `brightness(${value})`;
 }
 
 function GlowBar({ fontColor }: { fontColor: string }) {
@@ -109,7 +115,7 @@ const FONT_SIZE_CLASS: Record<SidebarFontSize, string> = {
 
 function CategoryNode({
   node, activeSlug, depth, fontColor, bgColor, withProducts,
-  sidebarStyle, categoryCountMap, itemOpacity, fontSizeClass, glow,
+  sidebarStyle, categoryCountMap, itemBrightness, fontSizeClass, glow,
 }: {
   node: Node;
   activeSlug: string | undefined;
@@ -119,7 +125,7 @@ function CategoryNode({
   withProducts: Set<string>;
   sidebarStyle: SidebarStyle;
   categoryCountMap: Record<string, number>;
-  itemOpacity: number;
+  itemBrightness: number;
   fontSizeClass: string;
   glow: SidebarGlow;
 }) {
@@ -130,25 +136,27 @@ function CategoryNode({
   const isActive = node.cat.slug === activeSlug;
   const count = categoryCountMap[node.cat.id] ?? 0;
   const shadow = glowShadow(fontColor, glow, isActive);
+  const bf = brightnessFilter(itemBrightness);
 
   let linkStyle: React.CSSProperties;
   if (sidebarStyle === "glow-bar") {
     linkStyle = isActive
       ? { color: fontColor, fontWeight: 600, background: `linear-gradient(to right, ${fontColor}22, transparent)`, borderRadius: "0 0.375rem 0.375rem 0", textShadow: shadow }
-      : { opacity: itemOpacity, textShadow: shadow };
+      : { filter: bf, textShadow: shadow };
   } else if (sidebarStyle === "frosted-cards") {
+    // In frosted-cards the wrapper handles the dark bg; active gets a subtle highlight
     linkStyle = isActive
       ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem", textShadow: shadow }
-      : { opacity: itemOpacity, textShadow: shadow };
+      : { filter: bf, textShadow: shadow };
   } else {
     linkStyle = isActive
       ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600, textShadow: shadow }
-      : { opacity: itemOpacity, textShadow: shadow };
+      : { filter: bf, textShadow: shadow };
   }
 
+  // frosted-cards: no individual card on <li> — the single FROSTED_WRAPPER handles it
   let liStyle: React.CSSProperties = {};
   if (sidebarStyle === "glow-bar") liStyle = { position: "relative" };
-  else if (sidebarStyle === "frosted-cards" && depth === 0) liStyle = FROSTED_CARD;
 
   const linkClass = cn(
     `flex-1 ${fontSizeClass} px-2 py-1.5 transition-colors`,
@@ -207,7 +215,7 @@ function CategoryNode({
               withProducts={withProducts}
               sidebarStyle={sidebarStyle}
               categoryCountMap={categoryCountMap}
-              itemOpacity={itemOpacity}
+              itemBrightness={itemBrightness}
               fontSizeClass={fontSizeClass}
               glow={glow}
             />
@@ -245,7 +253,7 @@ export function CategorySidebar({
   sidebarStyle = "standard",
   categoryCountMap = {},
   totalProductCount,
-  sidebarItemOpacity = 0.75,
+  sidebarItemOpacity = 1,
   sidebarFontSize = "sm",
   sidebarGlow = "none",
 }: CategorySidebarProps) {
@@ -254,39 +262,95 @@ export function CategorySidebar({
   const favActive = activePage === "favorites";
   const fontSizeClass = FONT_SIZE_CLASS[sidebarFontSize] ?? "text-sm";
   const isFrosted = sidebarStyle === "frosted-cards";
+  const bf = brightnessFilter(sidebarItemOpacity);
 
   function sharedLinkStyle(isActive: boolean): React.CSSProperties {
     const shadow = glowShadow(fontColor, sidebarGlow, isActive);
     if (sidebarStyle === "glow-bar") {
       return isActive
         ? { color: fontColor, fontWeight: 600, background: `linear-gradient(to right, ${fontColor}22, transparent)`, borderRadius: "0 0.375rem 0.375rem 0", textShadow: shadow }
-        : { opacity: sidebarItemOpacity, textShadow: shadow };
+        : { filter: bf, textShadow: shadow };
     }
     if (sidebarStyle === "frosted-cards") {
       return isActive
         ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem", textShadow: shadow }
-        : { opacity: sidebarItemOpacity, textShadow: shadow };
+        : { filter: bf, textShadow: shadow };
     }
     return isActive
       ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600, textShadow: shadow }
-      : { opacity: sidebarItemOpacity, textShadow: shadow };
+      : { filter: bf, textShadow: shadow };
   }
 
   const roundedClass = sidebarStyle === "pill" ? "rounded-full" : "rounded-md";
-  // frosted-cards: tight spacing so cards are nearly touching (no visible gap)
-  const listClass = isFrosted ? "space-y-0.5" : "space-y-0.5";
 
+  // Frosted-cards: render as a single unified card with divide-y separators inside
+  if (isFrosted) {
+    const itemCls = `${fontSizeClass} w-full px-2 py-1.5 transition-colors text-left block`;
+    const allLinkCls = cn(itemCls, roundedClass);
+    const favLinkCls = cn("flex items-center gap-2", `${fontSizeClass} w-full px-2 py-1.5 transition-colors text-left`, roundedClass);
+
+    return (
+      <nav>
+        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ opacity: 0.5 }}>
+          Categories
+        </p>
+        <div style={FROSTED_WRAPPER}>
+          <ul className="divide-y divide-white/10 px-1">
+            {/* All */}
+            <li className="py-0.5">
+              <Link href="/products" className={allLinkCls} style={sharedLinkStyle(allActive)}>
+                <span>All</span>
+              </Link>
+            </li>
+
+            {tree.map((node) => (
+              <CategoryNode
+                key={node.cat.id}
+                node={node}
+                activeSlug={activeSlug}
+                depth={0}
+                fontColor={fontColor}
+                bgColor={bgColor}
+                withProducts={categoryIdsWithProducts}
+                sidebarStyle={sidebarStyle}
+                categoryCountMap={categoryCountMap}
+                itemBrightness={sidebarItemOpacity}
+                fontSizeClass={fontSizeClass}
+                glow={sidebarGlow}
+              />
+            ))}
+
+            {isLoggedIn && (
+              <li className="py-0.5">
+                <Link href="/favorites" className={favLinkCls} style={sharedLinkStyle(favActive)}>
+                  <Heart
+                    style={{
+                      width: "0.875rem",
+                      height: "0.875rem",
+                      flexShrink: 0,
+                      fill: favActive ? "#ef4444" : "none",
+                      color: favActive ? "#ef4444" : "currentColor",
+                    }}
+                  />
+                  My Favorites
+                </Link>
+              </li>
+            )}
+          </ul>
+        </div>
+      </nav>
+    );
+  }
+
+  // ── Non-frosted styles ────────────────────────────────────────────────────────
   const allLinkClass = cn(
-    `${fontSizeClass} px-2 py-1.5 transition-colors`,
+    `${fontSizeClass} px-2 py-1.5 ml-5 transition-colors`,
     roundedClass,
-    !isFrosted && "ml-5",
     sidebarStyle === "count-badges" ? "flex items-center justify-between gap-2" : "block",
   );
-
   const favLinkClass = cn(
-    `flex items-center gap-2 ${fontSizeClass} px-2 py-1.5 transition-colors`,
+    `flex items-center gap-2 ${fontSizeClass} px-2 py-1.5 ml-5 transition-colors`,
     roundedClass,
-    !isFrosted && "ml-5",
   );
 
   return (
@@ -294,15 +358,8 @@ export function CategorySidebar({
       <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ opacity: 0.5 }}>
         Categories
       </p>
-      <ul className={listClass}>
-
-        {/* All */}
-        <li
-          style={{
-            ...(sidebarStyle === "glow-bar" ? { position: "relative" } : {}),
-            ...(isFrosted ? FROSTED_CARD : {}),
-          }}
-        >
+      <ul className="space-y-0.5">
+        <li style={sidebarStyle === "glow-bar" ? { position: "relative" } : {}}>
           {sidebarStyle === "glow-bar" && allActive && <GlowBar fontColor={fontColor} />}
           <Link href="/products" className={allLinkClass} style={sharedLinkStyle(allActive)}>
             <span>All</span>
@@ -323,7 +380,7 @@ export function CategorySidebar({
             withProducts={categoryIdsWithProducts}
             sidebarStyle={sidebarStyle}
             categoryCountMap={categoryCountMap}
-            itemOpacity={sidebarItemOpacity}
+            itemBrightness={sidebarItemOpacity}
             fontSizeClass={fontSizeClass}
             glow={sidebarGlow}
           />
@@ -332,9 +389,9 @@ export function CategorySidebar({
         {isLoggedIn && (
           <li
             style={{
-              ...(isFrosted
-                ? FROSTED_CARD
-                : { borderTop: "1px solid rgba(0,0,0,0.1)", marginTop: "0.75rem", paddingTop: "0.75rem" }),
+              borderTop: "1px solid rgba(0,0,0,0.1)",
+              marginTop: "0.75rem",
+              paddingTop: "0.75rem",
               ...(sidebarStyle === "glow-bar" ? { position: "relative" } : {}),
             }}
           >

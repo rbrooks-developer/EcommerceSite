@@ -1064,19 +1064,19 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         </div>
         <div className="max-w-xs mt-4">
           <Label htmlFor="sidebar_item_opacity">
-            Sidebar Item Brightness — {Math.round(sidebarItemOpacity * 100)}%
+            Sidebar Text Brightness — {Math.round(sidebarItemOpacity * 100)}%
           </Label>
           <input
             id="sidebar_item_opacity"
             type="range"
-            min={0.3}
-            max={1}
+            min={0.2}
+            max={2.5}
             step={0.05}
             value={sidebarItemOpacity}
             onChange={(e) => setSidebarItemOpacity(parseFloat(e.target.value))}
             className="mt-1 w-full accent-gray-900"
           />
-          <p className="text-xs text-gray-400 mt-1">Controls how bright inactive category items appear. 100% = full color, lower = dimmer.</p>
+          <p className="text-xs text-gray-400 mt-1">100% = theme color. Slide right past 100% to make text brighter than the theme color. Slide left to dim.</p>
         </div>
         <div className="max-w-xs mt-4">
           <Label htmlFor="sidebar_glow">Sidebar Text Glow</Label>
