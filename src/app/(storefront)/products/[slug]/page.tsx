@@ -6,6 +6,7 @@ import { notFound } from "next/navigation";
 import { formatPrice, ogImageUrl } from "@/lib/utils";
 import { ProductImages } from "./ProductImages";
 import { AddToCartButton } from "@/components/storefront/AddToCartButton";
+import { FavoriteButton } from "@/components/storefront/FavoriteButton";
 import { MakeOfferForm } from "./MakeOfferForm";
 import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
 import type { Metadata } from "next";
@@ -89,6 +90,17 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
   const images = product.images as string[];
 
   const { data: { user } } = await supabase.auth.getUser();
+
+  let isFavorited = false;
+  if (user) {
+    const { data: favRow } = await supabase
+      .from("product_favorites")
+      .select("id")
+      .eq("user_id", user.id)
+      .eq("product_id", product.id)
+      .maybeSingle();
+    isFavorited = !!favRow;
+  }
 
   const MAX_OFFERS = 4;
   let existingOfferStatus: string | null = null;
@@ -230,6 +242,12 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             )}
 
             <AddToCartButton product={product} />
+            <FavoriteButton
+              productId={product.id}
+              initialFavorited={isFavorited}
+              isLoggedIn={!!user}
+              variant="detail"
+            />
             {product.inventory > 0 && user && (
               <MakeOfferForm
                 productId={product.id}

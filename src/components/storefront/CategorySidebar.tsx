@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { ChevronRight } from "lucide-react";
+import { ChevronRight, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 type Cat = { id: string; slug: string; name: string; parent_id: string | null };
@@ -117,13 +117,24 @@ function CategoryNode({
 interface CategorySidebarProps {
   categories: Cat[];
   activeSlug: string | undefined;
+  activePage?: "favorites";
   fontColor: string;
   bgColor: string;
   categoryIdsWithProducts: Set<string>;
+  isLoggedIn?: boolean;
 }
 
-export function CategorySidebar({ categories, activeSlug, fontColor, bgColor, categoryIdsWithProducts }: CategorySidebarProps) {
+export function CategorySidebar({
+  categories,
+  activeSlug,
+  activePage,
+  fontColor,
+  bgColor,
+  categoryIdsWithProducts,
+  isLoggedIn = false,
+}: CategorySidebarProps) {
   const tree = buildTree(categories);
+  const allActive = !activeSlug && activePage !== "favorites";
 
   return (
     <nav>
@@ -136,7 +147,7 @@ export function CategorySidebar({ categories, activeSlug, fontColor, bgColor, ca
             href="/products"
             className="block text-sm px-2 py-1.5 rounded-md ml-5 transition-colors"
             style={
-              !activeSlug
+              allActive
                 ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
                 : { opacity: 0.75 }
             }
@@ -155,6 +166,22 @@ export function CategorySidebar({ categories, activeSlug, fontColor, bgColor, ca
             withProducts={categoryIdsWithProducts}
           />
         ))}
+        {isLoggedIn && (
+          <li className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.1)" }}>
+            <Link
+              href="/favorites"
+              className="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md ml-5 transition-colors"
+              style={
+                activePage === "favorites"
+                  ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
+                  : { opacity: 0.75 }
+              }
+            >
+              <Heart style={{ width: "0.875rem", height: "0.875rem", flexShrink: 0 }} />
+              My Favorites
+            </Link>
+          </li>
+        )}
       </ul>
     </nav>
   );

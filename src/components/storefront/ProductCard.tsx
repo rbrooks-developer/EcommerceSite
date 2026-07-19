@@ -1,12 +1,21 @@
 import Link from "next/link";
 import Image from "next/image";
 import { formatPrice } from "@/lib/utils";
+import { FavoriteButton } from "@/components/storefront/FavoriteButton";
 import type { Product } from "@/types";
 
 // 1×1 gray GIF — blurred by next/image to fill the container while the real image loads
 const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
 
-export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory"> }) {
+export function ProductCard({
+  product,
+  isFavorited = false,
+  isLoggedIn = false,
+}: {
+  product: Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory">;
+  isFavorited?: boolean;
+  isLoggedIn?: boolean;
+}) {
   const image = (product.images as string[])[0];
   const outOfStock = product.inventory <= 0;
 
@@ -40,6 +49,12 @@ export function ProductCard({ product }: { product: Pick<Product, "id" | "slug" 
             </span>
           </div>
         )}
+        <FavoriteButton
+          productId={product.id}
+          initialFavorited={isFavorited}
+          isLoggedIn={isLoggedIn}
+          variant="card"
+        />
       </div>
       <div className="mt-3 flex flex-col flex-1 px-4 sm:px-0">
         <h3

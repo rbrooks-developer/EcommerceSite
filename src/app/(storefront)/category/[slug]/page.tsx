@@ -1,5 +1,6 @@
 import { getSettings } from "@/lib/data/settings";
 import { getProducts, getCategories } from "@/lib/data/products";
+import { createClient } from "@/lib/supabase/server";
 import type { CategoryRow } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
@@ -36,10 +37,12 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 export default async function CategoryPage({ params }: { params: Promise<{ slug: string }> }) {
   const { slug } = await params;
 
-  const [products, categories, settings] = await Promise.all([
+  const supabase = await createClient();
+  const [products, categories, settings, { data: { user } }] = await Promise.all([
     getProducts(),
     getCategories(),
     getSettings(),
+    supabase.auth.getUser(),
   ]);
 
   const category = categories.find((c) => c.slug === slug);
@@ -57,6 +60,17 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
   const ids = collectIds(category.id, categories);
   const filtered = products.filter((p) => p.category_id && ids.includes(p.category_id));
+
+  let favoriteIds = new Set<string>();
+  if (user) {
+    const { data: favRows } = await supabase
+      .from("product_favorites")
+      .select("product_id")
+      .eq("user_id", user.id);
+    if (favRows) {
+      favoriteIds = new Set((favRows as { product_id: string }[]).map((r) => r.product_id));
+    }
+  }
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const breadcrumbLd = {
@@ -86,6 +100,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                 fontColor={fontColor}
                 bgColor={bgColor}
                 categoryIdsWithProducts={categoryIdsWithProducts}
+                isLoggedIn={!!user}
               />
             </aside>
           )}
@@ -95,7 +110,13 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
               <h1 className="text-xl font-bold">{category.name}</h1>
               <span className="text-sm" style={{ opacity: 0.5 }}>{filtered.length} products</span>
             </div>
-            <CategoryProducts key={slug} products={filtered} pageSize={pageSize} />
+            <CategoryProducts
+              key={slug}
+              products={filtered}
+              pageSize={pageSize}
+              favoriteIds={favoriteIds}
+              isLoggedIn={!!user}
+            />
           </div>
         </div>
       </div>

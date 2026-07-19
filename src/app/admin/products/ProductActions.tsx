@@ -142,7 +142,7 @@ export function DeleteAllProductsButton() {
   );
 }
 
-export function ProductCard({ product }: { product: ProductRow }) {
+export function ProductCard({ product, favoriteCount = 0 }: { product: ProductRow; favoriteCount?: number }) {
   const { published, loading, toggle } = usePublishToggle(product.id, product.is_published);
   const image = (product.images as string[])[0];
 
@@ -158,6 +158,9 @@ export function ProductCard({ product }: { product: ProductRow }) {
           <p className="font-medium text-gray-900 truncate">{product.name}</p>
           <p className="text-sm text-gray-500">{formatPrice(Number(product.price) * 100)}</p>
           <p className="text-xs text-gray-400">{product.categories?.name ?? "—"}</p>
+          {favoriteCount > 0 && (
+            <p className="text-xs text-gray-400 mt-0.5">❤️ {favoriteCount} {favoriteCount === 1 ? "favorite" : "favorites"}</p>
+          )}
         </div>
         <Badge variant={published ? "success" : "outline"}>{published ? "Live" : "Draft"}</Badge>
       </div>
@@ -177,7 +180,7 @@ export function ProductCard({ product }: { product: ProductRow }) {
   );
 }
 
-export function ProductTableRow({ product }: { product: ProductRow }) {
+export function ProductTableRow({ product, favoriteCount = 0 }: { product: ProductRow; favoriteCount?: number }) {
   const { published, loading, toggle } = usePublishToggle(product.id, product.is_published);
   const image = (product.images as string[])[0];
 
@@ -198,6 +201,7 @@ export function ProductTableRow({ product }: { product: ProductRow }) {
       <td className="px-4 py-3 text-gray-500">{product.categories?.name ?? "—"}</td>
       <td className="px-4 py-3 text-gray-700">{formatPrice(Number(product.price) * 100)}</td>
       <td className="px-4 py-3 text-gray-700">{product.inventory}</td>
+      <td className="px-4 py-3 text-gray-700">{favoriteCount > 0 ? favoriteCount : <span className="text-gray-300">—</span>}</td>
       <td className="px-4 py-3">
         <Badge variant={published ? "success" : "outline"}>{published ? "Live" : "Draft"}</Badge>
       </td>

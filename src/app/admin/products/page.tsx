@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Link from "next/link";
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { Plus } from "lucide-react";
 import { DeleteAllProductsButton, ProductCard, ProductTableRow } from "./ProductActions";
 import { ProductFilters } from "./ProductFilters";
@@ -28,14 +28,22 @@ export default async function ProductsPage({
 }) {
   const { search, category } = await searchParams;
   const supabase = await createClient();
+  const sb = createServiceClient();
 
-  const [{ data: raw }, { data: cats }] = await Promise.all([
+  const [{ data: raw }, { data: cats }, { data: favRows }] = await Promise.all([
     supabase.from("products").select("*, categories(name)"),
     supabase.from("categories").select("id, name, parent_id").order("name"),
+    sb.from("product_favorites").select("product_id"),
   ]);
 
   let products = (raw ?? []) as ProductRow[];
   const categories = cats ?? [];
+
+  // Build favorite counts by product
+  const favCounts: Record<string, number> = {};
+  for (const r of (favRows ?? []) as { product_id: string }[]) {
+    favCounts[r.product_id] = (favCounts[r.product_id] ?? 0) + 1;
+  }
 
   // Filter
   if (search?.trim()) {
@@ -79,7 +87,7 @@ export default async function ProductsPage({
       {/* Mobile card view */}
       <div className="space-y-3 md:hidden">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} />
+          <ProductCard key={product.id} product={product} favoriteCount={favCounts[product.id] ?? 0} />
         ))}
         {products.length === 0 && (
           <p className="py-12 text-center text-sm text-gray-400">No products found.</p>
@@ -96,13 +104,14 @@ export default async function ProductsPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Price</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Inventory</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500">❤️ Favs</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">Actions</th>
               </tr>
             </thead>
             <tbody>
               {products.map((product) => (
-                <ProductTableRow key={product.id} product={product} />
+                <ProductTableRow key={product.id} product={product} favoriteCount={favCounts[product.id] ?? 0} />
               ))}
             </tbody>
           </table>

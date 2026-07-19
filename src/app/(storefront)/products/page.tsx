@@ -1,5 +1,6 @@
 import { getSettings } from "@/lib/data/settings";
 import { getProducts, getCategories } from "@/lib/data/products";
+import { createClient } from "@/lib/supabase/server";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import type { Metadata } from "next";
@@ -37,10 +38,12 @@ export default async function ProductsPage({
 }) {
   const { category } = await searchParams;
 
-  const [products, categories, settings] = await Promise.all([
+  const supabase = await createClient();
+  const [products, categories, settings, { data: { user } }] = await Promise.all([
     getProducts(),
     getCategories(),
     getSettings(),
+    supabase.auth.getUser(),
   ]);
 
   const homepage = settings?.homepage_config as HomepageConfig | null;
@@ -61,6 +64,17 @@ export default async function ProductsPage({
 
   const heading = selectedCat?.name ?? "All Products";
 
+  let favoriteIds = new Set<string>();
+  if (user) {
+    const { data: favRows } = await supabase
+      .from("product_favorites")
+      .select("product_id")
+      .eq("user_id", user.id);
+    if (favRows) {
+      favoriteIds = new Set((favRows as { product_id: string }[]).map((r) => r.product_id));
+    }
+  }
+
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col gap-8 md:flex-row">
@@ -72,6 +86,7 @@ export default async function ProductsPage({
               fontColor={fontColor}
               bgColor={bgColor}
               categoryIdsWithProducts={categoryIdsWithProducts}
+              isLoggedIn={!!user}
             />
           </aside>
         )}
@@ -82,7 +97,13 @@ export default async function ProductsPage({
             <span className="text-sm" style={{ opacity: 0.5 }}>{filtered.length} products</span>
           </div>
 
-          <CategoryProducts key={category ?? "all"} products={filtered} pageSize={pageSize} />
+          <CategoryProducts
+            key={category ?? "all"}
+            products={filtered}
+            pageSize={pageSize}
+            favoriteIds={favoriteIds}
+            isLoggedIn={!!user}
+          />
         </div>
       </div>
     </div>
