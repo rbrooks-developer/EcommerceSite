@@ -52,6 +52,8 @@ export async function getEbayConfig(): Promise<EbayConfig | null> {
     inventory_sync_enabled:           db.inventory_sync_enabled           ?? false,
     inventory_sync_interval_minutes:  db.inventory_sync_interval_minutes  ?? 60,
     inventory_sync_last_run:          db.inventory_sync_last_run          ?? null,
+    listing_sync_enabled:             db.listing_sync_enabled             ?? false,
+    listing_sync_last_run:            db.listing_sync_last_run            ?? null,
     price_discount_percent:           db.price_discount_percent           ?? 0,
     cgc_census_url:                   db.cgc_census_url                   ?? null,
     cgc_button_image_url:             db.cgc_button_image_url             ?? null,
