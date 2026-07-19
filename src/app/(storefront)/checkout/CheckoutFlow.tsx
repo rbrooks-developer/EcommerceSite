@@ -257,7 +257,22 @@ function PaymentForm({
       return;
     }
 
-    const { paymentMethod, error: pmErr } = await stripe.createPaymentMethod({ elements });
+    const { paymentMethod, error: pmErr } = await stripe.createPaymentMethod({
+      elements,
+      params: {
+        billing_details: {
+          name: billingAddress.name,
+          address: {
+            line1: billingAddress.address_line1,
+            line2: billingAddress.address_line2 ?? undefined,
+            city: billingAddress.city,
+            state: billingAddress.state,
+            postal_code: billingAddress.zip,
+            country: billingAddress.country,
+          },
+        },
+      },
+    });
     if (pmErr || !paymentMethod) { setError(pmErr?.message ?? "Unable to process payment."); setLoading(false); return; }
 
     if (paymentMethod.card?.funding === "credit" && surchargeConfig?.surcharge_active) {
