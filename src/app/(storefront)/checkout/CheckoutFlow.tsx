@@ -957,7 +957,7 @@ export function CheckoutFlow({
               )}
 
               {clientSecret && orderIdForPayment && !paymentLoading && (
-                <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance }}>
+                <Elements stripe={stripePromise} options={{ clientSecret, appearance: stripeAppearance, paymentMethodCreation: "manual" }}>
                   <PaymentForm
                     clientSecret={clientSecret}
                     orderId={orderIdForPayment}
