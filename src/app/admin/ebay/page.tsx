@@ -1,4 +1,5 @@
 import { getEbayConfig } from "@/lib/ebay/auth";
+import { getSettings } from "@/lib/data/settings";
 import { EbaySettings } from "@/components/admin/EbaySettings";
 import { EbayInventorySyncSettings } from "@/components/admin/EbayInventorySyncSettings";
 import { EbayListingSettings } from "@/components/admin/EbayListingSettings";
@@ -10,7 +11,7 @@ export default async function EbayAdminPage({
 }: {
   searchParams: Promise<Record<string, string>>;
 }) {
-  const [config, params] = await Promise.all([getEbayConfig(), searchParams]);
+  const [config, params, settings] = await Promise.all([getEbayConfig(), searchParams, getSettings()]);
   const success = params.success ?? null;
   const error   = params.error   ?? null;
 
@@ -36,7 +37,7 @@ export default async function EbayAdminPage({
         errorParam={error}
       />
       <EbayInventorySyncSettings config={config} />
-      <EbayListingSettings config={config} />
+      <EbayListingSettings config={config} maxSizeMb={(settings as any)?.max_image_size_mb ?? 2} />
     </div>
   );
 }

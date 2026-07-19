@@ -11,9 +11,10 @@ interface ImageUploadProps {
   max?: number;
   bucket?: string;
   pathPrefix?: string;
+  maxSizeMb?: number;
 }
 
-export function ImageUpload({ value, onChange, max = 10, bucket = "product-images", pathPrefix = "products" }: ImageUploadProps) {
+export function ImageUpload({ value, onChange, max = 10, bucket = "product-images", pathPrefix = "products", maxSizeMb = 2 }: ImageUploadProps) {
   const [uploading, setUploading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
@@ -36,8 +37,8 @@ export function ImageUpload({ value, onChange, max = 10, bucket = "product-image
         setError("Only image files are allowed");
         continue;
       }
-      if (file.size > 12 * 1024 * 1024) {
-        setError("Each image must be under 12MB");
+      if (file.size > maxSizeMb * 1024 * 1024) {
+        setError(`Each image must be under ${maxSizeMb}MB`);
         continue;
       }
 
@@ -113,7 +114,7 @@ export function ImageUpload({ value, onChange, max = 10, bucket = "product-image
       />
 
       <p className="text-xs text-gray-500">
-        {value.length}/{max} images · Max 12MB each · JPEG, PNG, WebP
+        {value.length}/{max} images · Max {maxSizeMb}MB each · JPEG, PNG, WebP
       </p>
       {error && <p className="text-sm text-red-500">{error}</p>}
     </div>

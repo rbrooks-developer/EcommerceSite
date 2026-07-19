@@ -131,7 +131,7 @@ export default async function AccountPage() {
         <SectionHeading title="Profile" description="Your name, contact details, and profile photo." />
         <div className="rounded-lg p-5 space-y-6" style={panelStyle}>
           <div className="flex flex-col items-center sm:items-start sm:flex-row sm:gap-8">
-            <AvatarUpload currentUrl={(profileRaw as any)?.avatar_url ?? null} />
+            <AvatarUpload currentUrl={(profileRaw as any)?.avatar_url ?? null} maxSizeMb={(settings as any)?.max_image_size_mb ?? 2} />
             <div className="flex-1 w-full">
               <ProfileForm
                 firstName={profile?.first_name ?? null}

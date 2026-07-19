@@ -231,6 +231,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
 
   const productCfg = (defaultValues as any)?.product_config as ProductConfig | null;
   const [productsPerPage, setProductsPerPage] = useState(productCfg?.products_per_page ?? 24);
+  const [maxImageSizeMb, setMaxImageSizeMb] = useState<number>((defaultValues as any)?.max_image_size_mb ?? 2);
 
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
   const [chatEnabled, setChatEnabled] = useState(savedChat?.enabled ?? false);
@@ -346,6 +347,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
       product_config: {
         products_per_page: productsPerPage,
       },
+      max_image_size_mb: maxImageSizeMb,
       shipping_countries: shippingCountries,
       store_address: {
         name: g("store_name"),
@@ -414,7 +416,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         <div><Label htmlFor="meta_description">Meta Description <span className="text-gray-400 font-normal">(max 160 chars)</span></Label><Textarea id="meta_description" name="meta_description" maxLength={160} rows={2} defaultValue={defaultValues?.meta_description ?? ""} /></div>
         <div>
           <Label>Logo</Label>
-          <ImageUpload value={logoUrl} onChange={setLogoUrl} max={1} />
+          <ImageUpload value={logoUrl} onChange={setLogoUrl} max={1} maxSizeMb={maxImageSizeMb} />
           <div className="mt-2 flex flex-wrap gap-4">
             {([
               ["Header", logoSpinHeader, setLogoSpinHeader],
@@ -433,10 +435,27 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             ))}
           </div>
         </div>
-        <div><Label>Favicon <span className="text-gray-400 font-normal">(.ico, .png, .svg, .webp)</span></Label><ImageUpload value={faviconUrl} onChange={setFaviconUrl} max={1} bucket="site-assets" pathPrefix="site" /></div>
+        <div><Label>Favicon <span className="text-gray-400 font-normal">(.ico, .png, .svg, .webp)</span></Label><ImageUpload value={faviconUrl} onChange={setFaviconUrl} max={1} bucket="site-assets" pathPrefix="site" maxSizeMb={maxImageSizeMb} /></div>
         <div>
           <Label>OG Image <span className="text-gray-400 font-normal">(shared preview image for social media — recommended 1200×630)</span></Label>
-          <ImageUpload value={ogImageUrl} onChange={setOgImageUrl} max={1} bucket="site-assets" pathPrefix="og" />
+          <ImageUpload value={ogImageUrl} onChange={setOgImageUrl} max={1} bucket="site-assets" pathPrefix="og" maxSizeMb={maxImageSizeMb} />
+        </div>
+        <div>
+          <Label htmlFor="max_image_size_mb">Max Image Upload Size (MB)</Label>
+          <div className="flex items-center gap-3 mt-1">
+            <input
+              id="max_image_size_mb"
+              type="number"
+              min={1}
+              max={50}
+              step={1}
+              value={maxImageSizeMb}
+              onChange={(e) => setMaxImageSizeMb(Math.max(1, Math.min(50, parseInt(e.target.value) || 2)))}
+              className="w-24 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+            <span className="text-sm text-gray-500">MB</span>
+          </div>
+          <p className="text-xs text-gray-400 mt-1">Applies to all image uploads across the site (product images, site assets, avatars). Default: 2 MB.</p>
         </div>
         <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           <ColorPicker id="bg_color" label="Background Color" value={bgColor} onChange={setBgColor} />
@@ -629,6 +648,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           max={3}
           bucket="site-assets"
           pathPrefix="services"
+          maxSizeMb={maxImageSizeMb}
         />
       </Section>
 
@@ -663,7 +683,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           </div>
           <div>
             <Label>Image</Label>
-            <ImageUpload value={aboutImage1} onChange={setAboutImage1} max={1} bucket="site-assets" pathPrefix="about" />
+            <ImageUpload value={aboutImage1} onChange={setAboutImage1} max={1} bucket="site-assets" pathPrefix="about" maxSizeMb={maxImageSizeMb} />
           </div>
         </div>
 
@@ -693,7 +713,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           </div>
           <div>
             <Label>Image</Label>
-            <ImageUpload value={aboutImage2} onChange={setAboutImage2} max={1} bucket="site-assets" pathPrefix="about" />
+            <ImageUpload value={aboutImage2} onChange={setAboutImage2} max={1} bucket="site-assets" pathPrefix="about" maxSizeMb={maxImageSizeMb} />
           </div>
         </div>
       </Section>
@@ -702,7 +722,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         <p className="text-sm text-gray-500">
           A scrolling strip of images that appears between the hero and your content sections. Supports up to {MAX_CAROUSEL_IMAGES} images. Leave empty to hide.
         </p>
-        <CarouselSettings value={carouselConfig} onChange={setCarouselConfig} />
+        <CarouselSettings value={carouselConfig} onChange={setCarouselConfig} maxSizeMb={maxImageSizeMb} />
       </Section>
 
       <Section title="Cart / Checkout / Account / Login / Register / Forgot Password">
@@ -718,7 +738,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         <p className="text-sm text-gray-500">Upload a texture or striation image to overlay on every page background. Adjust opacity and blend mode to taste — <strong>Screen</strong> works best for light streaks on a dark background.</p>
         <div>
           <Label>Overlay Image</Label>
-          <ImageUpload value={striationUrl} onChange={setStriationUrl} max={1} bucket="site-assets" pathPrefix="overlay" />
+          <ImageUpload value={striationUrl} onChange={setStriationUrl} max={1} bucket="site-assets" pathPrefix="overlay" maxSizeMb={maxImageSizeMb} />
         </div>
         {striationUrl[0] && (
           <>

@@ -10,6 +10,7 @@ import { Spinner } from "@/components/ui/spinner";
 
 interface AvatarUploadProps {
   currentUrl: string | null;
+  maxSizeMb?: number;
 }
 
 async function getCroppedBlob(imageSrc: string, cropArea: Area): Promise<Blob> {
@@ -51,7 +52,7 @@ async function getCroppedBlob(imageSrc: string, cropArea: Area): Promise<Blob> {
   );
 }
 
-export function AvatarUpload({ currentUrl }: AvatarUploadProps) {
+export function AvatarUpload({ currentUrl, maxSizeMb = 2 }: AvatarUploadProps) {
   const [imageSrc, setImageSrc] = useState<string | null>(null);
   const [crop, setCrop] = useState({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
@@ -73,7 +74,7 @@ export function AvatarUpload({ currentUrl }: AvatarUploadProps) {
     const file = e.target.files?.[0];
     if (!file) return;
     if (!file.type.startsWith("image/")) { setError("Please select an image file."); return; }
-    if (file.size > 10 * 1024 * 1024) { setError("Image must be under 10MB."); return; }
+    if (file.size > maxSizeMb * 1024 * 1024) { setError(`Image must be under ${maxSizeMb}MB.`); return; }
     setError(null);
     const reader = new FileReader();
     reader.onload = () => setImageSrc(reader.result as string);

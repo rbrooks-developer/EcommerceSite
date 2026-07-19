@@ -1,4 +1,5 @@
 import { createClient } from "@/lib/supabase/server";
+import { getSettings } from "@/lib/data/settings";
 import { ProductForm } from "@/components/admin/ProductForm";
 import { createProduct } from "@/lib/actions/products";
 import Link from "next/link";
@@ -6,10 +7,13 @@ import { ChevronLeft } from "lucide-react";
 
 export default async function NewProductPage() {
   const supabase = await createClient();
-  const [{ data: categories }, { data: tariffCodes }] = await Promise.all([
+  const [{ data: categories }, { data: tariffCodes }, settings] = await Promise.all([
     supabase.from("categories").select("*").order("name"),
     supabase.from("tariff_codes").select("id, hs_tariff_number, description").order("hs_tariff_number"),
+    getSettings(),
   ]);
+
+  const maxSizeMb = (settings as any)?.max_image_size_mb ?? 2;
 
   return (
     <div className="space-y-5">
@@ -24,6 +28,7 @@ export default async function NewProductPage() {
         categories={categories ?? []}
         tariffCodes={tariffCodes ?? []}
         submitLabel="Create Product"
+        maxSizeMb={maxSizeMb}
       />
     </div>
   );

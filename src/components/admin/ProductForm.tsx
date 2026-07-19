@@ -18,6 +18,7 @@ interface ProductFormProps {
   tariffCodes?: TariffCode[];
   defaultValues?: Partial<Product>;
   submitLabel?: string;
+  maxSizeMb?: number;
 }
 
 export function ProductForm({
@@ -26,6 +27,7 @@ export function ProductForm({
   tariffCodes = [],
   defaultValues,
   submitLabel = "Save Product",
+  maxSizeMb = 2,
 }: ProductFormProps) {
   const [state, formAction, isPending] = useActionState(action, null) as [
     { error?: Record<string, string[]> } | null,
@@ -75,7 +77,7 @@ export function ProductForm({
       {/* Images */}
       <div>
         <Label>Product Images</Label>
-        <ImageUpload value={images} onChange={setImages} max={25} />
+        <ImageUpload value={images} onChange={setImages} max={25} maxSizeMb={maxSizeMb} />
       </div>
 
       {/* Name + Slug */}

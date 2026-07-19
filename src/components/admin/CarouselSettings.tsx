@@ -49,9 +49,11 @@ function Toggle({ id, checked, onChange }: { id: string; checked: boolean; onCha
 export function CarouselSettings({
   value,
   onChange,
+  maxSizeMb = 2,
 }: {
   value: CarouselConfig | undefined;
   onChange: (v: CarouselConfig) => void;
+  maxSizeMb?: number;
 }) {
   const [uploading, setUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -79,7 +81,7 @@ export function CarouselSettings({
 
     for (const file of allowed) {
       if (!file.type.startsWith("image/")) { setUploadError("Only image files are allowed"); continue; }
-      if (file.size > 12 * 1024 * 1024) { setUploadError("Each image must be under 12MB"); continue; }
+      if (file.size > maxSizeMb * 1024 * 1024) { setUploadError(`Each image must be under ${maxSizeMb}MB`); continue; }
       const rawExt = file.name.split(".").pop()?.toLowerCase() ?? "";
       const ext = ALLOWED_EXTS.includes(rawExt) ? rawExt : "bin";
       const path = `carousel/${Date.now()}-${Math.random().toString(36).slice(2)}.${ext}`;

@@ -7,7 +7,7 @@ import { ImageUpload } from "@/components/admin/ImageUpload";
 import { CheckCircle, XCircle } from "lucide-react";
 import type { EbayConfig } from "@/types";
 
-export function EbayListingSettings({ config }: { config: EbayConfig | null }) {
+export function EbayListingSettings({ config, maxSizeMb = 2 }: { config: EbayConfig | null; maxSizeMb?: number }) {
   const cgcCensusUrl = config?.cgc_census_url ?? "";
   const [cgcButtonImageUrl, setCgcButtonImageUrl] = useState<string[]>(
     config?.cgc_button_image_url ? [config.cgc_button_image_url] : []
@@ -54,6 +54,7 @@ export function EbayListingSettings({ config }: { config: EbayConfig | null }) {
             max={1}
             bucket="site-assets"
             pathPrefix="settings"
+            maxSizeMb={maxSizeMb}
           />
           <p className="text-xs text-gray-400">
             Optional custom image for the CGC Census button. If not set, a plain text button is shown.
