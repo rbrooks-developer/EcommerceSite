@@ -223,6 +223,7 @@ function PaymentForm({
   const [surcharge, setSurcharge] = useState<{ amount: number; percent: number } | null>(null);
   const [hasExpress, setHasExpress] = useState(false);
   const [selectedType, setSelectedType] = useState("card");
+  const [paymentElementComplete, setPaymentElementComplete] = useState(false);
   const isRedirect = selectedType === "klarna" || selectedType === "amazon_pay";
 
   function handleTypeChange(type: string) {
@@ -244,6 +245,12 @@ function PaymentForm({
     if (!stripe || !elements) return;
     setLoading(true);
     setError(null);
+
+    if (!paymentElementComplete) {
+      setError("Please fill in your complete payment details before proceeding.");
+      setLoading(false);
+      return;
+    }
 
     const { error: submitErr } = await elements.submit();
     if (submitErr) { setError(submitErr.message ?? "Please check your payment details."); setLoading(false); return; }
@@ -319,7 +326,7 @@ function PaymentForm({
         </div>
       )}
       <PaymentElement
-        onChange={e => handleTypeChange(e.value.type)}
+        onChange={e => { handleTypeChange(e.value.type); setPaymentElementComplete(e.complete); }}
         options={{
           layout: { type: "accordion", defaultCollapsed: false },
           fields: { billingDetails: { name: "never", address: "never" } },
