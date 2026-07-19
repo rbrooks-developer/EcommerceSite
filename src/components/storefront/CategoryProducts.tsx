@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import type { Product } from "@/types";
 
@@ -15,9 +15,16 @@ const SORT_OPTIONS: { value: SortKey; label: string }[] = [
   { value: "price_desc", label: "Highest Price" },
 ];
 
-export function CategoryProducts({ products }: { products: ProductRow[] }) {
-  const [query, setQuery]   = useState("");
-  const [sort, setSort]     = useState<SortKey>("az");
+export function CategoryProducts({
+  products,
+  pageSize = 24,
+}: {
+  products: ProductRow[];
+  pageSize?: number;
+}) {
+  const [query, setQuery] = useState("");
+  const [sort, setSort]   = useState<SortKey>("az");
+  const [page, setPage]   = useState(1);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -32,6 +39,14 @@ export function CategoryProducts({ products }: { products: ProductRow[] }) {
 
     return list;
   }, [products, query, sort]);
+
+  // Reset to page 1 when filter/sort changes
+  useEffect(() => { setPage(1); }, [query, sort]);
+
+  const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+  const safePage   = Math.min(page, totalPages);
+  const start      = (safePage - 1) * pageSize;
+  const paginated  = filtered.slice(start, start + pageSize);
 
   return (
     <>
@@ -80,11 +95,42 @@ export function CategoryProducts({ products }: { products: ProductRow[] }) {
           {query ? `No products matching "${query}".` : "No products in this category yet."}
         </p>
       ) : (
-        <div className="grid grid-cols-1 gap-y-8 md:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
-          {filtered.map((product) => (
-            <ProductCard key={product.id} product={product} />
-          ))}
-        </div>
+        <>
+          <div className="grid grid-cols-1 gap-y-8 md:gap-6 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
+            {paginated.map((product) => (
+              <ProductCard key={product.id} product={product} />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className="mt-10 flex items-center justify-between gap-4">
+              <span className="text-sm" style={{ opacity: 0.5 }}>
+                Showing {start + 1}–{Math.min(start + pageSize, filtered.length)} of {filtered.length}
+              </span>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => setPage((p) => Math.max(1, p - 1))}
+                  disabled={safePage === 1}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity disabled:opacity-30"
+                  style={{ border: "1px solid var(--site-fg, #111827)", backgroundColor: "var(--site-bg, #ffffff)", color: "var(--site-fg, #111827)" }}
+                >
+                  ← Prev
+                </button>
+                <span className="text-sm font-medium px-2" style={{ opacity: 0.7 }}>
+                  {safePage} / {totalPages}
+                </span>
+                <button
+                  onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                  disabled={safePage === totalPages}
+                  className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity disabled:opacity-30"
+                  style={{ border: "1px solid var(--site-fg, #111827)", backgroundColor: "var(--site-bg, #ffffff)", color: "var(--site-fg, #111827)" }}
+                >
+                  Next →
+                </button>
+              </div>
+            </div>
+          )}
+        </>
       )}
     </>
   );

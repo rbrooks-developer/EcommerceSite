@@ -3,7 +3,7 @@ import { getProducts, getCategories } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import type { Metadata } from "next";
-import type { HomepageConfig } from "@/types";
+import type { HomepageConfig, ProductConfig } from "@/types";
 import type { ProductListRow, CategoryRow } from "@/lib/data/products";
 
 function collectIds(rootId: string, all: CategoryRow[]): string[] {
@@ -44,8 +44,10 @@ export default async function ProductsPage({
   ]);
 
   const homepage = settings?.homepage_config as HomepageConfig | null;
+  const productCfg = (settings as any)?.product_config as ProductConfig | null;
   const fontColor = homepage?.font_color ?? "#111827";
   const bgColor = homepage?.bg_color ?? "#ffffff";
+  const pageSize = productCfg?.products_per_page ?? 24;
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
@@ -80,7 +82,7 @@ export default async function ProductsPage({
             <span className="text-sm" style={{ opacity: 0.5 }}>{filtered.length} products</span>
           </div>
 
-          <CategoryProducts products={filtered} />
+          <CategoryProducts products={filtered} pageSize={pageSize} />
         </div>
       </div>
     </div>

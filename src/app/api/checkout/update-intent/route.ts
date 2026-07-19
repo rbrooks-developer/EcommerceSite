@@ -23,7 +23,7 @@ export async function POST(request: NextRequest) {
 
   const { data: orderRaw } = await supabase
     .from("orders")
-    .select("id, user_id, subtotal, discount_amount, total_price, stripe_payment_intent_id, status")
+    .select("id, user_id, subtotal, discount_amount, total_price, surcharge_amount, stripe_payment_intent_id, status")
     .eq("id", orderId)
     .eq("user_id", user.id)
     .eq("status", "pending")
@@ -37,6 +37,7 @@ export async function POST(request: NextRequest) {
     subtotal: number;
     discount_amount: number;
     total_price: number;
+    surcharge_amount: number | null;
     stripe_payment_intent_id: string | null;
     status: string;
   };
@@ -61,7 +62,9 @@ export async function POST(request: NextRequest) {
 
   const surchargePercent = Math.min(surchargeCfg.surcharge_percent, 4);
   const surchargeAmount = Math.round(discountedSubtotal * surchargePercent / 100 * 100) / 100;
-  const newTotal = Number(order.total_price) + surchargeAmount;
+  // Subtract any previously applied surcharge so it's never stacked on itself
+  const baseTotal = Number(order.total_price) - Number(order.surcharge_amount ?? 0);
+  const newTotal = baseTotal + surchargeAmount;
 
   const stripe = getStripeClient();
   await stripe.paymentIntents.update(intentId, {

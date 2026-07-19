@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -229,6 +229,9 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [aboutBody2, setAboutBody2] = useState(aboutCfg?.body2 ?? "");
   const [aboutImage2, setAboutImage2] = useState<string[]>(aboutCfg?.image2_url ? [aboutCfg.image2_url] : []);
 
+  const productCfg = (defaultValues as any)?.product_config as ProductConfig | null;
+  const [productsPerPage, setProductsPerPage] = useState(productCfg?.products_per_page ?? 24);
+
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
   const [chatEnabled, setChatEnabled] = useState(savedChat?.enabled ?? false);
   const [chatPropertyId, setChatPropertyId] = useState(savedChat?.property_id ?? "");
@@ -339,6 +342,9 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         heading: contactHeading,
         subheading: contactSubheading,
         body_text: contactBodyText,
+      },
+      product_config: {
+        products_per_page: productsPerPage,
       },
       shipping_countries: shippingCountries,
       store_address: {
@@ -969,6 +975,34 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             <Label htmlFor="contact_body_text">Body Text</Label>
             <Textarea id="contact_body_text" value={contactBodyText} onChange={(e) => setContactBodyText(e.target.value)} placeholder="If you have any inquiries or just want to say hi, please use the contact form!" rows={3} className="mt-1" />
           </div>
+        </div>
+      </Section>
+
+      <Section title="Products">
+        <p className="text-sm text-gray-500">
+          Controls how products are displayed on the{" "}
+          <code className="bg-gray-100 px-1 rounded text-xs">/products</code> page.
+          The grid automatically calculates rows based on this limit and the visitor&apos;s screen size.
+        </p>
+        <div className="max-w-xs">
+          <Label htmlFor="products_per_page">Products per page</Label>
+          <div className="mt-1 flex items-center gap-2">
+            <input
+              id="products_per_page"
+              type="number"
+              min={4}
+              max={200}
+              step={1}
+              value={productsPerPage}
+              onChange={(e) => setProductsPerPage(Math.max(4, Math.min(200, parseInt(e.target.value) || 24)))}
+              className="w-24 rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+            />
+          </div>
+          <p className="text-xs text-gray-400 mt-1.5">
+            At 4 columns (large screens): {Math.ceil(productsPerPage / 4)} rows &middot;{" "}
+            3 columns: {Math.ceil(productsPerPage / 3)} rows &middot;{" "}
+            2 columns: {Math.ceil(productsPerPage / 2)} rows
+          </p>
         </div>
       </Section>
 

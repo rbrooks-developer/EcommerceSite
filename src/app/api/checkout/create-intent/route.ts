@@ -11,25 +11,25 @@ import type { Product } from "@/types";
 const requestSchema = z.object({
   items: z.array(
     z.object({
-      productId: z.string(),
-      quantity: z.number().int().positive(),
-      offerId: z.string().nullable().optional(),
+      productId: z.string().uuid(),
+      quantity: z.number().int().positive().max(100),
+      offerId: z.string().uuid().nullable().optional(),
     })
-  ),
+  ).min(1).max(50),
   shippingAddress: z.object({
-    name: z.string(),
-    address_line1: z.string(),
-    address_line2: z.string().optional(),
-    city: z.string(),
-    state: z.string(),
-    zip: z.string(),
-    country: z.string(),
+    name: z.string().min(1).max(100),
+    address_line1: z.string().min(1).max(200),
+    address_line2: z.string().max(200).optional(),
+    city: z.string().min(1).max(100),
+    state: z.string().max(50),
+    zip: z.string().min(1).max(20),
+    country: z.string().length(2),
   }),
   shippingRate: z.object({
-    id: z.string(),
-    carrier: z.string(),
-    service: z.string(),
-    rate: z.string(),
+    id: z.string().max(100),
+    carrier: z.string().max(100),
+    service: z.string().max(100),
+    rate: z.string().regex(/^\d+(\.\d{1,2})?$/, "Invalid rate format"),
     delivery_days: z.number().nullable(),
     delivery_date: z.string().nullable(),
   }),
@@ -122,16 +122,28 @@ export async function POST(request: NextRequest) {
   // Total WITHOUT surcharge — deferred until card type is known after Payment Element
   const totalPrice = discountedSubtotal + effectiveShipping + taxAmount;
 
-  // Cancel stale pending orders: mark DB immediately, fire-and-forget the Stripe cancellations
+  // Cancel stale pending orders — but first check Stripe PI status so we don't cancel
+  // an order that was just paid (webhook may not have arrived yet).
   if (pendingOrders && pendingOrders.length > 0) {
-    const oldIds = (pendingOrders as { id: string; stripe_payment_intent_id: string }[]).map((o) => o.id);
-    await supabase.from("orders").update({ status: "cancelled" }).in("id", oldIds);
-    // Stripe cancellations don't need to block the user — fire and forget
-    Promise.all(
-      (pendingOrders as { id: string; stripe_payment_intent_id: string }[]).map((o) =>
-        stripe.paymentIntents.cancel(o.stripe_payment_intent_id).catch(() => {})
-      )
+    type PendingOrder = { id: string; stripe_payment_intent_id: string };
+    const withStatus = await Promise.all(
+      (pendingOrders as PendingOrder[]).map(async (o) => {
+        try {
+          const pi = await stripe.paymentIntents.retrieve(o.stripe_payment_intent_id);
+          return { ...o, piStatus: pi.status };
+        } catch {
+          return { ...o, piStatus: "unknown" as const };
+        }
+      })
     );
+    // Only cancel PIs that haven't been charged; skip succeeded/processing ones
+    const safeToCancel = withStatus.filter((o) =>
+      ["requires_payment_method", "requires_confirmation", "requires_action", "unknown"].includes(o.piStatus)
+    );
+    if (safeToCancel.length > 0) {
+      await supabase.from("orders").update({ status: "cancelled" }).in("id", safeToCancel.map((o) => o.id));
+      Promise.all(safeToCancel.map((o) => stripe.paymentIntents.cancel(o.stripe_payment_intent_id).catch(() => {})));
+    }
   }
 
   const { data: orderData, error: orderError } = await supabase

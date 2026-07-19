@@ -223,6 +223,10 @@ export type SurchargeConfig = {
   surcharge_message: string;
 };
 
+export type ProductConfig = {
+  products_per_page: number;
+};
+
 export type ContactConfig = {
   heading: string;
   subheading: string;
