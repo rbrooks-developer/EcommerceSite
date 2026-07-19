@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig, SidebarStyle, SidebarFontSize } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig, SidebarStyle, SidebarFontSize, SidebarGlow } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -234,6 +234,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [categorySidebarStyle, setCategorySidebarStyle] = useState<SidebarStyle>(productCfg?.category_sidebar_style ?? "standard");
   const [sidebarItemOpacity, setSidebarItemOpacity] = useState<number>(productCfg?.sidebar_item_opacity ?? 0.75);
   const [sidebarFontSize, setSidebarFontSize] = useState<SidebarFontSize>(productCfg?.sidebar_font_size ?? "sm");
+  const [sidebarGlow, setSidebarGlow] = useState<SidebarGlow>(productCfg?.sidebar_glow ?? "none");
   const [maxImageSizeMb, setMaxImageSizeMb] = useState<number>((defaultValues as any)?.max_image_size_mb ?? 2);
 
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
@@ -352,6 +353,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         category_sidebar_style: categorySidebarStyle,
         sidebar_item_opacity: sidebarItemOpacity,
         sidebar_font_size: sidebarFontSize,
+        sidebar_glow: sidebarGlow,
       },
       max_image_size_mb: maxImageSizeMb,
       shipping_countries: shippingCountries,
@@ -1075,6 +1077,21 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             className="mt-1 w-full accent-gray-900"
           />
           <p className="text-xs text-gray-400 mt-1">Controls how bright inactive category items appear. 100% = full color, lower = dimmer.</p>
+        </div>
+        <div className="max-w-xs mt-4">
+          <Label htmlFor="sidebar_glow">Sidebar Text Glow</Label>
+          <select
+            id="sidebar_glow"
+            value={sidebarGlow}
+            onChange={(e) => setSidebarGlow(e.target.value as SidebarGlow)}
+            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            <option value="none">None</option>
+            <option value="subtle">Subtle</option>
+            <option value="medium">Medium</option>
+            <option value="strong">Strong</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1.5">Adds a color glow around category text using your theme color. Works especially well on dark backgrounds.</p>
         </div>
       </Section>
 

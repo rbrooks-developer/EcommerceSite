@@ -57,6 +57,7 @@ export default async function FavoritesPage() {
   const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
   const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
   const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
+  const sidebarGlow = productCfg?.sidebar_glow ?? "none";
 
   const favoriteIds = new Set(products.map((p) => p.id));
   const categoryIdsWithProducts = new Set(
@@ -75,7 +76,7 @@ export default async function FavoritesPage() {
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
       <div className="flex flex-col gap-8 md:flex-row">
         {categories.length > 0 && (
-          <aside className="md:w-52 shrink-0">
+          <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
             <CategorySidebar
               categories={categories}
               activeSlug={undefined}
@@ -89,6 +90,7 @@ export default async function FavoritesPage() {
               totalProductCount={sidebarStyle === "count-badges" ? allProducts.length : undefined}
               sidebarItemOpacity={sidebarItemOpacity}
               sidebarFontSize={sidebarFontSize}
+              sidebarGlow={sidebarGlow}
             />
           </aside>
         )}

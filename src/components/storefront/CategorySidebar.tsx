@@ -4,7 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
-import type { SidebarStyle, SidebarFontSize } from "@/types";
+import type { SidebarStyle, SidebarFontSize, SidebarGlow } from "@/types";
 
 type Cat = { id: string; slug: string; name: string; parent_id: string | null };
 
@@ -32,14 +32,31 @@ function nodeHasProducts(node: Node, withProducts: Set<string>): boolean {
   return node.children.some((child) => nodeHasProducts(child, withProducts));
 }
 
+// Opaque-enough dark bg blocks striation bleed-through; position+zIndex creates stacking context
 const FROSTED_CARD: React.CSSProperties = {
-  border: "1px solid rgba(255,255,255,0.12)",
+  position: "relative",
+  zIndex: 1,
+  border: "1px solid rgba(255,255,255,0.14)",
   borderRadius: "0.5rem",
-  padding: "0.375rem",
-  background: "rgba(255,255,255,0.04)",
-  backdropFilter: "blur(8px)",
-  WebkitBackdropFilter: "blur(8px)",
+  padding: "0.25rem",
+  background: "rgba(0, 0, 0, 0.55)",
+  backdropFilter: "blur(12px)",
+  WebkitBackdropFilter: "blur(12px)",
 };
+
+function glowShadow(fontColor: string, glow: SidebarGlow, isActive: boolean): string | undefined {
+  if (glow === "none") return undefined;
+  if (glow === "subtle")
+    return isActive ? `0 0 8px ${fontColor}` : `0 0 5px ${fontColor}80`;
+  if (glow === "medium")
+    return isActive
+      ? `0 0 10px ${fontColor}, 0 0 24px ${fontColor}80`
+      : `0 0 6px ${fontColor}, 0 0 14px ${fontColor}50`;
+  // strong
+  return isActive
+    ? `0 0 10px ${fontColor}, 0 0 24px ${fontColor}, 0 0 48px ${fontColor}90`
+    : `0 0 8px ${fontColor}, 0 0 20px ${fontColor}80`;
+}
 
 function GlowBar({ fontColor }: { fontColor: string }) {
   return (
@@ -59,16 +76,8 @@ function GlowBar({ fontColor }: { fontColor: string }) {
   );
 }
 
-function CountBadge({
-  count,
-  isActive,
-  fontColor,
-  bgColor,
-}: {
-  count: number;
-  isActive: boolean;
-  fontColor: string;
-  bgColor: string;
+function CountBadge({ count, isActive, fontColor, bgColor }: {
+  count: number; isActive: boolean; fontColor: string; bgColor: string;
 }) {
   if (!count) return null;
   return (
@@ -99,16 +108,8 @@ const FONT_SIZE_CLASS: Record<SidebarFontSize, string> = {
 };
 
 function CategoryNode({
-  node,
-  activeSlug,
-  depth,
-  fontColor,
-  bgColor,
-  withProducts,
-  sidebarStyle,
-  categoryCountMap,
-  itemOpacity,
-  fontSizeClass,
+  node, activeSlug, depth, fontColor, bgColor, withProducts,
+  sidebarStyle, categoryCountMap, itemOpacity, fontSizeClass, glow,
 }: {
   node: Node;
   activeSlug: string | undefined;
@@ -120,6 +121,7 @@ function CategoryNode({
   categoryCountMap: Record<string, number>;
   itemOpacity: number;
   fontSizeClass: string;
+  glow: SidebarGlow;
 }) {
   if (depth > 0 && !nodeHasProducts(node, withProducts)) return null;
 
@@ -127,30 +129,26 @@ function CategoryNode({
   const [open, setOpen] = useState(true);
   const isActive = node.cat.slug === activeSlug;
   const count = categoryCountMap[node.cat.id] ?? 0;
+  const shadow = glowShadow(fontColor, glow, isActive);
 
-  // ── link style ──────────────────────────────────────────────────────────────
   let linkStyle: React.CSSProperties;
   if (sidebarStyle === "glow-bar") {
     linkStyle = isActive
-      ? { color: fontColor, fontWeight: 600, background: `linear-gradient(to right, ${fontColor}22, transparent)`, borderRadius: "0 0.375rem 0.375rem 0" }
-      : { opacity: itemOpacity };
+      ? { color: fontColor, fontWeight: 600, background: `linear-gradient(to right, ${fontColor}22, transparent)`, borderRadius: "0 0.375rem 0.375rem 0", textShadow: shadow }
+      : { opacity: itemOpacity, textShadow: shadow };
   } else if (sidebarStyle === "frosted-cards") {
     linkStyle = isActive
-      ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem" }
-      : { opacity: itemOpacity };
+      ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem", textShadow: shadow }
+      : { opacity: itemOpacity, textShadow: shadow };
   } else {
     linkStyle = isActive
-      ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
-      : { opacity: itemOpacity };
+      ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600, textShadow: shadow }
+      : { opacity: itemOpacity, textShadow: shadow };
   }
 
-  // ── li container style ───────────────────────────────────────────────────────
   let liStyle: React.CSSProperties = {};
-  if (sidebarStyle === "glow-bar") {
-    liStyle = { position: "relative" };
-  } else if (sidebarStyle === "frosted-cards" && depth === 0) {
-    liStyle = FROSTED_CARD;
-  }
+  if (sidebarStyle === "glow-bar") liStyle = { position: "relative" };
+  else if (sidebarStyle === "frosted-cards" && depth === 0) liStyle = FROSTED_CARD;
 
   const linkClass = cn(
     `flex-1 ${fontSizeClass} px-2 py-1.5 transition-colors`,
@@ -211,6 +209,7 @@ function CategoryNode({
               categoryCountMap={categoryCountMap}
               itemOpacity={itemOpacity}
               fontSizeClass={fontSizeClass}
+              glow={glow}
             />
           ))}
         </ul>
@@ -232,6 +231,7 @@ interface CategorySidebarProps {
   totalProductCount?: number;
   sidebarItemOpacity?: number;
   sidebarFontSize?: SidebarFontSize;
+  sidebarGlow?: SidebarGlow;
 }
 
 export function CategorySidebar({
@@ -247,6 +247,7 @@ export function CategorySidebar({
   totalProductCount,
   sidebarItemOpacity = 0.75,
   sidebarFontSize = "sm",
+  sidebarGlow = "none",
 }: CategorySidebarProps) {
   const tree = buildTree(categories);
   const allActive = !activeSlug && activePage !== "favorites";
@@ -254,28 +255,27 @@ export function CategorySidebar({
   const fontSizeClass = FONT_SIZE_CLASS[sidebarFontSize] ?? "text-sm";
   const isFrosted = sidebarStyle === "frosted-cards";
 
-  // Shared link style for "All" and "My Favorites"
   function sharedLinkStyle(isActive: boolean): React.CSSProperties {
+    const shadow = glowShadow(fontColor, sidebarGlow, isActive);
     if (sidebarStyle === "glow-bar") {
       return isActive
-        ? { color: fontColor, fontWeight: 600, background: `linear-gradient(to right, ${fontColor}22, transparent)`, borderRadius: "0 0.375rem 0.375rem 0" }
-        : { opacity: sidebarItemOpacity };
+        ? { color: fontColor, fontWeight: 600, background: `linear-gradient(to right, ${fontColor}22, transparent)`, borderRadius: "0 0.375rem 0.375rem 0", textShadow: shadow }
+        : { opacity: sidebarItemOpacity, textShadow: shadow };
     }
     if (sidebarStyle === "frosted-cards") {
       return isActive
-        ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem" }
-        : { opacity: sidebarItemOpacity };
+        ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem", textShadow: shadow }
+        : { opacity: sidebarItemOpacity, textShadow: shadow };
     }
     return isActive
-      ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
-      : { opacity: sidebarItemOpacity };
+      ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600, textShadow: shadow }
+      : { opacity: sidebarItemOpacity, textShadow: shadow };
   }
 
   const roundedClass = sidebarStyle === "pill" ? "rounded-full" : "rounded-md";
-  const listClass = isFrosted ? "space-y-2" : "space-y-0.5";
+  // frosted-cards: tight spacing so cards are nearly touching (no visible gap)
+  const listClass = isFrosted ? "space-y-0.5" : "space-y-0.5";
 
-  // "All" and "My Favorites" use ml-5 only when NOT in frosted-cards
-  // (frosted-cards: each is its own card so no indent needed)
   const allLinkClass = cn(
     `${fontSizeClass} px-2 py-1.5 transition-colors`,
     roundedClass,
@@ -291,7 +291,7 @@ export function CategorySidebar({
 
   return (
     <nav>
-      <p className={`${fontSizeClass === "text-xs" ? "text-xs" : "text-xs"} font-semibold uppercase tracking-wider mb-3`} style={{ opacity: 0.5 }}>
+      <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ opacity: 0.5 }}>
         Categories
       </p>
       <ul className={listClass}>
@@ -325,6 +325,7 @@ export function CategorySidebar({
             categoryCountMap={categoryCountMap}
             itemOpacity={sidebarItemOpacity}
             fontSizeClass={fontSizeClass}
+            glow={sidebarGlow}
           />
         ))}
 

@@ -56,6 +56,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
   const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
   const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
+  const sidebarGlow = productCfg?.sidebar_glow ?? "none";
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
@@ -104,7 +105,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
         <div className="flex flex-col gap-8 md:flex-row mt-4">
           {categories.length > 0 && (
-            <aside className="md:w-52 shrink-0">
+            <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
               <CategorySidebar
                 categories={categories}
                 activeSlug={slug}
@@ -117,6 +118,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                 totalProductCount={sidebarStyle === "count-badges" ? products.length : undefined}
                 sidebarItemOpacity={sidebarItemOpacity}
                 sidebarFontSize={sidebarFontSize}
+                sidebarGlow={sidebarGlow}
               />
             </aside>
           )}
