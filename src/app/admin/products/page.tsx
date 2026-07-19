@@ -104,7 +104,7 @@ export default async function ProductsPage({
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Price</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Inventory</th>
-                <th className="px-4 py-3 text-left font-medium text-gray-500">❤️ Favs</th>
+                <th className="px-4 py-3 text-left font-medium text-gray-500 whitespace-nowrap">♥ Favs</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Status</th>
                 <th className="px-4 py-3 text-right font-medium text-gray-500">Actions</th>
               </tr>

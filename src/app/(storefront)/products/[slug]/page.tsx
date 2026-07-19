@@ -241,12 +241,16 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </a>
             )}
 
-            <AddToCartButton product={product} />
-            <FavoriteButton
-              productId={product.id}
-              initialFavorited={isFavorited}
-              isLoggedIn={!!user}
-              variant="detail"
+            <AddToCartButton
+              product={product}
+              favoriteSlot={
+                <FavoriteButton
+                  productId={product.id}
+                  initialFavorited={isFavorited}
+                  isLoggedIn={!!user}
+                  variant="detail"
+                />
+              }
             />
             {product.inventory > 0 && user && (
               <MakeOfferForm

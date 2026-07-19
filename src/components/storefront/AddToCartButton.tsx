@@ -10,7 +10,7 @@ type ProductProps = Pick<
   "id" | "name" | "price" | "images" | "weight_oz" | "length_in" | "width_in" | "height_in" | "inventory"
 >;
 
-export function AddToCartButton({ product }: { product: ProductProps }) {
+export function AddToCartButton({ product, favoriteSlot }: { product: ProductProps; favoriteSlot?: React.ReactNode }) {
   const { addItem, reloadCart } = useCart();
   const [qty, setQty] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "added" | "error">("idle");
@@ -42,13 +42,16 @@ export function AddToCartButton({ product }: { product: ProductProps }) {
 
   if (product.inventory === 0) {
     return (
-      <button
-        disabled
-        className="w-full rounded-md py-4 text-sm font-semibold cursor-not-allowed"
-        style={{ opacity: 0.35, border: "1px solid currentColor" }}
-      >
-        Out of Stock
-      </button>
+      <div className="space-y-3">
+        <button
+          disabled
+          className="w-full rounded-md py-4 text-sm font-semibold cursor-not-allowed"
+          style={{ opacity: 0.35, border: "1px solid currentColor" }}
+        >
+          Out of Stock
+        </button>
+        {favoriteSlot}
+      </div>
     );
   }
 
@@ -77,6 +80,7 @@ export function AddToCartButton({ product }: { product: ProductProps }) {
           </button>
         </div>
         <span className="text-xs" style={{ opacity: 0.45 }}>{product.inventory} available</span>
+        {favoriteSlot}
       </div>
 
       {errorMsg && (
