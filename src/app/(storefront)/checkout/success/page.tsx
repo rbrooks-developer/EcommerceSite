@@ -151,7 +151,7 @@ export default async function CheckoutSuccessPage({
 
       <div className="mt-8 flex flex-col sm:flex-row gap-3 justify-center">
         <Link
-          href="/account/orders"
+          href="/account#orders"
           className="rounded-lg px-6 py-3 text-sm font-semibold transition-opacity hover:opacity-85 text-center"
           style={{ backgroundColor: "var(--site-fg)", color: "var(--site-bg)" }}
         >
