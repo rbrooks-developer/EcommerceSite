@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
-import { getCategories } from "@/lib/data/products";
+import { getCategories, getProducts } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import type { Metadata } from "next";
@@ -41,7 +41,7 @@ export default async function FavoritesPage() {
     products = (prodRows ?? []) as typeof products;
   }
 
-  const [categories, settings] = await Promise.all([getCategories(), getSettings()]);
+  const [allProducts, categories, settings] = await Promise.all([getProducts(), getCategories(), getSettings()]);
 
   const homepage = settings?.homepage_config as HomepageConfig | null;
   const productCfg = (settings as any)?.product_config as ProductConfig | null;
@@ -49,11 +49,10 @@ export default async function FavoritesPage() {
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const pageSize = productCfg?.products_per_page ?? 24;
 
-  // For sidebar: show categories that contain at least one favorite product
   const favoriteIds = new Set(products.map((p) => p.id));
-  const categoryIdsWithFavorites = new Set<string>();
-  // We'd need category_id per product for this; use an empty set to show root categories only
-  // (root categories always show regardless of withProducts check)
+  const categoryIdsWithProducts = new Set(
+    allProducts.map((p) => p.category_id).filter(Boolean) as string[]
+  );
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -66,7 +65,7 @@ export default async function FavoritesPage() {
               activePage="favorites"
               fontColor={fontColor}
               bgColor={bgColor}
-              categoryIdsWithProducts={categoryIdsWithFavorites}
+              categoryIdsWithProducts={categoryIdsWithProducts}
               isLoggedIn={true}
             />
           </aside>
