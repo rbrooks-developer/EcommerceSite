@@ -138,6 +138,8 @@ export const siteSettingsSchema = z.object({
   product_config: z.object({
     products_per_page: z.number().int().min(4).max(200).default(24),
     category_sidebar_style: z.enum(["standard", "glow-bar", "pill", "count-badges", "frosted-cards"]).optional(),
+    sidebar_item_opacity: z.number().min(0.3).max(1).optional(),
+    sidebar_font_size: z.enum(["xs", "sm", "base", "lg"]).optional(),
   }).optional(),
   max_image_size_mb: z.number().int().min(1).max(50).default(2).optional(),
   shipping_countries: z.array(z.string()).min(1, "Select at least one shipping country"),

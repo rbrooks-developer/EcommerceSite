@@ -52,6 +52,8 @@ export default async function ProductsPage({
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const pageSize = productCfg?.products_per_page ?? 24;
   const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
+  const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
+  const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
@@ -99,6 +101,8 @@ export default async function ProductsPage({
               sidebarStyle={sidebarStyle}
               categoryCountMap={categoryCountMap}
               totalProductCount={sidebarStyle === "count-badges" ? products.length : undefined}
+              sidebarItemOpacity={sidebarItemOpacity}
+              sidebarFontSize={sidebarFontSize}
             />
           </aside>
         )}

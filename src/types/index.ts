@@ -227,9 +227,13 @@ export type SurchargeConfig = {
 
 export type SidebarStyle = "standard" | "glow-bar" | "pill" | "count-badges" | "frosted-cards";
 
+export type SidebarFontSize = "xs" | "sm" | "base" | "lg";
+
 export type ProductConfig = {
   products_per_page: number;
   category_sidebar_style?: SidebarStyle;
+  sidebar_item_opacity?: number;
+  sidebar_font_size?: SidebarFontSize;
 };
 
 export type ContactConfig = {

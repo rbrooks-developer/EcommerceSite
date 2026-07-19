@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig, SidebarStyle } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig, SidebarStyle, SidebarFontSize } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -232,6 +232,8 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const productCfg = (defaultValues as any)?.product_config as ProductConfig | null;
   const [productsPerPage, setProductsPerPage] = useState(productCfg?.products_per_page ?? 24);
   const [categorySidebarStyle, setCategorySidebarStyle] = useState<SidebarStyle>(productCfg?.category_sidebar_style ?? "standard");
+  const [sidebarItemOpacity, setSidebarItemOpacity] = useState<number>(productCfg?.sidebar_item_opacity ?? 0.75);
+  const [sidebarFontSize, setSidebarFontSize] = useState<SidebarFontSize>(productCfg?.sidebar_font_size ?? "sm");
   const [maxImageSizeMb, setMaxImageSizeMb] = useState<number>((defaultValues as any)?.max_image_size_mb ?? 2);
 
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
@@ -348,6 +350,8 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
       product_config: {
         products_per_page: productsPerPage,
         category_sidebar_style: categorySidebarStyle,
+        sidebar_item_opacity: sidebarItemOpacity,
+        sidebar_font_size: sidebarFontSize,
       },
       max_image_size_mb: maxImageSizeMb,
       shipping_countries: shippingCountries,
@@ -1041,6 +1045,36 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             <option value="frosted-cards">Frosted Cards</option>
           </select>
           <p className="text-xs text-gray-400 mt-1.5">Visual style of the category sidebar on the products and category pages.</p>
+        </div>
+        <div className="max-w-xs mt-4">
+          <Label htmlFor="sidebar_font_size">Sidebar Font Size</Label>
+          <select
+            id="sidebar_font_size"
+            value={sidebarFontSize}
+            onChange={(e) => setSidebarFontSize(e.target.value as SidebarFontSize)}
+            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            <option value="xs">Small (12px)</option>
+            <option value="sm">Normal (14px) — default</option>
+            <option value="base">Large (16px)</option>
+            <option value="lg">Extra Large (18px)</option>
+          </select>
+        </div>
+        <div className="max-w-xs mt-4">
+          <Label htmlFor="sidebar_item_opacity">
+            Sidebar Item Brightness — {Math.round(sidebarItemOpacity * 100)}%
+          </Label>
+          <input
+            id="sidebar_item_opacity"
+            type="range"
+            min={0.3}
+            max={1}
+            step={0.05}
+            value={sidebarItemOpacity}
+            onChange={(e) => setSidebarItemOpacity(parseFloat(e.target.value))}
+            className="mt-1 w-full accent-gray-900"
+          />
+          <p className="text-xs text-gray-400 mt-1">Controls how bright inactive category items appear. 100% = full color, lower = dimmer.</p>
         </div>
       </Section>
 

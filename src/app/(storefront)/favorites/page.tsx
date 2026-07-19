@@ -55,6 +55,8 @@ export default async function FavoritesPage() {
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const pageSize = productCfg?.products_per_page ?? 24;
   const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
+  const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
+  const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
 
   const favoriteIds = new Set(products.map((p) => p.id));
   const categoryIdsWithProducts = new Set(
@@ -85,6 +87,8 @@ export default async function FavoritesPage() {
               sidebarStyle={sidebarStyle}
               categoryCountMap={categoryCountMap}
               totalProductCount={sidebarStyle === "count-badges" ? allProducts.length : undefined}
+              sidebarItemOpacity={sidebarItemOpacity}
+              sidebarFontSize={sidebarFontSize}
             />
           </aside>
         )}
