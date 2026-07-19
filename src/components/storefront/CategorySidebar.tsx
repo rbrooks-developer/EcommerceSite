@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ChevronRight, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
+import type { SidebarStyle } from "@/types";
 
 type Cat = { id: string; slug: string; name: string; parent_id: string | null };
 
@@ -31,6 +32,56 @@ function nodeHasProducts(node: Node, withProducts: Set<string>): boolean {
   return node.children.some((child) => nodeHasProducts(child, withProducts));
 }
 
+function GlowBar({ fontColor }: { fontColor: string }) {
+  return (
+    <span
+      style={{
+        position: "absolute",
+        left: 0,
+        top: "4px",
+        bottom: "4px",
+        width: "3px",
+        borderRadius: "0 2px 2px 0",
+        backgroundColor: fontColor,
+        boxShadow: `0 0 8px ${fontColor}, 0 0 16px ${fontColor}80`,
+        pointerEvents: "none",
+      }}
+    />
+  );
+}
+
+function CountBadge({
+  count,
+  isActive,
+  fontColor,
+  bgColor,
+}: {
+  count: number;
+  isActive: boolean;
+  fontColor: string;
+  bgColor: string;
+}) {
+  if (!count) return null;
+  return (
+    <span
+      style={{
+        fontSize: "0.65rem",
+        fontWeight: 600,
+        padding: "0 0.4rem",
+        borderRadius: "9999px",
+        backgroundColor: isActive ? `${bgColor}40` : `${fontColor}22`,
+        color: isActive ? bgColor : fontColor,
+        minWidth: "1.4rem",
+        textAlign: "center",
+        lineHeight: "1.4rem",
+        flexShrink: 0,
+      }}
+    >
+      {count}
+    </span>
+  );
+}
+
 function CategoryNode({
   node,
   activeSlug,
@@ -38,6 +89,8 @@ function CategoryNode({
   fontColor,
   bgColor,
   withProducts,
+  sidebarStyle,
+  categoryCountMap,
 }: {
   node: Node;
   activeSlug: string | undefined;
@@ -45,24 +98,66 @@ function CategoryNode({
   fontColor: string;
   bgColor: string;
   withProducts: Set<string>;
+  sidebarStyle: SidebarStyle;
+  categoryCountMap: Record<string, number>;
 }) {
-  // Hide child categories (depth > 0) that have no products in them or their descendants
   if (depth > 0 && !nodeHasProducts(node, withProducts)) return null;
 
   const hasChildren = node.children.length > 0;
-  // Auto-expand if any descendant is active
-  const isDescendantActive = (n: Node): boolean =>
-    n.cat.slug === activeSlug || n.children.some(isDescendantActive);
   const [open, setOpen] = useState(true);
-
   const isActive = node.cat.slug === activeSlug;
+  const count = categoryCountMap[node.cat.id] ?? 0;
+
+  // ── link style ──────────────────────────────────────────────────────────────
+  let linkStyle: React.CSSProperties;
+  if (sidebarStyle === "glow-bar") {
+    linkStyle = isActive
+      ? {
+          color: fontColor,
+          fontWeight: 600,
+          background: `linear-gradient(to right, ${fontColor}22, transparent)`,
+          borderRadius: "0 0.375rem 0.375rem 0",
+        }
+      : { opacity: 0.7 };
+  } else if (sidebarStyle === "frosted-cards") {
+    linkStyle = isActive
+      ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem" }
+      : { opacity: 0.75 };
+  } else {
+    // standard, pill, count-badges
+    linkStyle = isActive
+      ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
+      : { opacity: 0.75 };
+  }
+
+  // ── li container style ───────────────────────────────────────────────────────
+  let liStyle: React.CSSProperties = {};
+  if (sidebarStyle === "glow-bar") {
+    liStyle = { position: "relative" };
+  } else if (sidebarStyle === "frosted-cards" && depth === 0) {
+    liStyle = {
+      border: "1px solid rgba(255,255,255,0.12)",
+      borderRadius: "0.5rem",
+      padding: "0.375rem",
+      background: "rgba(255,255,255,0.04)",
+      backdropFilter: "blur(8px)",
+      WebkitBackdropFilter: "blur(8px)",
+    };
+  }
+
+  const linkClass = cn(
+    "flex-1 text-sm px-2 py-1.5 transition-colors",
+    sidebarStyle === "pill" ? "rounded-full" : "rounded-md",
+    (sidebarStyle === "count-badges") && "flex items-center justify-between gap-2",
+  );
+
+  const paddingLeft = sidebarStyle === "glow-bar" ? depth * 14 + 6 : depth * 14;
 
   return (
-    <li>
-      <div
-        className="flex items-center gap-0.5"
-        style={{ paddingLeft: depth * 14 }}
-      >
+    <li style={liStyle}>
+      {sidebarStyle === "glow-bar" && isActive && <GlowBar fontColor={fontColor} />}
+
+      <div className="flex items-center gap-0.5" style={{ paddingLeft }}>
         {hasChildren ? (
           <button
             type="button"
@@ -71,10 +166,7 @@ function CategoryNode({
             aria-label={open ? "Collapse" : "Expand"}
           >
             <ChevronRight
-              className={cn(
-                "h-3.5 w-3.5 transition-transform duration-150",
-                open && "rotate-90"
-              )}
+              className={cn("h-3.5 w-3.5 transition-transform duration-150", open && "rotate-90")}
               style={{ opacity: 0.5 }}
             />
           </button>
@@ -82,21 +174,26 @@ function CategoryNode({
           <span className="shrink-0 w-5" />
         )}
 
-        <Link
-          href={`/category/${node.cat.slug}`}
-          className="flex-1 text-sm px-2 py-1.5 rounded-md transition-colors"
-          style={
-            isActive
-              ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
-              : { opacity: 0.75 }
-          }
-        >
-          {node.cat.name}
+        <Link href={`/category/${node.cat.slug}`} className={linkClass} style={linkStyle}>
+          <span>{node.cat.name}</span>
+          {sidebarStyle === "count-badges" && (
+            <CountBadge count={count} isActive={isActive} fontColor={fontColor} bgColor={bgColor} />
+          )}
         </Link>
       </div>
 
       {hasChildren && open && (
-        <ul className="mt-0.5 space-y-0.5">
+        <ul
+          className={cn(
+            "mt-0.5 space-y-0.5",
+            sidebarStyle === "frosted-cards" && depth === 0 && "ml-2 mt-1",
+          )}
+          style={
+            sidebarStyle === "frosted-cards" && depth === 0
+              ? { borderLeft: "1px solid rgba(255,255,255,0.12)", paddingLeft: "0.5rem" }
+              : {}
+          }
+        >
           {node.children.map((child) => (
             <CategoryNode
               key={child.cat.id}
@@ -106,6 +203,8 @@ function CategoryNode({
               fontColor={fontColor}
               bgColor={bgColor}
               withProducts={withProducts}
+              sidebarStyle={sidebarStyle}
+              categoryCountMap={categoryCountMap}
             />
           ))}
         </ul>
@@ -122,6 +221,9 @@ interface CategorySidebarProps {
   bgColor: string;
   categoryIdsWithProducts: Set<string>;
   isLoggedIn?: boolean;
+  sidebarStyle?: SidebarStyle;
+  categoryCountMap?: Record<string, number>;
+  totalProductCount?: number;
 }
 
 export function CategorySidebar({
@@ -132,29 +234,69 @@ export function CategorySidebar({
   bgColor,
   categoryIdsWithProducts,
   isLoggedIn = false,
+  sidebarStyle = "standard",
+  categoryCountMap = {},
+  totalProductCount,
 }: CategorySidebarProps) {
   const tree = buildTree(categories);
   const allActive = !activeSlug && activePage !== "favorites";
+  const favActive = activePage === "favorites";
+
+  function linkStyle(isActive: boolean): React.CSSProperties {
+    if (sidebarStyle === "glow-bar") {
+      return isActive
+        ? {
+            color: fontColor,
+            fontWeight: 600,
+            background: `linear-gradient(to right, ${fontColor}22, transparent)`,
+            borderRadius: "0 0.375rem 0.375rem 0",
+          }
+        : { opacity: 0.7 };
+    }
+    if (sidebarStyle === "frosted-cards") {
+      return isActive
+        ? { color: fontColor, fontWeight: 700, backgroundColor: `${fontColor}1a`, borderRadius: "0.375rem" }
+        : { opacity: 0.75 };
+    }
+    return isActive
+      ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
+      : { opacity: 0.75 };
+  }
+
+  const roundedClass = sidebarStyle === "pill" ? "rounded-full" : "rounded-md";
+  const listClass = sidebarStyle === "frosted-cards" ? "space-y-2" : "space-y-0.5";
 
   return (
     <nav>
       <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ opacity: 0.5 }}>
         Categories
       </p>
-      <ul className="space-y-0.5">
-        <li>
+      <ul className={listClass}>
+
+        {/* All */}
+        <li style={sidebarStyle === "glow-bar" ? { position: "relative" } : {}}>
+          {sidebarStyle === "glow-bar" && allActive && <GlowBar fontColor={fontColor} />}
           <Link
             href="/products"
-            className="block text-sm px-2 py-1.5 rounded-md ml-5 transition-colors"
-            style={
-              allActive
-                ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
-                : { opacity: 0.75 }
-            }
+            className={cn(
+              "text-sm px-2 py-1.5 ml-5 transition-colors",
+              roundedClass,
+              sidebarStyle === "count-badges" ? "flex items-center justify-between gap-2" : "block",
+            )}
+            style={linkStyle(allActive)}
           >
-            All
+            <span>All</span>
+            {sidebarStyle === "count-badges" && totalProductCount != null && (
+              <CountBadge
+                count={totalProductCount}
+                isActive={allActive}
+                fontColor={fontColor}
+                bgColor={bgColor}
+              />
+            )}
           </Link>
         </li>
+
         {tree.map((node) => (
           <CategoryNode
             key={node.cat.id}
@@ -164,26 +306,32 @@ export function CategorySidebar({
             fontColor={fontColor}
             bgColor={bgColor}
             withProducts={categoryIdsWithProducts}
+            sidebarStyle={sidebarStyle}
+            categoryCountMap={categoryCountMap}
           />
         ))}
+
         {isLoggedIn && (
-          <li className="mt-3 pt-3" style={{ borderTop: "1px solid rgba(0,0,0,0.1)" }}>
+          <li
+            className="mt-3 pt-3"
+            style={{
+              borderTop: "1px solid rgba(0,0,0,0.1)",
+              ...(sidebarStyle === "glow-bar" ? { position: "relative" } : {}),
+            }}
+          >
+            {sidebarStyle === "glow-bar" && favActive && <GlowBar fontColor={fontColor} />}
             <Link
               href="/favorites"
-              className="flex items-center gap-2 text-sm px-2 py-1.5 rounded-md ml-5 transition-colors"
-              style={
-                activePage === "favorites"
-                  ? { backgroundColor: fontColor, color: bgColor, fontWeight: 600 }
-                  : { opacity: 0.75 }
-              }
+              className={cn("flex items-center gap-2 text-sm px-2 py-1.5 ml-5 transition-colors", roundedClass)}
+              style={linkStyle(favActive)}
             >
               <Heart
                 style={{
                   width: "0.875rem",
                   height: "0.875rem",
                   flexShrink: 0,
-                  fill: activePage === "favorites" ? "#ef4444" : "none",
-                  color: activePage === "favorites" ? "#ef4444" : "currentColor",
+                  fill: favActive ? "#ef4444" : "none",
+                  color: favActive ? "#ef4444" : "currentColor",
                 }}
               />
               My Favorites

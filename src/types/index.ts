@@ -225,8 +225,11 @@ export type SurchargeConfig = {
   surcharge_message: string;
 };
 
+export type SidebarStyle = "standard" | "glow-bar" | "pill" | "count-badges" | "frosted-cards";
+
 export type ProductConfig = {
   products_per_page: number;
+  category_sidebar_style?: SidebarStyle;
 };
 
 export type ContactConfig = {

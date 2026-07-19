@@ -7,7 +7,7 @@ import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { HomepageConfig, ProductConfig } from "@/types";
+import type { HomepageConfig, ProductConfig, SidebarStyle } from "@/types";
 
 function collectIds(rootId: string, all: CategoryRow[]): string[] {
   const children = all.filter((c) => c.parent_id === rootId);
@@ -53,10 +53,19 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const fontColor = homepage?.font_color ?? "#111827";
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const pageSize = productCfg?.products_per_page ?? 24;
+  const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
   );
+
+  const categoryCountMap: Record<string, number> = {};
+  if (sidebarStyle === "count-badges") {
+    for (const cat of categories) {
+      const ids = collectIds(cat.id, categories);
+      categoryCountMap[cat.id] = products.filter((p) => p.category_id && ids.includes(p.category_id)).length;
+    }
+  }
 
   const ids = collectIds(category.id, categories);
   const filtered = products.filter((p) => p.category_id && ids.includes(p.category_id));
@@ -101,6 +110,9 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
                 bgColor={bgColor}
                 categoryIdsWithProducts={categoryIdsWithProducts}
                 isLoggedIn={!!user}
+                sidebarStyle={sidebarStyle}
+                categoryCountMap={categoryCountMap}
+                totalProductCount={sidebarStyle === "count-badges" ? products.length : undefined}
               />
             </aside>
           )}

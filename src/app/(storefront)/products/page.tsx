@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import type { Metadata } from "next";
-import type { HomepageConfig, ProductConfig } from "@/types";
+import type { HomepageConfig, ProductConfig, SidebarStyle } from "@/types";
 import type { ProductListRow, CategoryRow } from "@/lib/data/products";
 
 function collectIds(rootId: string, all: CategoryRow[]): string[] {
@@ -51,10 +51,19 @@ export default async function ProductsPage({
   const fontColor = homepage?.font_color ?? "#111827";
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const pageSize = productCfg?.products_per_page ?? 24;
+  const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
   );
+
+  const categoryCountMap: Record<string, number> = {};
+  if (sidebarStyle === "count-badges") {
+    for (const cat of categories) {
+      const ids = collectIds(cat.id, categories);
+      categoryCountMap[cat.id] = products.filter((p) => p.category_id && ids.includes(p.category_id)).length;
+    }
+  }
 
   const selectedCat = category ? categories.find((c) => c.slug === category) : null;
   const filterIds = selectedCat ? collectIds(selectedCat.id, categories) : null;
@@ -87,6 +96,9 @@ export default async function ProductsPage({
               bgColor={bgColor}
               categoryIdsWithProducts={categoryIdsWithProducts}
               isLoggedIn={!!user}
+              sidebarStyle={sidebarStyle}
+              categoryCountMap={categoryCountMap}
+              totalProductCount={sidebarStyle === "count-badges" ? products.length : undefined}
             />
           </aside>
         )}

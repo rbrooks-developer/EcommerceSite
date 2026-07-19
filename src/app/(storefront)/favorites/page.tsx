@@ -6,7 +6,13 @@ import { getCategories, getProducts } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import type { Metadata } from "next";
-import type { HomepageConfig, ProductConfig } from "@/types";
+import type { HomepageConfig, ProductConfig, SidebarStyle } from "@/types";
+import type { CategoryRow } from "@/lib/data/products";
+
+function collectIds(rootId: string, all: CategoryRow[]): string[] {
+  const children = all.filter((c) => c.parent_id === rootId);
+  return [rootId, ...children.flatMap((c) => collectIds(c.id, all))];
+}
 
 export const metadata: Metadata = { title: "My Favorites" };
 
@@ -48,11 +54,20 @@ export default async function FavoritesPage() {
   const fontColor = homepage?.font_color ?? "#111827";
   const bgColor = homepage?.bg_color ?? "#ffffff";
   const pageSize = productCfg?.products_per_page ?? 24;
+  const sidebarStyle = (productCfg?.category_sidebar_style ?? "standard") as SidebarStyle;
 
   const favoriteIds = new Set(products.map((p) => p.id));
   const categoryIdsWithProducts = new Set(
     allProducts.map((p) => p.category_id).filter(Boolean) as string[]
   );
+
+  const categoryCountMap: Record<string, number> = {};
+  if (sidebarStyle === "count-badges") {
+    for (const cat of categories) {
+      const ids = collectIds(cat.id, categories);
+      categoryCountMap[cat.id] = allProducts.filter((p) => p.category_id && ids.includes(p.category_id)).length;
+    }
+  }
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -67,6 +82,9 @@ export default async function FavoritesPage() {
               bgColor={bgColor}
               categoryIdsWithProducts={categoryIdsWithProducts}
               isLoggedIn={true}
+              sidebarStyle={sidebarStyle}
+              categoryCountMap={categoryCountMap}
+              totalProductCount={sidebarStyle === "count-badges" ? allProducts.length : undefined}
             />
           </aside>
         )}

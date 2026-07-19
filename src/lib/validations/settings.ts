@@ -137,6 +137,7 @@ export const siteSettingsSchema = z.object({
   }).optional(),
   product_config: z.object({
     products_per_page: z.number().int().min(4).max(200).default(24),
+    category_sidebar_style: z.enum(["standard", "glow-bar", "pill", "count-badges", "frosted-cards"]).optional(),
   }).optional(),
   max_image_size_mb: z.number().int().min(1).max(50).default(2).optional(),
   shipping_countries: z.array(z.string()).min(1, "Select at least one shipping country"),

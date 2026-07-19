@@ -12,7 +12,7 @@ import { Spinner } from "@/components/ui/spinner";
 import { createClient } from "@/lib/supabase/client";
 import { COUNTRIES } from "@/lib/data/countries";
 import type { SiteSettings } from "@/types";
-import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig } from "@/types";
+import type { HomepageConfig, NavConfig, FooterConfig, ContactInfo, StoreAddress, CarouselConfig, ChatConfig, TrackingConfig, AboutConfig, CheckoutConfig, ContactConfig, SurchargeConfig, ProductConfig, SidebarStyle } from "@/types";
 
 const MAX_CAROUSEL_IMAGES = 25;
 
@@ -231,6 +231,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
 
   const productCfg = (defaultValues as any)?.product_config as ProductConfig | null;
   const [productsPerPage, setProductsPerPage] = useState(productCfg?.products_per_page ?? 24);
+  const [categorySidebarStyle, setCategorySidebarStyle] = useState<SidebarStyle>(productCfg?.category_sidebar_style ?? "standard");
   const [maxImageSizeMb, setMaxImageSizeMb] = useState<number>((defaultValues as any)?.max_image_size_mb ?? 2);
 
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
@@ -346,6 +347,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
       },
       product_config: {
         products_per_page: productsPerPage,
+        category_sidebar_style: categorySidebarStyle,
       },
       max_image_size_mb: maxImageSizeMb,
       shipping_countries: shippingCountries,
@@ -1023,6 +1025,22 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             3 columns: {Math.ceil(productsPerPage / 3)} rows &middot;{" "}
             2 columns: {Math.ceil(productsPerPage / 2)} rows
           </p>
+        </div>
+        <div className="max-w-xs mt-4">
+          <Label htmlFor="category_sidebar_style">Category Sidebar Style</Label>
+          <select
+            id="category_sidebar_style"
+            value={categorySidebarStyle}
+            onChange={(e) => setCategorySidebarStyle(e.target.value as SidebarStyle)}
+            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          >
+            <option value="standard">Standard</option>
+            <option value="glow-bar">Glow Bar</option>
+            <option value="pill">Pill</option>
+            <option value="count-badges">Count Badges</option>
+            <option value="frosted-cards">Frosted Cards</option>
+          </select>
+          <p className="text-xs text-gray-400 mt-1.5">Visual style of the category sidebar on the products and category pages.</p>
         </div>
       </Section>
 
