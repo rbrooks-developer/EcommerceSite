@@ -32,10 +32,11 @@ function nodeHasProducts(node: Node, withProducts: Set<string>): boolean {
   return node.children.some((child) => nodeHasProducts(child, withProducts));
 }
 
-// Single opaque wrapper used for the entire frosted-cards list — prevents striation bleed-through
+// zIndex: 50 puts this above the striation overlay (zIndex: 45) so screen-blend can't reach it
 const FROSTED_WRAPPER: React.CSSProperties = {
   position: "relative",
-  zIndex: 1,
+  zIndex: 50,
+  isolation: "isolate",
   border: "1px solid rgba(255,255,255,0.14)",
   borderRadius: "0.5rem",
   overflow: "hidden",
