@@ -2,6 +2,7 @@ import { getEbayConfig } from "@/lib/ebay/auth";
 import { getSettings } from "@/lib/data/settings";
 import { EbaySettings } from "@/components/admin/EbaySettings";
 import { EbayInventorySyncSettings } from "@/components/admin/EbayInventorySyncSettings";
+import { EbayListingSyncSettings } from "@/components/admin/EbayListingSyncSettings";
 import { EbayListingSettings } from "@/components/admin/EbayListingSettings";
 
 export const dynamic = "force-dynamic";
@@ -37,6 +38,7 @@ export default async function EbayAdminPage({
         errorParam={error}
       />
       <EbayInventorySyncSettings config={config} />
+      <EbayListingSyncSettings config={config} />
       <EbayListingSettings config={config} maxSizeMb={(settings as any)?.max_image_size_mb ?? 2} />
     </div>
   );

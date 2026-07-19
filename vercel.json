@@ -3,6 +3,10 @@
     {
       "path": "/api/cron/ebay-inventory-sync",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/ebay-listing-sync",
+      "schedule": "0 1 * * *"
     }
   ]
 }

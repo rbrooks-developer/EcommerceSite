@@ -82,6 +82,25 @@ export async function saveEbayListingSettings(
   }
 }
 
+export async function saveEbayListingSyncSettings(
+  _prevState: { error?: string; success?: true } | null,
+  formData: FormData,
+): Promise<{ error?: string; success?: true }> {
+  const auth = await requireAdmin();
+  if (auth.error) return { error: auth.error };
+
+  const enabled = formData.has("enabled");
+
+  try {
+    await saveEbayConfig({ listing_sync_enabled: enabled } as any);
+    revalidatePath("/admin/ebay");
+    refresh();
+    return { success: true };
+  } catch (err: any) {
+    return { error: err.message };
+  }
+}
+
 export async function saveEbayInventorySyncSettings(
   _prevState: { error?: string; success?: true } | null,
   formData: FormData,

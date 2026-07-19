@@ -142,6 +142,8 @@ export type EbayConfig = {
   inventory_sync_interval_minutes?: number | null;
   inventory_sync_last_run?: string | null;
   price_discount_percent?: number | null;
+  listing_sync_enabled?: boolean | null;
+  listing_sync_last_run?: string | null;
   cgc_census_url?: string | null;
   cgc_button_image_url?: string | null;
 };
