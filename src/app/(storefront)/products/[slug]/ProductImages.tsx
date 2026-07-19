@@ -2,7 +2,7 @@
 
 import { useState, useRef } from "react";
 import Image from "next/image";
-import { cn } from "@/lib/utils";
+import { cn, imgUrl } from "@/lib/utils";
 import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
@@ -57,7 +57,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
     );
   }
 
-  const slides = images.map((src) => ({ src }));
+  const slides = images.map((src) => ({ src: imgUrl(src) }));
 
   return (
     <div className="space-y-3">
@@ -67,7 +67,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
         onClick={() => setLightboxOpen(true)}
       >
         <Image
-          src={images[selected]}
+          src={imgUrl(images[selected])}
           alt={`${name} - image ${selected + 1}`}
           fill
           className="object-contain p-4"
@@ -99,7 +99,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
           style={{ transformOrigin: "50% 50%" }}
         >
           <Image
-            src={images[selected]}
+            src={imgUrl(images[selected])}
             alt={`${name} - image ${selected + 1}`}
             fill
             className="object-contain p-4"
@@ -123,7 +123,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
               )}
             >
               <Image
-                src={src}
+                src={imgUrl(src)}
                 alt={`Thumbnail ${i + 1}`}
                 fill
                 className="object-cover"

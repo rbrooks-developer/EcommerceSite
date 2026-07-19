@@ -1,6 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, imgUrl } from "@/lib/utils";
 import { FavoriteButton } from "@/components/storefront/FavoriteButton";
 import type { Product } from "@/types";
 
@@ -27,7 +27,7 @@ export function ProductCard({
       >
         {image ? (
           <Image
-            src={image}
+            src={imgUrl(image)}
             alt={product.name}
             fill
             className="object-contain p-2"

@@ -6,7 +6,7 @@ import Image from "next/image";
 import { deleteProduct, deleteAllProducts, togglePublished } from "@/lib/actions/products";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, imgUrl } from "@/lib/utils";
 import type { Product } from "@/types";
 
 type ProductRow = Product & { categories: { name: string } | null };
@@ -151,7 +151,7 @@ export function ProductCard({ product, favoriteCount = 0 }: { product: ProductRo
       <div className="flex gap-3">
         {image && (
           <div className="relative h-16 w-16 shrink-0 rounded-md overflow-hidden">
-            <Image src={image} alt={product.name} fill className="object-cover" sizes="64px" />
+            <Image src={imgUrl(image)} alt={product.name} fill className="object-cover" sizes="64px" />
           </div>
         )}
         <div className="min-w-0 flex-1">
@@ -190,7 +190,7 @@ export function ProductTableRow({ product, favoriteCount = 0 }: { product: Produ
         <div className="flex items-center gap-3">
           {image ? (
             <div className="relative h-10 w-10 rounded-md overflow-hidden shrink-0">
-              <Image src={image} alt={product.name} fill className="object-cover" sizes="40px" />
+              <Image src={imgUrl(image)} alt={product.name} fill className="object-cover" sizes="40px" />
             </div>
           ) : (
             <div className="h-10 w-10 rounded-md bg-gray-100 shrink-0" />

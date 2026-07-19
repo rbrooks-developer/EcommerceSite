@@ -8,6 +8,7 @@ import { getCachedUserSidebarData } from "@/lib/data/users";
 import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
 import { checkSitePassword } from "@/lib/sitePasswordGate";
+import { imgUrl } from "@/lib/utils";
 import type { PromoBanner as PromoBannerType } from "@/lib/actions/promos";
 
 export default async function StorefrontLayout({ children }: { children: React.ReactNode }) {
@@ -40,7 +41,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
               inset: 0,
               zIndex: 45,
               pointerEvents: "none",
-              backgroundImage: `url(${striationImageUrl})`,
+              backgroundImage: `url(${imgUrl(striationImageUrl)})`,
               backgroundSize: "auto",
               backgroundRepeat: "repeat",
               opacity: striationOpacity / 100,
@@ -60,7 +61,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
             }}
           >
             <Image
-              src={striationImageUrl}
+              src={imgUrl(striationImageUrl)}
               alt=""
               fill
               priority

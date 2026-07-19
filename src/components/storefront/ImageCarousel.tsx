@@ -4,6 +4,7 @@ import { useRef } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import type { CarouselConfig } from "@/types";
+import { imgUrl } from "@/lib/utils";
 
 export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgColor: string }) {
   const trackRef = useRef<HTMLDivElement>(null);
@@ -70,7 +71,7 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
             };
             const imgEl = (
               <Image
-                src={item.url} alt="" fill
+                src={imgUrl(item.url)} alt="" fill
                 className="object-cover"
                 sizes={`${itemWidth}px`}
                 aria-hidden="true"
@@ -102,7 +103,7 @@ export function ImageCarousel({ config, bgColor }: { config: CarouselConfig; bgC
           const imgEl = (
             // eslint-disable-next-line @next/next/no-img-element
             <img
-              src={item.url}
+              src={imgUrl(item.url)}
               alt=""
               loading="lazy"
               decoding="async"

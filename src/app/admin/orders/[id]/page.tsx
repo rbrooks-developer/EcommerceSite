@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
 import { getSettings } from "@/lib/data/settings";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, imgUrl } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/ui/badge";
 import { OrderDetailActions } from "./OrderDetailActions";
 import { ChevronLeft } from "lucide-react";
@@ -129,7 +129,7 @@ export default async function OrderDetailPage({ params }: { params: Promise<{ id
             <li key={item.id} className="flex items-center gap-4 px-5 py-4">
               {((item.products?.images as string[]) ?? [])[0] ? (
                 <div className="relative h-12 w-12 rounded-md overflow-hidden shrink-0">
-                  <Image src={((item.products!.images as string[]))[0]} alt="" fill className="object-cover" sizes="48px" />
+                  <Image src={imgUrl(((item.products!.images as string[]))[0])} alt="" fill className="object-cover" sizes="48px" />
                 </div>
               ) : (
                 <div className="h-12 w-12 rounded-md bg-gray-100 shrink-0" />

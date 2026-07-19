@@ -3,6 +3,7 @@
 import { useState, useTransition } from "react";
 import { Trash2, ChevronDown, ChevronUp, Phone, Mail, MessageSquare, ExternalLink } from "lucide-react";
 import { markCollectionRead, deleteCollectionRequest } from "@/lib/actions/collection";
+import { imgUrl } from "@/lib/utils";
 
 type CollectionRequest = {
   id: string;
@@ -142,7 +143,7 @@ export function CollectionRow({
                     className="relative aspect-square rounded-lg overflow-hidden border border-gray-200 dark:border-gray-700 group hover:border-blue-400 transition-colors"
                   >
                     {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt={`Collection photo ${i + 1}`} className="h-full w-full object-cover" />
+                    <img src={imgUrl(url)} alt={`Collection photo ${i + 1}`} className="h-full w-full object-cover" />
                     <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 transition-colors flex items-center justify-center">
                       <ExternalLink className="h-4 w-4 text-white opacity-0 group-hover:opacity-100 transition-opacity" />
                     </div>

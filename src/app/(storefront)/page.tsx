@@ -2,7 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { getSettings } from "@/lib/data/settings";
 import { getProducts, getCategories } from "@/lib/data/products";
-import { ogImageUrl } from "@/lib/utils";
+import { ogImageUrl, imgUrl } from "@/lib/utils";
 import { ProductCard } from "@/components/storefront/ProductCard";
 import { ImageCarousel } from "@/components/storefront/ImageCarousel";
 import { FoundAndCreatorHero } from "@/components/storefront/heroes/FoundAndCreatorHero";
@@ -149,7 +149,7 @@ export default async function HomePage() {
             // Single image: natural size, centered
             <div className="flex justify-center">
               <Image
-                src={serviceImages[0]}
+                src={imgUrl(serviceImages[0])}
                 alt={`${displayName} services`}
                 width={1200}
                 height={800}
@@ -166,7 +166,7 @@ export default async function HomePage() {
               {serviceImages.map((url, i) => (
                 <Image
                   key={i}
-                  src={url}
+                  src={imgUrl(url)}
                   alt={`${displayName} — service photo ${i + 1}`}
                   width={1200}
                   height={800}

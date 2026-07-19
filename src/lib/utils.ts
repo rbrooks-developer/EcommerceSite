@@ -29,6 +29,21 @@ export function slugify(text: string): string {
     .replace(/^-+|-+$/g, "");
 }
 
+// Routes any Supabase Storage URL through Vercel's CDN edge proxy so that
+// Vercel absorbs repeat traffic and Supabase egress drops to near zero.
+// Works in server and client components (NEXT_PUBLIC_SUPABASE_URL is inlined
+// at build time). Passes non-Supabase URLs through unchanged — safe to call
+// on any image source.
+export function imgUrl(url: string | null | undefined): string {
+  if (!url) return "";
+  const base = process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
+  const prefix = `${base}/storage/v1/object/public/`;
+  if (base && url.startsWith(prefix)) {
+    return `/api/img/${url.slice(prefix.length)}`;
+  }
+  return url;
+}
+
 // Routes a remote (e.g. Supabase Storage) image through Next's built-in
 // /_next/image optimizer so OG/Twitter crawlers fetch it from our own
 // domain at a compressed size — Supabase Storage serves public objects

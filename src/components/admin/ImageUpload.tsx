@@ -3,6 +3,7 @@
 import { useState, useRef } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { X, Upload } from "lucide-react";
+import { imgUrl } from "@/lib/utils";
 import { Spinner } from "@/components/ui/spinner";
 
 interface ImageUploadProps {
@@ -74,7 +75,7 @@ export function ImageUpload({ value, onChange, max = 10, bucket = "product-image
         {value.map((url) => (
           <div key={url} className="relative h-24 w-24 rounded-md overflow-hidden border border-gray-200">
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src={url} alt="Product image" className="h-full w-full object-cover" />
+            <img src={imgUrl(url)} alt="Product image" className="h-full w-full object-cover" />
             <button
               type="button"
               onClick={() => remove(url)}

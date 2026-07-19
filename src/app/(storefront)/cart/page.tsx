@@ -6,7 +6,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart/store";
 import { validateAndSyncCart } from "@/lib/actions/cart";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, imgUrl } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 
 export default function CartPage() {
@@ -63,7 +63,7 @@ export default function CartPage() {
             >
               {item.image ? (
                 <div className="relative h-20 w-20 shrink-0 rounded-md overflow-hidden">
-                  <Image src={item.image} alt={item.name} fill className="object-contain" sizes="80px" />
+                  <Image src={imgUrl(item.image)} alt={item.name} fill className="object-contain" sizes="80px" />
                 </div>
               ) : (
                 <div className="h-20 w-20 shrink-0 rounded-md" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 10%, var(--site-bg))" }} />

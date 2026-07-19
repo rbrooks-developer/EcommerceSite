@@ -3,6 +3,7 @@
 import { useState, useCallback, useRef } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
+import { imgUrl } from "@/lib/utils";
 import { createClient } from "@/lib/supabase/client";
 import { saveAvatarUrl } from "@/lib/actions/profile";
 import { Camera, X, Trash2 } from "lucide-react";
@@ -126,7 +127,7 @@ export function AvatarUpload({ currentUrl, maxSizeMb = 2 }: AvatarUploadProps) {
         >
           {avatarUrl ? (
             // eslint-disable-next-line @next/next/no-img-element
-            <img src={avatarUrl} alt="Avatar" className="h-full w-full object-cover" />
+            <img src={imgUrl(avatarUrl)} alt="Avatar" className="h-full w-full object-cover" />
           ) : (
             <span className="text-3xl font-bold select-none" style={{ color: "var(--site-bg)" }}>?</span>
           )}

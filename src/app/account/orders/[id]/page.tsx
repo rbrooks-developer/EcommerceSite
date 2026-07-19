@@ -2,7 +2,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { createClient } from "@/lib/supabase/server";
-import { formatPrice, formatDate } from "@/lib/utils";
+import { formatPrice, formatDate, imgUrl } from "@/lib/utils";
 import { OrderStatusBadge } from "@/components/ui/badge";
 import { ChevronLeft } from "lucide-react";
 import type { Metadata } from "next";
@@ -97,7 +97,7 @@ export default async function AccountOrderPage({
               <li key={item.id} className="flex items-center gap-4 px-5 py-4">
                 {image ? (
                   <div className="relative h-14 w-14 rounded-md overflow-hidden shrink-0 bg-gray-100">
-                    <Image src={image} alt="" fill className="object-cover" sizes="56px" />
+                    <Image src={imgUrl(image)} alt="" fill className="object-cover" sizes="56px" />
                   </div>
                 ) : (
                   <div className="h-14 w-14 rounded-md bg-gray-100 shrink-0" />

@@ -3,6 +3,7 @@
 import { useRef, useState } from "react";
 import { createClient } from "@/lib/supabase/client";
 import { Input } from "@/components/ui/input";
+import { imgUrl } from "@/lib/utils";
 import { Label } from "@/components/ui/label";
 import { Spinner } from "@/components/ui/spinner";
 import { X, Upload, GripVertical } from "lucide-react";
@@ -213,7 +214,7 @@ export function CarouselSettings({
                 {/* Thumbnail */}
                 <div className="relative h-14 w-20 shrink-0 overflow-hidden rounded border border-gray-200 bg-gray-100">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img src={img.url} alt="" className="h-full w-full object-cover" draggable={false} />
+                  <img src={imgUrl(img.url)} alt="" className="h-full w-full object-cover" draggable={false} />
                 </div>
 
                 {/* Link input — stopPropagation so text-selection drag doesn't fight with row drag */}

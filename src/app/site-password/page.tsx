@@ -1,5 +1,6 @@
 import Image from "next/image";
 import { getSettings } from "@/lib/data/settings";
+import { imgUrl } from "@/lib/utils";
 import type { HomepageConfig } from "@/types";
 import type { Metadata } from "next";
 import { SitePasswordForm } from "./SitePasswordForm";
@@ -24,7 +25,7 @@ export default async function SitePasswordPage() {
       <div className="w-full max-w-sm space-y-8">
         <div className="text-center space-y-3">
           {logoUrl ? (
-            <Image src={logoUrl} alt={siteTitle} width={64} height={64} className="object-contain mx-auto" />
+            <Image src={imgUrl(logoUrl)} alt={siteTitle} width={64} height={64} className="object-contain mx-auto" />
           ) : (
             <h1 className="text-2xl font-bold">{siteTitle}</h1>
           )}

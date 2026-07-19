@@ -8,6 +8,7 @@ import { getCachedUserSidebarData } from "@/lib/data/users";
 import { createClient } from "@/lib/supabase/server";
 import type { NavConfig, FooterConfig, ContactInfo, HomepageConfig } from "@/types";
 import { checkSitePassword } from "@/lib/sitePasswordGate";
+import { imgUrl } from "@/lib/utils";
 
 export const metadata: Metadata = {
   robots: { index: false, follow: false },
@@ -40,7 +41,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
               inset: 0,
               zIndex: 45,
               pointerEvents: "none",
-              backgroundImage: `url(${striationImageUrl})`,
+              backgroundImage: `url(${imgUrl(striationImageUrl)})`,
               backgroundSize: "auto",
               backgroundRepeat: "repeat",
               opacity: striationOpacity / 100,
@@ -60,7 +61,7 @@ export default async function AuthLayout({ children }: { children: React.ReactNo
             }}
           >
             <Image
-              src={striationImageUrl}
+              src={imgUrl(striationImageUrl)}
               alt=""
               fill
               priority

@@ -1,7 +1,7 @@
 import { createServiceClient } from "@/lib/supabase/server";
 import { OfferActions } from "./OfferActions";
 import { AdminDeleteButton } from "./AdminDeleteButton";
-import { formatPrice } from "@/lib/utils";
+import { formatPrice, imgUrl } from "@/lib/utils";
 
 type ProfileData = { first_name: string | null; last_name: string | null; email: string };
 
@@ -71,7 +71,7 @@ export default async function AdminOffersPage() {
               <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                 {/* Product image */}
                 {offer.products?.images?.[0] && (
-                  <img src={offer.products.images[0]} alt="" className="h-14 w-14 rounded-md object-contain bg-gray-50 shrink-0" />
+                  <img src={imgUrl(offer.products.images[0])} alt="" className="h-14 w-14 rounded-md object-contain bg-gray-50 shrink-0" />
                 )}
 
                 {/* Details */}

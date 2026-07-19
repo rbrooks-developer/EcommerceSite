@@ -1,5 +1,6 @@
 import Link from "next/link";
 import Image from "next/image";
+import { imgUrl } from "@/lib/utils";
 
 interface Props {
   bgColor: string;
@@ -38,7 +39,7 @@ export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, log
             style={{ filter: `drop-shadow(0 0 24px color-mix(in srgb, ${fontColor} 35%, transparent))` }}
           >
             <Image
-              src={logoUrl}
+              src={imgUrl(logoUrl)}
               alt={siteTitle}
               fill
               sizes="(min-width: 768px) 144px, 112px"

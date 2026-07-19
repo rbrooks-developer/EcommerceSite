@@ -4,7 +4,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useState } from "react";
 import { Menu, X, ShoppingCart, CircleUser, UserRound } from "lucide-react";
-import { cn } from "@/lib/utils";
+import { cn, imgUrl } from "@/lib/utils";
 import { useCart } from "@/lib/cart/store";
 import type { NavConfig } from "@/types";
 
@@ -57,7 +57,7 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
             position: "absolute",
             inset: 0,
             pointerEvents: "none",
-            backgroundImage: `url(${striationImageUrl})`,
+            backgroundImage: `url(${imgUrl(striationImageUrl)})`,
             backgroundAttachment: "fixed",
             backgroundSize: striationPosition === "full" ? "cover" : striationPosition === "stretch" ? "100% 100%" : striationPosition === "contain" ? "contain" : striationPosition === "tile" ? "auto" : "auto 100%",
             backgroundPosition: striationPosition === "left" ? "left center" : striationPosition === "right" ? "right center" : "center",
@@ -73,7 +73,7 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
           <Link href="/" className="flex items-center gap-2 font-bold text-lg" style={{ color: fontColor }}>
             {logoUrl ? (
               <Image
-                src={logoUrl}
+                src={imgUrl(logoUrl)}
                 alt={siteTitle}
                 width={200}
                 height={48}
@@ -121,7 +121,7 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
                 <span className="relative inline-flex">
                   {avatarUrl ? (
                     <Image
-                      src={avatarUrl}
+                      src={imgUrl(avatarUrl)}
                       alt="My account"
                       width={40}
                       height={40}

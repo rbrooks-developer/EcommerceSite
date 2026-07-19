@@ -1,6 +1,7 @@
 import React from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { imgUrl } from "@/lib/utils";
 import { SiInstagram, SiYoutube, SiTiktok, SiFacebook, SiX, SiEbay } from "react-icons/si";
 import { FaLinkedinIn } from "react-icons/fa6";
 import type { FooterConfig, ContactInfo } from "@/types";
@@ -39,7 +40,7 @@ export function Footer({
           <Link href="/" aria-label={`${siteTitle} — home`}>
             {logoUrl ? (
               <Image
-                src={logoUrl}
+                src={imgUrl(logoUrl)}
                 alt={siteTitle}
                 width={200}
                 height={64}
