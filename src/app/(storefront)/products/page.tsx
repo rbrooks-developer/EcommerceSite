@@ -82,7 +82,7 @@ export default async function ProductsPage({
             <span className="text-sm" style={{ opacity: 0.5 }}>{filtered.length} products</span>
           </div>
 
-          <CategoryProducts products={filtered} pageSize={pageSize} />
+          <CategoryProducts key={category ?? "all"} products={filtered} pageSize={pageSize} />
         </div>
       </div>
     </div>
