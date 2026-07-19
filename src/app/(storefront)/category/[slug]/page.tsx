@@ -6,7 +6,7 @@ import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
 import { notFound } from "next/navigation";
 import type { Metadata } from "next";
-import type { HomepageConfig } from "@/types";
+import type { HomepageConfig, ProductConfig } from "@/types";
 
 function collectIds(rootId: string, all: CategoryRow[]): string[] {
   const children = all.filter((c) => c.parent_id === rootId);
@@ -46,8 +46,10 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   if (!category) notFound();
 
   const homepage = settings?.homepage_config as HomepageConfig | null;
+  const productCfg = (settings as any)?.product_config as ProductConfig | null;
   const fontColor = homepage?.font_color ?? "#111827";
   const bgColor = homepage?.bg_color ?? "#ffffff";
+  const pageSize = productCfg?.products_per_page ?? 24;
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
@@ -93,7 +95,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
               <h1 className="text-xl font-bold">{category.name}</h1>
               <span className="text-sm" style={{ opacity: 0.5 }}>{filtered.length} products</span>
             </div>
-            <CategoryProducts products={filtered} />
+            <CategoryProducts key={slug} products={filtered} pageSize={pageSize} />
           </div>
         </div>
       </div>
