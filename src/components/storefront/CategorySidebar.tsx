@@ -177,7 +177,15 @@ export function CategorySidebar({
                   : { opacity: 0.75 }
               }
             >
-              <Heart style={{ width: "0.875rem", height: "0.875rem", flexShrink: 0 }} />
+              <Heart
+                style={{
+                  width: "0.875rem",
+                  height: "0.875rem",
+                  flexShrink: 0,
+                  fill: activePage === "favorites" ? "#ef4444" : "none",
+                  color: activePage === "favorites" ? "#ef4444" : "currentColor",
+                }}
+              />
               My Favorites
             </Link>
           </li>
