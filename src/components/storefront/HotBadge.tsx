@@ -19,6 +19,9 @@ export function HotBadge({ count }: { count: number }) {
           fontSize: "1rem",
           lineHeight: 1,
           backdropFilter: "blur(4px)",
+          WebkitTextFillColor: "initial",
+          backgroundImage: "none",
+          fontFamily: "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',emoji,sans-serif",
         }}
       >
         🔥
