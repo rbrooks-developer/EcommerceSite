@@ -1,5 +1,5 @@
 export function HotBadge({ count }: { count: number }) {
-  const label = `🔥 Hurry! This item is in ${count} other cart${count === 1 ? "" : "s"} right now.`;
+  const label = "🔥 Hurry! This item is in demand.";
 
   return (
     <div

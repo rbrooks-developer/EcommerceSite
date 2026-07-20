@@ -248,7 +248,7 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
             {hotCartCount > 0 && (
               <div className="text-sm font-semibold" style={{ color: "#f97316", WebkitTextFillColor: "#f97316", backgroundImage: "none" }}>
                 <span style={{ fontFamily: "'Apple Color Emoji','Segoe UI Emoji','Noto Color Emoji',emoji,sans-serif", WebkitTextFillColor: "initial" }}>🔥</span>
-                {" "}Hurry! This item is in {hotCartCount} other cart{hotCartCount === 1 ? "" : "s"} right now.
+                {" "}Hurry! This item is in demand.
               </div>
             )}
             <AddToCartButton
