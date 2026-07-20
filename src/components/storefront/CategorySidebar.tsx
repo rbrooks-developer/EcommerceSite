@@ -311,9 +311,6 @@ export function CategorySidebar({
       <>
         <style>{hoverStyle}</style>
         <nav>
-        <p className={cn(fontSizeClass, "font-semibold uppercase tracking-wider mb-2")} style={{ opacity: 0.5 }}>
-          Categories
-        </p>
         <div style={FROSTED_WRAPPER}>
           <ul className="divide-y divide-white/10 px-1">
             {/* All */}
@@ -380,9 +377,6 @@ export function CategorySidebar({
     <>
       <style>{hoverStyle}</style>
       <nav>
-      <p className={cn(fontSizeClass, "font-semibold uppercase tracking-wider mb-3")} style={{ opacity: 0.5 }}>
-        Categories
-      </p>
       <ul className="space-y-0.5">
         <li style={sidebarStyle === "glow-bar" ? { position: "relative" } : {}}>
           {sidebarStyle === "glow-bar" && allActive && <GlowBar fontColor={fontColor} />}
