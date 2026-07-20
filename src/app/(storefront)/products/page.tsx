@@ -1,5 +1,6 @@
 import { getSettings } from "@/lib/data/settings";
 import { getProducts, getCategories } from "@/lib/data/products";
+import { getHotCartCounts } from "@/lib/data/cart";
 import { createClient } from "@/lib/supabase/server";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
@@ -56,6 +57,7 @@ export default async function ProductsPage({
   const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
   const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
   const sidebarGlow = productCfg?.sidebar_glow ?? "none";
+  const hotCartThreshold = productCfg?.hot_cart_threshold ?? 1;
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
@@ -87,6 +89,8 @@ export default async function ProductsPage({
       favoriteIds = new Set((favRows as { product_id: string }[]).map((r) => r.product_id));
     }
   }
+
+  const hotCartCounts = await getHotCartCounts(products.map((p) => p.id), user?.id ?? null);
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
@@ -123,6 +127,8 @@ export default async function ProductsPage({
             pageSize={pageSize}
             favoriteIds={favoriteIds}
             isLoggedIn={!!user}
+            hotCartCounts={hotCartCounts}
+            hotCartThreshold={hotCartThreshold}
           />
         </div>
       </div>

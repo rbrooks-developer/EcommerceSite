@@ -1,5 +1,6 @@
 import { getSettings } from "@/lib/data/settings";
 import { getProducts, getCategories } from "@/lib/data/products";
+import { getHotCartCounts } from "@/lib/data/cart";
 import { createClient } from "@/lib/supabase/server";
 import type { CategoryRow } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
@@ -57,6 +58,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
   const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
   const sidebarGlow = productCfg?.sidebar_glow ?? "none";
+  const hotCartThreshold = productCfg?.hot_cart_threshold ?? 1;
 
   const categoryIdsWithProducts = new Set(
     products.map((p) => p.category_id).filter(Boolean) as string[]
@@ -83,6 +85,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
       favoriteIds = new Set((favRows as { product_id: string }[]).map((r) => r.product_id));
     }
   }
+
+  const hotCartCounts = await getHotCartCounts(products.map((p) => p.id), user?.id ?? null);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
   const breadcrumbLd = {
@@ -134,6 +138,8 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
               pageSize={pageSize}
               favoriteIds={favoriteIds}
               isLoggedIn={!!user}
+              hotCartCounts={hotCartCounts}
+              hotCartThreshold={hotCartThreshold}
             />
           </div>
         </div>

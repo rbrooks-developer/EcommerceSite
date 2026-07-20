@@ -141,6 +141,7 @@ export const siteSettingsSchema = z.object({
     sidebar_item_opacity: z.number().min(0.2).max(2.5).optional(),
     sidebar_font_size: z.enum(["xs", "sm", "base", "lg"]).optional(),
     sidebar_glow: z.enum(["none", "subtle", "medium", "strong"]).optional(),
+    hot_cart_threshold: z.number().int().min(1).max(999).default(1).optional(),
   }).optional(),
   max_image_size_mb: z.number().int().min(1).max(50).default(2).optional(),
   shipping_countries: z.array(z.string()).min(1, "Select at least one shipping country"),

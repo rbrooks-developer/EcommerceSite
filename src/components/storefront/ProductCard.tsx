@@ -2,6 +2,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { formatPrice, imgUrl } from "@/lib/utils";
 import { FavoriteButton } from "@/components/storefront/FavoriteButton";
+import { HotBadge } from "@/components/storefront/HotBadge";
 import type { Product } from "@/types";
 
 // 1×1 gray GIF — blurred by next/image to fill the container while the real image loads
@@ -11,10 +12,14 @@ export function ProductCard({
   product,
   isFavorited = false,
   isLoggedIn = false,
+  hotCartCount = 0,
+  hotCartThreshold = 1,
 }: {
   product: Pick<Product, "id" | "slug" | "name" | "price" | "images" | "inventory">;
   isFavorited?: boolean;
   isLoggedIn?: boolean;
+  hotCartCount?: number;
+  hotCartThreshold?: number;
 }) {
   const image = (product.images as string[])[0];
   const outOfStock = product.inventory <= 0;
@@ -48,6 +53,9 @@ export function ProductCard({
               Out of Stock
             </span>
           </div>
+        )}
+        {hotCartCount >= hotCartThreshold && hotCartCount > 0 && (
+          <HotBadge count={hotCartCount} />
         )}
         <FavoriteButton
           productId={product.id}

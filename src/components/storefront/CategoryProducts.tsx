@@ -20,11 +20,15 @@ export function CategoryProducts({
   pageSize = 24,
   favoriteIds,
   isLoggedIn = false,
+  hotCartCounts = {},
+  hotCartThreshold = 1,
 }: {
   products: ProductRow[];
   pageSize?: number;
   favoriteIds?: Set<string>;
   isLoggedIn?: boolean;
+  hotCartCounts?: Record<string, number>;
+  hotCartThreshold?: number;
 }) {
   const [query, setQuery] = useState("");
   const [sort, setSort]   = useState<SortKey>("az");
@@ -107,6 +111,8 @@ export function CategoryProducts({
                 product={product}
                 isFavorited={favoriteIds?.has(product.id) ?? false}
                 isLoggedIn={isLoggedIn}
+                hotCartCount={hotCartCounts[product.id] ?? 0}
+                hotCartThreshold={hotCartThreshold}
               />
             ))}
           </div>

@@ -235,6 +235,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [sidebarItemOpacity, setSidebarItemOpacity] = useState<number>(productCfg?.sidebar_item_opacity ?? 0.75);
   const [sidebarFontSize, setSidebarFontSize] = useState<SidebarFontSize>(productCfg?.sidebar_font_size ?? "sm");
   const [sidebarGlow, setSidebarGlow] = useState<SidebarGlow>(productCfg?.sidebar_glow ?? "none");
+  const [hotCartThreshold, setHotCartThreshold] = useState<number>(productCfg?.hot_cart_threshold ?? 1);
   const [maxImageSizeMb, setMaxImageSizeMb] = useState<number>((defaultValues as any)?.max_image_size_mb ?? 2);
 
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
@@ -354,6 +355,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         sidebar_item_opacity: sidebarItemOpacity,
         sidebar_font_size: sidebarFontSize,
         sidebar_glow: sidebarGlow,
+        hot_cart_threshold: hotCartThreshold,
       },
       max_image_size_mb: maxImageSizeMb,
       shipping_countries: shippingCountries,
@@ -1092,6 +1094,19 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             <option value="strong">Strong</option>
           </select>
           <p className="text-xs text-gray-400 mt-1.5">Adds a color glow around category text using your theme color. Works especially well on dark backgrounds.</p>
+        </div>
+        <div className="max-w-xs mt-4">
+          <Label htmlFor="hot_cart_threshold">🔥 Hot Cart Alert Threshold</Label>
+          <input
+            id="hot_cart_threshold"
+            type="number"
+            min={1}
+            max={999}
+            value={hotCartThreshold}
+            onChange={(e) => setHotCartThreshold(Math.max(1, parseInt(e.target.value) || 1))}
+            className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
+          />
+          <p className="text-xs text-gray-400 mt-1">Show the 🔥 fire badge on product cards when the item is in at least this many other shoppers' carts. Default: 1.</p>
         </div>
       </Section>
 

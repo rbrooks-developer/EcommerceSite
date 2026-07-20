@@ -9,6 +9,7 @@ import { AddToCartButton } from "@/components/storefront/AddToCartButton";
 import { FavoriteButton } from "@/components/storefront/FavoriteButton";
 import { MakeOfferForm } from "./MakeOfferForm";
 import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
+import { getHotCartCounts } from "@/lib/data/cart";
 import type { Metadata } from "next";
 import type { Product } from "@/types";
 
@@ -131,6 +132,9 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
     }
   }
 
+  const hotCounts = await getHotCartCounts([product.id], user?.id ?? null);
+  const hotCartCount = hotCounts[product.id] ?? 0;
+
   // Pull CGC fields from already-cached settings instead of a separate DB call
   const ebayConfig = (settings as any)?.ebay_config ?? {};
   const cgcCensusUrl      = ebayConfig.cgc_census_url       ?? null;
@@ -241,6 +245,11 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
               </a>
             )}
 
+            {hotCartCount > 0 && (
+              <p className="text-sm font-semibold" style={{ color: "#f97316" }}>
+                🔥 Hurry! This item is in {hotCartCount} other cart{hotCartCount === 1 ? "" : "s"} right now.
+              </p>
+            )}
             <AddToCartButton
               product={product}
               favoriteSlot={

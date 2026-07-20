@@ -6,6 +6,7 @@ import { getCategories, getProducts } from "@/lib/data/products";
 import { CategoryProducts } from "@/components/storefront/CategoryProducts";
 import { CategorySidebar } from "@/components/storefront/CategorySidebar";
 import { Breadcrumbs } from "@/components/storefront/Breadcrumbs";
+import { getHotCartCounts } from "@/lib/data/cart";
 import type { Metadata } from "next";
 import type { HomepageConfig, ProductConfig, SidebarStyle } from "@/types";
 import type { CategoryRow } from "@/lib/data/products";
@@ -59,7 +60,9 @@ export default async function FavoritesPage() {
   const sidebarItemOpacity = productCfg?.sidebar_item_opacity ?? 0.75;
   const sidebarFontSize = productCfg?.sidebar_font_size ?? "sm";
   const sidebarGlow = productCfg?.sidebar_glow ?? "none";
+  const hotCartThreshold = productCfg?.hot_cart_threshold ?? 1;
 
+  const hotCartCounts = await getHotCartCounts(allProducts.map((p) => p.id), user.id);
   const favoriteIds = new Set(products.map((p) => p.id));
   const categoryIdsWithProducts = new Set(
     allProducts.map((p) => p.category_id).filter(Boolean) as string[]
@@ -116,6 +119,8 @@ export default async function FavoritesPage() {
               pageSize={pageSize}
               favoriteIds={favoriteIds}
               isLoggedIn={true}
+              hotCartCounts={hotCartCounts}
+              hotCartThreshold={hotCartThreshold}
             />
           )}
         </div>
