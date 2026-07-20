@@ -105,7 +105,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
 
         <div className="flex flex-col gap-8 md:flex-row mt-4">
           {categories.length > 0 && (
-            <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100vh-5rem)] md:overflow-y-auto">
+            <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100vh-5rem)] md:overflow-y-auto" style={{ zIndex: 46 }}>
               <CategorySidebar
                 categories={categories}
                 activeSlug={slug}

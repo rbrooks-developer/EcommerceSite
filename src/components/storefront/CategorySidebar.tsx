@@ -6,6 +6,22 @@ import { ChevronRight, Heart } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { SidebarStyle, SidebarFontSize, SidebarGlow } from "@/types";
 
+const hoverStyle = `
+  .sidebar-link { position: relative; transition: transform 0.15s ease; }
+  .sidebar-link::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: rgba(255,255,255,0);
+    transition: background 0.15s ease;
+    pointer-events: none;
+  }
+  .sidebar-link:hover:not(.sidebar-link-active) { transform: translateX(2px); }
+  .sidebar-link:hover::after { background: rgba(255,255,255,0.09); }
+  .sidebar-link:active::after { background: rgba(255,255,255,0.18); }
+`;
+
 type Cat = { id: string; slug: string; name: string; parent_id: string | null };
 
 interface Node {
@@ -160,7 +176,8 @@ function CategoryNode({
   if (sidebarStyle === "glow-bar") liStyle = { position: "relative" };
 
   const linkClass = cn(
-    `flex-1 ${fontSizeClass} px-2 py-1.5 transition-colors`,
+    `flex-1 ${fontSizeClass} px-2 py-1.5 transition-colors sidebar-link`,
+    isActive && "sidebar-link-active",
     sidebarStyle === "pill" ? "rounded-full" : "rounded-md",
     sidebarStyle === "count-badges" && "flex items-center justify-between gap-2",
   );
@@ -286,13 +303,15 @@ export function CategorySidebar({
 
   // Frosted-cards: render as a single unified card with divide-y separators inside
   if (isFrosted) {
-    const itemCls = `${fontSizeClass} w-full px-2 py-1.5 transition-colors text-left block`;
-    const allLinkCls = cn(itemCls, roundedClass);
-    const favLinkCls = cn("flex items-center gap-2", `${fontSizeClass} w-full px-2 py-1.5 transition-colors text-left`, roundedClass);
+    const itemCls = `${fontSizeClass} w-full px-2 py-1.5 transition-colors text-left block sidebar-link`;
+    const allLinkCls = cn(itemCls, roundedClass, allActive && "sidebar-link-active");
+    const favLinkCls = cn("flex items-center gap-2", `${fontSizeClass} w-full px-2 py-1.5 transition-colors text-left sidebar-link`, favActive && "sidebar-link-active", roundedClass);
 
     return (
-      <nav>
-        <p className="text-xs font-semibold uppercase tracking-wider mb-2" style={{ opacity: 0.5 }}>
+      <>
+        <style>{hoverStyle}</style>
+        <nav>
+        <p className={cn(fontSizeClass, "font-semibold uppercase tracking-wider mb-2")} style={{ opacity: 0.5 }}>
           Categories
         </p>
         <div style={FROSTED_WRAPPER}>
@@ -340,23 +359,28 @@ export function CategorySidebar({
           </ul>
         </div>
       </nav>
+      </>
     );
   }
 
   // ── Non-frosted styles ────────────────────────────────────────────────────────
   const allLinkClass = cn(
-    `${fontSizeClass} px-2 py-1.5 ml-5 transition-colors`,
+    `${fontSizeClass} px-2 py-1.5 ml-5 transition-colors sidebar-link`,
+    allActive && "sidebar-link-active",
     roundedClass,
     sidebarStyle === "count-badges" ? "flex items-center justify-between gap-2" : "block",
   );
   const favLinkClass = cn(
-    `flex items-center gap-2 ${fontSizeClass} px-2 py-1.5 ml-5 transition-colors`,
+    `flex items-center gap-2 ${fontSizeClass} px-2 py-1.5 ml-5 transition-colors sidebar-link`,
+    favActive && "sidebar-link-active",
     roundedClass,
   );
 
   return (
-    <nav>
-      <p className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ opacity: 0.5 }}>
+    <>
+      <style>{hoverStyle}</style>
+      <nav>
+      <p className={cn(fontSizeClass, "font-semibold uppercase tracking-wider mb-3")} style={{ opacity: 0.5 }}>
         Categories
       </p>
       <ul className="space-y-0.5">
@@ -413,5 +437,6 @@ export function CategorySidebar({
         )}
       </ul>
     </nav>
+    </>
   );
 }
