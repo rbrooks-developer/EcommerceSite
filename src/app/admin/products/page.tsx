@@ -119,7 +119,7 @@ export default async function ProductsPage({
       <div className="hidden md:block rounded-lg border border-gray-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
               <tr className="border-b border-gray-200">
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Product</th>
                 <th className="px-4 py-3 text-left font-medium text-gray-500">Category</th>

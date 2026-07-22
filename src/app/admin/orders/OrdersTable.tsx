@@ -257,7 +257,7 @@ export function OrdersTable({ orders, restockingFeePercent = 0, processingFeeFla
       <div className="hidden md:block rounded-lg border border-gray-200 bg-white overflow-hidden">
         <div className="overflow-x-auto">
           <table className="min-w-full text-sm">
-            <thead className="bg-gray-50">
+            <thead className="bg-gray-50 dark:bg-gray-800/50 border-b border-gray-200 dark:border-gray-700">
               <tr className="border-b border-gray-200">
                 <th className="w-10 px-4 py-3">
                   <input
