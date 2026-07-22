@@ -39,7 +39,7 @@ export default async function CategoriesPage() {
         </Link>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-white divide-y">
+      <div className="rounded-lg border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-700">
         {roots.length === 0 && (
           <p className="py-10 text-center text-sm text-gray-400">No categories yet.</p>
         )}

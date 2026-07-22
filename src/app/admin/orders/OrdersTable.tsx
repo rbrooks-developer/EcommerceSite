@@ -200,7 +200,7 @@ export function OrdersTable({ orders, restockingFeePercent = 0, processingFeeFla
 
       {/* Label results feedback */}
       {results.length > 0 && (
-        <div className="rounded-md border border-gray-200 bg-white divide-y text-sm">
+        <div className="rounded-md border border-gray-200 dark:border-gray-700 bg-white dark:bg-gray-900 divide-y divide-gray-100 dark:divide-gray-700 text-sm">
           {results.map((r) => (
             <div key={r.id} className={`flex items-center gap-2 px-4 py-2 ${r.error ? "text-red-600" : "text-green-600"}`}>
               <span className="font-mono text-xs">{r.id.slice(0, 8).toUpperCase()}</span>
