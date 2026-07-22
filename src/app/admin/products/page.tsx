@@ -38,7 +38,7 @@ export default async function ProductsPage({
     supabase.from("categories").select("id, name, parent_id").order("name"),
     sb.from("product_favorites").select("product_id, user_id"),
     sb.from("profiles").select("id").eq("role", "admin"),
-    sb.from("promos").select("id, code, discount_value, discount_type").eq("enabled", true).order("code"),
+    sb.from("promos").select("id, code, discount_value, discount_type, description").eq("enabled", true).order("code"),
     getEmailTemplates(),
     getSettings(),
   ]);

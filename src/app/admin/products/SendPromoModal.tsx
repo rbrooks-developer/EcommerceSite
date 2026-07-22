@@ -6,7 +6,7 @@ import { Mail } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
 type Template = { id: string; name: string };
-type Promo = { id: string; code: string; discount_value: number; discount_type: string };
+type Promo = { id: string; code: string; discount_value: number; discount_type: string; description?: string | null };
 
 function Modal({
   productId,
@@ -87,7 +87,7 @@ function Modal({
                 >
                   {promos.map((p) => (
                     <option key={p.id} value={p.id}>
-                      {p.code} — {p.discount_type === "percent" ? `${p.discount_value}%` : `$${p.discount_value}`} off
+                      {p.code}{p.description ? ` — ${p.description}` : ""}
                     </option>
                   ))}
                 </select>

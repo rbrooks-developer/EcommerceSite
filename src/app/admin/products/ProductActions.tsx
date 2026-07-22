@@ -10,7 +10,7 @@ import { Badge } from "@/components/ui/badge";
 import { formatPrice, imgUrl } from "@/lib/utils";
 import type { Product } from "@/types";
 
-type PromoRow = { id: string; code: string; discount_value: number; discount_type: string };
+type PromoRow = { id: string; code: string; discount_value: number; discount_type: string; description?: string | null };
 type TemplateRow = { id: string; name: string };
 
 type ProductRow = Product & { categories: { name: string } | null };
