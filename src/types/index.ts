@@ -237,6 +237,7 @@ export type ProductConfig = {
   sidebar_font_size?: SidebarFontSize;
   sidebar_glow?: SidebarGlow;
   hot_cart_threshold?: number;
+  promo_email_enabled?: boolean;
 };
 
 export type ContactConfig = {

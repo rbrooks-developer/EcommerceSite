@@ -4,7 +4,10 @@ import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { Plus } from "lucide-react";
 import { DeleteAllProductsButton, ProductCard, ProductTableRow } from "./ProductActions";
 import { ProductFilters } from "./ProductFilters";
-import type { Product } from "@/types";
+import { SendPromoButton } from "./SendPromoModal";
+import { getEmailTemplates } from "@/lib/actions/email-templates";
+import { getSettings } from "@/lib/data/settings";
+import type { Product, ProductConfig } from "@/types";
 
 type ProductRow = Product & { categories: { name: string } | null };
 type CategoryRow = { id: string; name: string; parent_id: string | null };
@@ -30,12 +33,19 @@ export default async function ProductsPage({
   const supabase = await createClient();
   const sb = createServiceClient();
 
-  const [{ data: raw }, { data: cats }, { data: favRows }, { data: adminProfiles }] = await Promise.all([
+  const [{ data: raw }, { data: cats }, { data: favRows }, { data: adminProfiles }, { data: promoRows }, templates, settings] = await Promise.all([
     supabase.from("products").select("*, categories(name)"),
     supabase.from("categories").select("id, name, parent_id").order("name"),
     sb.from("product_favorites").select("product_id, user_id"),
     sb.from("profiles").select("id").eq("role", "admin"),
+    sb.from("promos").select("id, code, discount_value, discount_type").eq("enabled", true).order("code"),
+    getEmailTemplates(),
+    getSettings(),
   ]);
+
+  const productCfg = (settings as any)?.product_config as ProductConfig | null;
+  const promoEmailEnabled = productCfg?.promo_email_enabled ?? true;
+  const promos = (promoRows ?? []) as { id: string; code: string; discount_value: number; discount_type: string }[];
 
   let products = (raw ?? []) as ProductRow[];
   const categories = cats ?? [];
@@ -91,7 +101,14 @@ export default async function ProductsPage({
       {/* Mobile card view */}
       <div className="space-y-3 md:hidden">
         {products.map((product) => (
-          <ProductCard key={product.id} product={product} favoriteCount={favCounts[product.id] ?? 0} />
+          <ProductCard
+            key={product.id}
+            product={product}
+            favoriteCount={favCounts[product.id] ?? 0}
+            promoEmailEnabled={promoEmailEnabled}
+            templates={templates}
+            promos={promos}
+          />
         ))}
         {products.length === 0 && (
           <p className="py-12 text-center text-sm text-gray-400">No products found.</p>
@@ -115,7 +132,14 @@ export default async function ProductsPage({
             </thead>
             <tbody>
               {products.map((product) => (
-                <ProductTableRow key={product.id} product={product} favoriteCount={favCounts[product.id] ?? 0} />
+                <ProductTableRow
+                  key={product.id}
+                  product={product}
+                  favoriteCount={favCounts[product.id] ?? 0}
+                  promoEmailEnabled={promoEmailEnabled}
+                  templates={templates}
+                  promos={promos}
+                />
               ))}
             </tbody>
           </table>

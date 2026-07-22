@@ -236,6 +236,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [sidebarFontSize, setSidebarFontSize] = useState<SidebarFontSize>(productCfg?.sidebar_font_size ?? "sm");
   const [sidebarGlow, setSidebarGlow] = useState<SidebarGlow>(productCfg?.sidebar_glow ?? "none");
   const [hotCartThreshold, setHotCartThreshold] = useState<number>(productCfg?.hot_cart_threshold ?? 1);
+  const [promoEmailEnabled, setPromoEmailEnabled] = useState<boolean>(productCfg?.promo_email_enabled ?? true);
   const [maxImageSizeMb, setMaxImageSizeMb] = useState<number>((defaultValues as any)?.max_image_size_mb ?? 2);
 
   const savedChat = (defaultValues as any)?.chat_config as ChatConfig | null;
@@ -356,6 +357,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         sidebar_font_size: sidebarFontSize,
         sidebar_glow: sidebarGlow,
         hot_cart_threshold: hotCartThreshold,
+        promo_email_enabled: promoEmailEnabled,
       },
       max_image_size_mb: maxImageSizeMb,
       shipping_countries: shippingCountries,
@@ -1107,6 +1109,18 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             className="mt-1 w-full rounded-md border border-gray-300 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-900"
           />
           <p className="text-xs text-gray-400 mt-1">Show the 🔥 fire badge on product cards when the item is in at least this many other shoppers' carts. Default: 1.</p>
+        </div>
+        <div className="max-w-xs mt-4">
+          <label className="flex items-center gap-3 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={promoEmailEnabled}
+              onChange={(e) => setPromoEmailEnabled(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-gray-900 focus:ring-gray-900"
+            />
+            <span className="text-sm font-medium text-gray-700">Enable Promo Emails to Fans</span>
+          </label>
+          <p className="text-xs text-gray-400 mt-1 ml-7">Shows the &quot;Send Promo&quot; button on the admin product listing to email fans of a product.</p>
         </div>
       </Section>
 

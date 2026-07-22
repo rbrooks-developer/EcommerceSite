@@ -22,6 +22,7 @@ import {
   Globe,
   Percent,
   BookOpen,
+  Mail,
 } from "lucide-react";
 import { ThemeToggle } from "./ThemeToggle";
 
@@ -32,6 +33,7 @@ const navItems = [
   { label: "Orders",           href: "/admin/orders",           icon: ShoppingCart },
   { label: "Offers",           href: "/admin/offers",           icon: Tag },
   { label: "Promos",           href: "/admin/promos",           icon: Percent },
+  { label: "Email Templates",  href: "/admin/email-templates",  icon: Mail },
   { label: "Collections",      href: "/admin/collections",      icon: BookOpen },
   { label: "eBay Sync",        href: "/admin/ebay",             icon: RefreshCw },
   { label: "Google Analytics", href: "/admin/analytics",        icon: BarChart2 },

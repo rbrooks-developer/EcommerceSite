@@ -4,10 +4,14 @@ import { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { deleteProduct, deleteAllProducts, togglePublished } from "@/lib/actions/products";
+import { SendPromoButton } from "./SendPromoModal";
 import { Spinner } from "@/components/ui/spinner";
 import { Badge } from "@/components/ui/badge";
 import { formatPrice, imgUrl } from "@/lib/utils";
 import type { Product } from "@/types";
+
+type PromoRow = { id: string; code: string; discount_value: number; discount_type: string };
+type TemplateRow = { id: string; name: string };
 
 type ProductRow = Product & { categories: { name: string } | null };
 
@@ -142,7 +146,7 @@ export function DeleteAllProductsButton() {
   );
 }
 
-export function ProductCard({ product, favoriteCount = 0 }: { product: ProductRow; favoriteCount?: number }) {
+export function ProductCard({ product, favoriteCount = 0, promoEmailEnabled = true, templates = [], promos = [] }: { product: ProductRow; favoriteCount?: number; promoEmailEnabled?: boolean; templates?: TemplateRow[]; promos?: PromoRow[] }) {
   const { published, loading, toggle } = usePublishToggle(product.id, product.is_published);
   const image = (product.images as string[])[0];
 
@@ -164,7 +168,7 @@ export function ProductCard({ product, favoriteCount = 0 }: { product: ProductRo
         </div>
         <Badge variant={published ? "success" : "outline"}>{published ? "Live" : "Draft"}</Badge>
       </div>
-      <div className="mt-3 flex gap-2">
+      <div className="mt-3 flex flex-wrap gap-2">
         <Link href={`/admin/products/${product.id}/edit`} className="text-sm text-blue-600 hover:underline">Edit</Link>
         <button
           onClick={toggle}
@@ -175,12 +179,15 @@ export function ProductCard({ product, favoriteCount = 0 }: { product: ProductRo
           {published ? "Unpublish" : "Publish"}
         </button>
         <DeleteProductButton id={product.id} />
+        {promoEmailEnabled && (
+          <SendPromoButton productId={product.id} productName={product.name} favoriteCount={favoriteCount} templates={templates} promos={promos} />
+        )}
       </div>
     </div>
   );
 }
 
-export function ProductTableRow({ product, favoriteCount = 0 }: { product: ProductRow; favoriteCount?: number }) {
+export function ProductTableRow({ product, favoriteCount = 0, promoEmailEnabled = true, templates = [], promos = [] }: { product: ProductRow; favoriteCount?: number; promoEmailEnabled?: boolean; templates?: TemplateRow[]; promos?: PromoRow[] }) {
   const { published, loading, toggle } = usePublishToggle(product.id, product.is_published);
   const image = (product.images as string[])[0];
 
@@ -217,6 +224,9 @@ export function ProductTableRow({ product, favoriteCount = 0 }: { product: Produ
             {published ? "Unpublish" : "Publish"}
           </button>
           <DeleteProductButton id={product.id} />
+          {promoEmailEnabled && (
+            <SendPromoButton productId={product.id} productName={product.name} favoriteCount={favoriteCount} templates={templates} promos={promos} />
+          )}
         </div>
       </td>
     </tr>
