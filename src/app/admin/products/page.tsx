@@ -30,18 +30,22 @@ export default async function ProductsPage({
   const supabase = await createClient();
   const sb = createServiceClient();
 
-  const [{ data: raw }, { data: cats }, { data: favRows }] = await Promise.all([
+  const [{ data: raw }, { data: cats }, { data: favRows }, { data: adminProfiles }] = await Promise.all([
     supabase.from("products").select("*, categories(name)"),
     supabase.from("categories").select("id, name, parent_id").order("name"),
-    sb.from("product_favorites").select("product_id"),
+    sb.from("product_favorites").select("product_id, user_id"),
+    sb.from("profiles").select("id").eq("role", "admin"),
   ]);
 
   let products = (raw ?? []) as ProductRow[];
   const categories = cats ?? [];
 
-  // Build favorite counts by product
+  const adminIds = new Set((adminProfiles ?? []).map((p: { id: string }) => p.id));
+
+  // Build favorite counts by product, excluding admins
   const favCounts: Record<string, number> = {};
-  for (const r of (favRows ?? []) as { product_id: string }[]) {
+  for (const r of (favRows ?? []) as { product_id: string; user_id: string }[]) {
+    if (adminIds.has(r.user_id)) continue;
     favCounts[r.product_id] = (favCounts[r.product_id] ?? 0) + 1;
   }
 
