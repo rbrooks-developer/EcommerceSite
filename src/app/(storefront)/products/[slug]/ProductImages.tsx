@@ -64,7 +64,6 @@ export function ProductImages({ images, name }: { images: string[]; name: string
       {/* Mobile: tap-to-lightbox */}
       <div
         className="relative aspect-[3/4] overflow-hidden lg:hidden cursor-zoom-in"
-        style={{ backgroundColor: "#111111" }}
         onClick={() => setLightboxOpen(true)}
       >
         <Image
@@ -88,7 +87,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
       <div
         ref={containerRef}
         className="product-zoom-container relative aspect-square overflow-hidden rounded-lg cursor-zoom-in hidden lg:block"
-        style={{ backgroundColor: "#111111", zIndex: 46, isolation: "isolate" }}
+        style={{ zIndex: 46, isolation: "isolate" }}
         onMouseEnter={(e) => zoomIn(e.clientX, e.clientY)}
         onMouseMove={(e) => pan(e.clientX, e.clientY)}
         onMouseLeave={zoomOut}

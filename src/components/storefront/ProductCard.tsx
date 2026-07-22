@@ -28,7 +28,7 @@ export function ProductCard({
     <Link href={`/products/${product.slug}`} className="group flex flex-col" style={{ color: "inherit" }}>
       <div
         className="aspect-[3/4] md:aspect-square overflow-hidden md:rounded-lg relative"
-        style={{ backgroundColor: "#111111", zIndex: 46, isolation: "isolate" }}
+        style={{ backgroundColor: "transparent", zIndex: 46, isolation: "isolate" }}
       >
         {image ? (
           <Image
