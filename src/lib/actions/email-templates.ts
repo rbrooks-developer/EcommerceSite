@@ -99,14 +99,14 @@ export async function sendPromoToFans(
 
   // Fetch all required data in parallel
   const [productRes, templateRes, promoRes, adminRes, settings] = await Promise.all([
-    sb.from("products").select("id, name, description, price, images").eq("id", productId).maybeSingle(),
+    sb.from("products").select("id, name, description, price, images, slug").eq("id", productId).maybeSingle(),
     sb.from("email_templates").select("*").eq("id", templateId).maybeSingle(),
     sb.from("promos").select("code, discount_type, discount_value, expiration_date").eq("id", promoId).maybeSingle(),
     sb.from("profiles").select("id").eq("role", "admin"),
     getSettings(),
   ]);
 
-  const product = productRes.data as { id: string; name: string; description: string | null; price: number; images: string[] } | null;
+  const product = productRes.data as { id: string; name: string; description: string | null; price: number; images: string[]; slug: string } | null;
   const template = templateRes.data as EmailTemplate | null;
   const promo = promoRes.data as { code: string; discount_type: string; discount_value: number; expiration_date: string | null } | null;
 
@@ -158,6 +158,7 @@ export async function sendPromoToFans(
     "promo.code": promo.code,
     "promo.discount": discountLabel,
     "promo.expiry": expiryLabel,
+    "product.url": `${storeUrl}/products/${product.slug}`,
     "store.name": storeName,
     "store.display_name": storeDisplayName,
     "store.logo_url": storeLogoUrl,
