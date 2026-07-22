@@ -79,7 +79,12 @@ export async function deleteEmailTemplate(id: string): Promise<{ error?: string 
 // ── Send Promo to Fans ────────────────────────────────────────────────────────
 
 function substituteVars(text: string, vars: Record<string, string>): string {
-  return text.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? `{{${key}}}`);
+  // Process {{#if var}}...{{/if}} blocks first
+  const result = text.replace(/\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, content) =>
+    vars[key.trim()] ? content : ""
+  );
+  // Then process simple {{var}} substitutions
+  return result.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? `{{${key}}}`);
 }
 
 export async function sendPromoToFans(

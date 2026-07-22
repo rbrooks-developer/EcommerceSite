@@ -18,7 +18,10 @@ const SAMPLE_VARS: Record<string, string> = {
 };
 
 function substituteVars(text: string, vars: Record<string, string>) {
-  return text.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? `{{${key}}}`);
+  const result = text.replace(/\{\{#if\s+([^}]+)\}\}([\s\S]*?)\{\{\/if\}\}/g, (_, key, content) =>
+    vars[key.trim()] ? content : ""
+  );
+  return result.replace(/\{\{([^}]+)\}\}/g, (_, key) => vars[key.trim()] ?? `{{${key}}}`);
 }
 
 const DEFAULT_BODY = `<!DOCTYPE html>
