@@ -135,7 +135,8 @@ export async function sendPromoToFans(
   const homepage = settings?.homepage_config as HomepageConfig | null;
   const storeName = settings?.site_title ?? "My Store";
   const storeUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
-  const fromDisplay = homepage?.font_color ? storeName : storeName;
+  const storeDisplayName = homepage?.hero_display_name ?? storeName;
+  const storeLogoUrl = (settings as any)?.logo_url ?? "";
   const fromField = `${storeName} <${FROM_EMAIL}>`;
 
   const discountLabel =
@@ -158,6 +159,8 @@ export async function sendPromoToFans(
     "promo.discount": discountLabel,
     "promo.expiry": expiryLabel,
     "store.name": storeName,
+    "store.display_name": storeDisplayName,
+    "store.logo_url": storeLogoUrl,
     "store.url": storeUrl,
   };
 

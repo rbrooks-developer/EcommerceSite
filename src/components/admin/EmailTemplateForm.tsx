@@ -14,6 +14,8 @@ const SAMPLE_VARS: Record<string, string> = {
   "promo.discount": "20% off",
   "promo.expiry": "August 31, 2026",
   "store.name": "My Store",
+  "store.display_name": "Godly Comics",
+  "store.logo_url": "",
   "store.url": "#",
 };
 
@@ -66,7 +68,9 @@ const VARIABLES = [
   { key: "{{promo.code}}", desc: "Promo code" },
   { key: "{{promo.discount}}", desc: "e.g. '20% off' or '$10 off'" },
   { key: "{{promo.expiry}}", desc: "Expiration date" },
-  { key: "{{store.name}}", desc: "Your store name" },
+  { key: "{{store.name}}", desc: "Site title (General settings)" },
+  { key: "{{store.display_name}}", desc: "Hero display name" },
+  { key: "{{store.logo_url}}", desc: "Logo URL (General settings)" },
   { key: "{{store.url}}", desc: "Your store URL" },
 ];
 
@@ -166,6 +170,24 @@ export function EmailTemplateForm({ template }: { template?: EmailTemplate }) {
               </div>
             )}
           </div>
+
+          <div className="flex gap-3 pt-1">
+            <button
+              type="button"
+              onClick={handleSave}
+              disabled={saving}
+              className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
+            >
+              {saving ? "Saving…" : template ? "Save Changes" : "Create Template"}
+            </button>
+            <button
+              type="button"
+              onClick={() => router.push("/admin/email-templates")}
+              className="rounded-md border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+            >
+              Cancel
+            </button>
+          </div>
         </div>
 
         {/* Right: variable reference */}
@@ -196,23 +218,6 @@ export function EmailTemplateForm({ template }: { template?: EmailTemplate }) {
         </div>
       </div>
 
-      <div className="flex gap-3 pt-2">
-        <button
-          type="button"
-          onClick={handleSave}
-          disabled={saving}
-          className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
-        >
-          {saving ? "Saving…" : template ? "Save Changes" : "Create Template"}
-        </button>
-        <button
-          type="button"
-          onClick={() => router.push("/admin/email-templates")}
-          className="rounded-md border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
-        >
-          Cancel
-        </button>
-      </div>
     </div>
   );
 }
