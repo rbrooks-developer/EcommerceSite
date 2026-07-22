@@ -7,13 +7,26 @@ export async function getHotCartCounts(
   if (productIds.length === 0) return {};
 
   const supabase = createServiceClient();
+
+  // Collect user IDs to exclude: the current user + all admins
+  const excludeIds = new Set<string>();
+  if (excludeUserId) excludeIds.add(excludeUserId);
+
+  const { data: adminProfiles } = await supabase
+    .from("profiles")
+    .select("id")
+    .eq("role", "admin");
+  for (const p of (adminProfiles ?? []) as { id: string }[]) {
+    excludeIds.add(p.id);
+  }
+
   let query = supabase
     .from("cart_items")
     .select("product_id, user_id")
     .in("product_id", productIds);
 
-  if (excludeUserId) {
-    query = query.neq("user_id", excludeUserId);
+  if (excludeIds.size > 0) {
+    query = query.not("user_id", "in", `(${[...excludeIds].join(",")})`);
   }
 
   const { data } = await query;
