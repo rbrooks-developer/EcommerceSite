@@ -124,7 +124,7 @@ export function CategoryProducts({
               </span>
               <div className="flex items-center gap-2">
                 <button
-                  onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  onClick={() => { setPage((p) => Math.max(1, p - 1)); window.scrollTo(0, 0); }}
                   disabled={safePage === 1}
                   className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity disabled:opacity-30"
                   style={{ border: "1px solid var(--site-fg, #111827)", backgroundColor: "var(--site-bg, #ffffff)", color: "var(--site-fg, #111827)" }}
@@ -135,7 +135,7 @@ export function CategoryProducts({
                   {safePage} / {totalPages}
                 </span>
                 <button
-                  onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo({ top: 0, behavior: "smooth" }); }}
+                  onClick={() => { setPage((p) => Math.min(totalPages, p + 1)); window.scrollTo(0, 0); }}
                   disabled={safePage === totalPages}
                   className="rounded-lg px-4 py-2 text-sm font-medium transition-opacity disabled:opacity-30"
                   style={{ border: "1px solid var(--site-fg, #111827)", backgroundColor: "var(--site-bg, #ffffff)", color: "var(--site-fg, #111827)" }}
