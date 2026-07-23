@@ -15,6 +15,7 @@ export interface ListingSyncResult {
   total: number;
   inserted: number;
   updated: number;
+  unchanged: number;
   errors: ListingSyncError[];
 }
 
@@ -26,7 +27,7 @@ export interface ListingSyncCallbacks {
     current: number,
     total: number,
     title: string,
-    status: "inserted" | "updated" | "skipped",
+    status: "inserted" | "updated" | "unchanged" | "skipped",
     reason?: string,
   ) => void | Promise<void>;
 }
@@ -86,10 +87,10 @@ export async function runEbayListingSync(
   const discountPct = config.price_discount_percent ?? 0;
   await callbacks?.onTotal?.(total);
 
-  // One bulk lookup to keep slugs stable across syncs
+  // One bulk lookup to keep slugs stable and enable change detection
   const { data: existingRows } = await supabase
     .from("products")
-    .select("id, slug, ebay_listing_id")
+    .select("id, slug, ebay_listing_id, name, price, inventory, images, description, category_id, weight_oz, length_in, width_in, height_in, genre, grade, professional_grader, certification_number, signed, signed_by")
     .not("ebay_listing_id", "is", null);
 
   const existingByListingId = new Map(
@@ -98,6 +99,7 @@ export async function runEbayListingSync(
 
   let inserted = 0;
   let updated  = 0;
+  let unchanged = 0;
   const errors: ListingSyncError[] = [];
 
   for (let i = 0; i < listings.length; i++) {
@@ -124,6 +126,40 @@ export async function runEbayListingSync(
     const slug     = existing?.slug
       ?? `${slugify(listing.title).slice(0, 200)}-${listing.listingId.slice(-6)}`;
 
+    const newPrice = discountPct > 0
+      ? Math.round(listing.price * (1 - discountPct / 100) * 100) / 100
+      : listing.price;
+
+    if (existing) {
+      const newSigned = listing.specifics["signed"] != null
+        ? listing.specifics["signed"].toLowerCase() === "yes"
+        : null;
+
+      const hasChanged =
+        existing.name              !== listing.title ||
+        Math.abs(Number(existing.price) - newPrice) >= 0.01 ||
+        existing.inventory         !== listing.inventory ||
+        JSON.stringify(existing.images) !== JSON.stringify(listing.images) ||
+        (existing.description ?? null) !== (listing.description ?? null) ||
+        existing.category_id       !== categoryId ||
+        existing.weight_oz         !== listing.weightOz ||
+        existing.length_in         !== listing.lengthIn ||
+        existing.width_in          !== listing.widthIn ||
+        existing.height_in         !== listing.heightIn ||
+        (existing.genre            ?? null) !== (listing.specifics["genre"]                ?? null) ||
+        (existing.grade            ?? null) !== (listing.specifics["grade"]                ?? null) ||
+        (existing.professional_grader ?? null) !== (listing.specifics["professional grader"] ?? null) ||
+        (existing.certification_number ?? null) !== (listing.specifics["certification number"] ?? null) ||
+        (existing.signed           ?? null) !== newSigned ||
+        (existing.signed_by        ?? null) !== (listing.specifics["signed by"]            ?? null);
+
+      if (!hasChanged) {
+        unchanged++;
+        await callbacks?.onItem?.(i + 1, total, listing.title, "unchanged");
+        continue;
+      }
+    }
+
     const { error } = await supabase
       .from("products")
       .upsert(
@@ -133,9 +169,7 @@ export async function runEbayListingSync(
           name:                 listing.title,
           slug,
           description:          listing.description,
-          price:                discountPct > 0
-            ? Math.round(listing.price * (1 - discountPct / 100) * 100) / 100
-            : listing.price,
+          price:                newPrice,
           cost:                 0,
           inventory:            listing.inventory,
           images:               listing.images,
@@ -172,12 +206,12 @@ export async function runEbayListingSync(
 
   await saveEbayConfig({
     listings_synced_at: new Date().toISOString(),
-    listings_count:     inserted + updated,
+    listings_count:     inserted + updated + unchanged,
   } as any);
 
   if (inserted > 0 || updated > 0) {
     revalidateTag("products", "default");
   }
 
-  return { total, inserted, updated, errors };
+  return { total, inserted, updated, unchanged, errors };
 }

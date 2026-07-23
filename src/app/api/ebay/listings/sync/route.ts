@@ -38,7 +38,7 @@ export async function POST(_request: NextRequest): Promise<Response> {
           send({ type: "item", current, total, title, status, ...(reason ? { reason } : {}) }),
       });
 
-      await send({ type: "done", inserted: result.inserted, updated: result.updated, errors: result.errors });
+      await send({ type: "done", inserted: result.inserted, updated: result.updated, unchanged: result.unchanged, errors: result.errors });
     } catch (err) {
       const e = err as Error & { cause?: Error };
       const message = [e.message, e.cause?.message].filter(Boolean).join(" → ");
