@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { XMLParser } from "fast-xml-parser";
-import { deriveWebhookVerificationToken, recordWebhookHit } from "@/lib/ebay/auth";
+import { deriveWebhookVerificationToken, resolveWebhookEndpointUrl, recordWebhookHit } from "@/lib/ebay/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { revalidateTag } from "next/cache";
 
@@ -24,8 +24,9 @@ export async function GET(request: NextRequest): Promise<Response> {
     return new Response("eBay credentials not configured", { status: 500 });
   }
 
-  const endpointUrl = resolveEndpointUrl(request);
-  const hash = createHash("sha256")
+  const host        = request.headers.get("host") ?? "localhost:3000";
+  const endpointUrl = resolveWebhookEndpointUrl(host);
+  const hash        = createHash("sha256")
     .update(challengeCode + token + endpointUrl)
     .digest("hex");
 
@@ -215,15 +216,6 @@ async function handleItemClosed(itemId: string): Promise<void> {
 }
 
 // ── Utilities ─────────────────────────────────────────────────────────────────
-
-function resolveEndpointUrl(request: NextRequest): string {
-  if (process.env.NEXT_PUBLIC_APP_URL) {
-    return `${process.env.NEXT_PUBLIC_APP_URL}/api/ebay/notifications`;
-  }
-  const host = request.headers.get("host") ?? "localhost:3000";
-  const proto = host.startsWith("localhost") ? "http" : "https";
-  return `${proto}://${host}/api/ebay/notifications`;
-}
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 function deepFind(obj: any, key: string): any {

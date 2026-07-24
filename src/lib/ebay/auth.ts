@@ -80,6 +80,19 @@ export function deriveWebhookVerificationToken(): string | null {
     .digest("hex"); // 64 hex chars — within eBay's 32–80 char requirement
 }
 
+/**
+ * Single source of truth for the registered webhook endpoint URL.
+ * Must produce the EXACT same string in every context (install, challenge
+ * response, test) — any mismatch makes the SHA-256 hash wrong.
+ */
+export function resolveWebhookEndpointUrl(hostHeader: string): string {
+  const proto  = hostHeader.startsWith("localhost") ? "http" : "https";
+  // Strip trailing slash from env var so we never get double-slashes
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "")
+    || `${proto}://${hostHeader}`;
+  return `${appUrl}/api/ebay/notifications`;
+}
+
 /** Updates the webhook_last_hits map for the given event type without clobbering other fields. */
 export async function recordWebhookHit(eventType: string): Promise<void> {
   const supabase = createServiceClient();

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { getValidEbayConfig, saveEbayConfig, getAppToken, deriveWebhookVerificationToken } from "@/lib/ebay/auth";
+import { getValidEbayConfig, saveEbayConfig, getAppToken, deriveWebhookVerificationToken, resolveWebhookEndpointUrl } from "@/lib/ebay/auth";
 import { setNotificationPreferences } from "@/lib/ebay/trading";
 
 export const dynamic = "force-dynamic";
@@ -16,14 +16,18 @@ export async function POST(request: NextRequest): Promise<Response> {
     return Response.json({ error: "eBay account not connected" }, { status: 400 });
   }
 
-  const host = request.headers.get("host") ?? "";
-  const proto = host.startsWith("localhost") ? "http" : "https";
-  // Use || not ?? so an empty-string env var still falls back to the host header
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "") || `${proto}://${host}`;
-  const endpointUrl = `${appUrl}/api/ebay/notifications`;
+  const host        = request.headers.get("host") ?? "";
+  const endpointUrl = resolveWebhookEndpointUrl(host);
+  const token       = deriveWebhookVerificationToken() ?? "";
+
+  // Hash that eBay will verify against — include in debug so you can spot mismatches
+  const { createHash } = await import("crypto");
+  const exampleHash = createHash("sha256")
+    .update("EXAMPLE_CHALLENGE" + token + endpointUrl)
+    .digest("hex");
 
   const results: Record<string, string> = {};
-  const debug: Record<string, string> = { endpointUrl };
+  const debug = { endpointUrl, tokenPrefix: token.slice(0, 8) + "...", exampleHash };
 
   // ── 1. Platform Notifications (System B) ─────────────────────────────────
   try {
@@ -41,10 +45,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const appToken = await getAppToken(config);
 
-    // Token is derived from credentials (not stored in DB) so it's always
-    // instantly available when eBay fires the GET challenge during destination creation.
-    const verificationToken = deriveWebhookVerificationToken();
-    if (!verificationToken) throw new Error("eBay credentials not configured");
+    if (!token) throw new Error("eBay credentials not configured");
+    const verificationToken = token;
 
     // Create or update destination
     let destinationId = config.commerce_notification_destination_id ?? null;

@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { deriveWebhookVerificationToken } from "@/lib/ebay/auth";
+import { deriveWebhookVerificationToken, resolveWebhookEndpointUrl } from "@/lib/ebay/auth";
 import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -19,13 +19,11 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const { event } = (await request.json()) as { event: EventType };
 
-  const host = request.headers.get("host") ?? "";
-  const proto = host.startsWith("localhost") ? "http" : "https";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
-  const notifUrl = `${appUrl}/api/ebay/notifications`;
+  const host     = request.headers.get("host") ?? "";
+  const notifUrl = resolveWebhookEndpointUrl(host);
 
   if (event === "challenge") {
-    return testChallenge(notifUrl, appUrl);
+    return testChallenge(notifUrl, host);
   }
 
   if (event === "MARKETPLACE_ACCOUNT_DELETION") {
@@ -37,7 +35,7 @@ export async function POST(request: NextRequest): Promise<Response> {
 
 // ── Challenge test ────────────────────────────────────────────────────────────
 
-async function testChallenge(notifUrl: string, appUrl: string): Promise<Response> {
+async function testChallenge(notifUrl: string, hostHeader: string): Promise<Response> {
   const testCode = "test_challenge_" + Date.now();
   const res = await fetch(`${notifUrl}?challenge_code=${testCode}`, { method: "GET" });
 
@@ -53,13 +51,16 @@ async function testChallenge(notifUrl: string, appUrl: string): Promise<Response
     return Response.json({ success: false, error: "eBay credentials not configured" });
   }
 
-  const expected = createHash("sha256")
-    .update(testCode + token + `${appUrl}/api/ebay/notifications`)
+  // Use same URL function as the challenge handler — any mismatch = wrong hash
+  const endpointUrl = resolveWebhookEndpointUrl(hostHeader);
+  const expected    = createHash("sha256")
+    .update(testCode + token + endpointUrl)
     .digest("hex");
 
   const match = returned === expected;
   return Response.json({
     success: match,
+    endpointUrl,
     returned,
     expected,
     error: match ? null : "Challenge hash mismatch",
