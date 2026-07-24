@@ -63,7 +63,8 @@ export async function POST(request: NextRequest): Promise<Response> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name:     "GodlyComics Webhook",
+          name:    "GodlyComics Webhook",
+          status:  "ENABLED",
           endpoint: { endpointUrl, verificationToken },
         }),
       });
