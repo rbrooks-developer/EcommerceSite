@@ -100,57 +100,80 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     if (!destinationId) {
-      // Try user token first, fall back to app token if 401
-      const tryCreate = async (authToken: string) =>
-        fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-          method:  "POST",
-          headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name:           "GodlyComics Webhook",
-            status:         "ENABLED",
-            payloadVersion: "1.0",
-            deliveryConfig: { endpointUrl, verificationToken },
-          }),
-        });
+      // Probe multiple payload shapes — eBay is rejecting BOTH ENABLED and DISABLED,
+      // meaning the request body itself is wrong (not the live challenge). Try four
+      // combinations of (field name) × (payloadVersion presence) with DISABLED status
+      // so we avoid the challenge complication. First success wins.
+      type Shape = { label: string; body: Record<string, unknown> };
+      const shapes: Shape[] = [
+        {
+          label: "deliveryConfig+pv",
+          body: { name: "GodlyComics Webhook", status: "DISABLED", payloadVersion: "1.0", deliveryConfig: { endpointUrl, verificationToken } },
+        },
+        {
+          label: "endpoint+pv",
+          body: { name: "GodlyComics Webhook", status: "DISABLED", payloadVersion: "1.0", endpoint: { endpointUrl, verificationToken } },
+        },
+        {
+          label: "deliveryConfig_nopv",
+          body: { name: "GodlyComics Webhook", status: "DISABLED", deliveryConfig: { endpointUrl, verificationToken } },
+        },
+        {
+          label: "endpoint_nopv",
+          body: { name: "GodlyComics Webhook", status: "DISABLED", endpoint: { endpointUrl, verificationToken } },
+        },
+      ];
 
-      let destRes = userToken ? await tryCreate(userToken) : null;
+      let winningShape: Shape | null = null;
+      for (const shape of shapes) {
+        const r = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+          method:  "POST",
+          headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
+          body:    JSON.stringify(shape.body),
+        });
+        const t = await r.text();
+        debug[`probe_${shape.label}`] = `${r.status}: ${t.slice(0, 160)}`;
+        if (r.ok) {
+          const d = JSON.parse(t) as { destinationId?: string };
+          winningShape = shape;
+          // Clean up the DISABLED destination immediately
+          if (d.destinationId) {
+            await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination/${d.destinationId}`, {
+              method: "DELETE", headers: { Authorization: `Bearer ${appToken}` },
+            });
+            debug.winningShape = shape.label;
+          }
+          break;
+        }
+      }
+
+      if (!winningShape) {
+        throw new Error("All payload shape probes failed — see debug.probe_* fields");
+      }
+
+      // Re-create with ENABLED using the winning shape and the user token if available
+      const enabledBody = { ...winningShape.body, status: "ENABLED" };
       debug.userTokenTried = String(!!userToken);
+      let destRes = userToken
+        ? await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+            method: "POST",
+            headers: { Authorization: `Bearer ${userToken}`, "Content-Type": "application/json" },
+            body:   JSON.stringify(enabledBody),
+          })
+        : null;
 
       if (!destRes?.ok) {
-        // Fallback: app token
-        destRes = await tryCreate(appToken);
+        destRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+          method: "POST",
+          headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
+          body:   JSON.stringify(enabledBody),
+        });
         debug.appTokenFallback = "true";
       }
 
       if (!destRes.ok) {
         const text = await destRes.text();
-        // Diagnostic: try DISABLED status — if this succeeds, the live challenge
-        // verification is failing (eBay can't reach or get wrong hash from our endpoint).
-        // DISABLED skips the challenge so eBay accepts the URL without verification.
-        const disabledRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-          method:  "POST",
-          headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
-          body: JSON.stringify({
-            name:           "GodlyComics Webhook",
-            status:         "DISABLED",
-            payloadVersion: "1.0",
-            deliveryConfig: { endpointUrl, verificationToken },
-          }),
-        });
-        if (disabledRes.ok) {
-          const disabledData = await disabledRes.json() as { destinationId?: string };
-          debug.disabledSucceeded = disabledData.destinationId ?? "no-id";
-          // Clean up the disabled destination so we don't leave orphans
-          if (disabledData.destinationId) {
-            await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination/${disabledData.destinationId}`, {
-              method:  "DELETE",
-              headers: { Authorization: `Bearer ${appToken}` },
-            });
-          }
-        } else {
-          debug.disabledAlsoFailed = String(disabledRes.status);
-        }
-        throw new Error(`Create destination failed ${destRes.status}: ${text}`);
+        throw new Error(`Create ENABLED destination failed ${destRes.status}: ${text}`);
       }
 
       const destData = await destRes.json() as { destinationId?: string };
