@@ -147,17 +147,17 @@ export function buildAuthorizeUrl(config: EbayConfig, state: string): string {
   return `${EBAY_AUTH_URL}?${params.toString()}`;
 }
 
-export async function getAppToken(config: EbayConfig): Promise<string> {
+export async function getAppToken(
+  config: EbayConfig,
+  scope = "https://api.ebay.com/oauth/api_scope",
+): Promise<string> {
   const res = await fetch(EBAY_TOKEN_URL, {
     method: "POST",
     headers: {
       Authorization:  basicAuth(config.app_id, config.cert_id),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({
-      grant_type: "client_credentials",
-      scope:      "https://api.ebay.com/oauth/api_scope",
-    }).toString(),
+    body: new URLSearchParams({ grant_type: "client_credentials", scope }).toString(),
   });
   if (!res.ok) {
     const text = await res.text();

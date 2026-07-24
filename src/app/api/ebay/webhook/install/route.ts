@@ -73,20 +73,38 @@ export async function POST(request: NextRequest): Promise<Response> {
       debug.challengeSelfTest = `error: ${(e as Error).message}`;
     }
 
-    // Try user access token first (has broader scope); fall back to app token
-    const userToken  = config.access_token ?? null;
-    const appToken   = await getAppToken(config);
-    const bearerToken = userToken ?? appToken;
+    const userToken = config.access_token ?? null;
+    // Basic app token (basic scope) — used so far, failing
+    const appToken  = await getAppToken(config);
 
-    // List existing destinations to avoid conflicts and detect stale state
+    // Try a token with the Commerce Notification subscription scope specifically.
+    // The basic scope token can LIST destinations but may not be allowed to CREATE them.
+    let notifToken: string | null = null;
+    try {
+      notifToken = await getAppToken(
+        config,
+        "https://api.ebay.com/oauth/api_scope/commerce.notification.subscription",
+      );
+      debug.notifScopeToken = "obtained";
+    } catch (e) {
+      debug.notifScopeToken = `failed: ${(e as Error).message.slice(0, 120)}`;
+    }
+
+    // Show the full topic response — the "scope" field tells us what's needed
+    const topicRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/topic/MARKETPLACE_ACCOUNT_DELETION`, {
+      headers: { Authorization: `Bearer ${appToken}` },
+    });
+    debug.topicFull = `${topicRes.status}: ${(await topicRes.text()).slice(0, 500)}`;
+
+    // List existing destinations
     let destinationId: string | null = null;
+    const listToken = notifToken ?? appToken;
     const listRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-      headers: { Authorization: `Bearer ${bearerToken}` },
+      headers: { Authorization: `Bearer ${listToken}` },
     });
     if (listRes.ok) {
       const listData  = await listRes.json() as { destinations?: { destinationId: string; deliveryConfig?: { endpointUrl?: string }; endpoint?: { endpointUrl?: string } }[] };
       const existing  = listData.destinations ?? [];
-      // Reuse destination if one already points to our URL (check both field names)
       const match = existing.find(
         (d) => d.deliveryConfig?.endpointUrl === endpointUrl || d.endpoint?.endpointUrl === endpointUrl,
       );
@@ -96,119 +114,49 @@ export async function POST(request: NextRequest): Promise<Response> {
       }
       debug.existingDestinations = String(existing.length);
     } else {
-      debug.listError = `${listRes.status} ${await listRes.text()}`;
+      debug.listError = `${listRes.status} ${(await listRes.text()).slice(0, 120)}`;
     }
 
     if (!destinationId) {
-      // ── Diagnostic: check topic access and probe what eBay says is missing ────
-      const topicRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/topic/MARKETPLACE_ACCOUNT_DELETION`, {
-        headers: { Authorization: `Bearer ${appToken}` },
-      });
-      debug.topicAccess = `${topicRes.status}: ${(await topicRes.text()).slice(0, 200)}`;
+      // Try creating with the notification-scoped token first, then fall back to others.
+      // statusOnlyProbe (no endpoint fields at all) gave 195017 with basic app token —
+      // confirming this is a token scope issue, not an endpoint URL format issue.
+      const destBody = {
+        name:           "GodlyComics Webhook",
+        status:         "ENABLED",
+        payloadVersion: "1.0",
+        endpoint:       { endpointUrl, verificationToken },
+      };
 
-      // Probe with no endpoint fields at all — if eBay complains "missing endpoint"
-      // (vs 195017 again), we learn whether the error is about the URL value or just parsing.
-      const statusOnlyRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-        method:  "POST",
-        headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
-        body:    JSON.stringify({ name: "GodlyComics Webhook", status: "DISABLED" }),
-      });
-      debug.statusOnlyProbe = `${statusOnlyRes.status}: ${(await statusOnlyRes.text()).slice(0, 200)}`;
-
-      // Probe multiple payload shapes — eBay is rejecting BOTH ENABLED and DISABLED,
-      // meaning the request body itself is wrong (not the live challenge). Try four
-      // combinations of (field name) × (payloadVersion presence) with DISABLED status
-      // so we avoid the challenge complication. First success wins.
-      type Shape = { label: string; body: Record<string, unknown> };
-      const shapes: Shape[] = [
-        {
-          label: "deliveryConfig+pv",
-          body: { name: "GodlyComics Webhook", status: "DISABLED", payloadVersion: "1.0", deliveryConfig: { endpointUrl, verificationToken } },
-        },
-        {
-          label: "endpoint+pv",
-          body: { name: "GodlyComics Webhook", status: "DISABLED", payloadVersion: "1.0", endpoint: { endpointUrl, verificationToken } },
-        },
-        {
-          label: "deliveryConfig_nopv",
-          body: { name: "GodlyComics Webhook", status: "DISABLED", deliveryConfig: { endpointUrl, verificationToken } },
-        },
-        {
-          label: "endpoint_nopv",
-          body: { name: "GodlyComics Webhook", status: "DISABLED", endpoint: { endpointUrl, verificationToken } },
-        },
-        // Try flat structure and alternate outer key names
-        {
-          label: "flat",
-          body: { name: "GodlyComics Webhook", status: "DISABLED", endpointUrl, verificationToken },
-        },
-        {
-          label: "notificationEndpoint",
-          body: { name: "GodlyComics Webhook", status: "DISABLED", notificationEndpoint: { endpointUrl, verificationToken } },
-        },
-      ];
-
-      let winningShape: Shape | null = null;
-      for (const shape of shapes) {
+      const tryWith = async (tok: string, label: string) => {
         const r = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
           method:  "POST",
-          headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
-          body:    JSON.stringify(shape.body),
+          headers: { Authorization: `Bearer ${tok}`, "Content-Type": "application/json" },
+          body:    JSON.stringify(destBody),
         });
         const t = await r.text();
-        debug[`probe_${shape.label}`] = `${r.status}: ${t.slice(0, 160)}`;
-        if (r.ok) {
-          const d = JSON.parse(t) as { destinationId?: string };
-          winningShape = shape;
-          // Clean up the DISABLED destination immediately
-          if (d.destinationId) {
-            await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination/${d.destinationId}`, {
-              method: "DELETE", headers: { Authorization: `Bearer ${appToken}` },
-            });
-            debug.winningShape = shape.label;
-          }
-          break;
-        }
+        debug[`create_${label}`] = `${r.status}: ${t.slice(0, 200)}`;
+        return r.ok ? (JSON.parse(t) as { destinationId?: string }) : null;
+      };
+
+      let destData: { destinationId?: string } | null = null;
+      if (notifToken) destData = await tryWith(notifToken, "notifScope");
+      if (!destData && userToken) { destData = await tryWith(userToken, "userToken"); }
+      if (!destData)              { destData = await tryWith(appToken, "appToken"); }
+
+      if (!destData) {
+        throw new Error("Destination creation failed with all tokens — see debug.create_* fields");
       }
 
-      if (!winningShape) {
-        throw new Error("All payload shape probes failed — see debug.probe_* fields");
-      }
-
-      // Re-create with ENABLED using the winning shape and the user token if available
-      const enabledBody = { ...winningShape.body, status: "ENABLED" };
-      debug.userTokenTried = String(!!userToken);
-      let destRes = userToken
-        ? await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-            method: "POST",
-            headers: { Authorization: `Bearer ${userToken}`, "Content-Type": "application/json" },
-            body:   JSON.stringify(enabledBody),
-          })
-        : null;
-
-      if (!destRes?.ok) {
-        destRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-          method: "POST",
-          headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
-          body:   JSON.stringify(enabledBody),
-        });
-        debug.appTokenFallback = "true";
-      }
-
-      if (!destRes.ok) {
-        const text = await destRes.text();
-        throw new Error(`Create ENABLED destination failed ${destRes.status}: ${text}`);
-      }
-
-      const destData = await destRes.json() as { destinationId?: string };
-      destinationId  = destData.destinationId ?? null;
+      destinationId = destData.destinationId ?? null;
       if (!destinationId) throw new Error("eBay returned no destinationId");
     }
 
     // Create subscription for MARKETPLACE_ACCOUNT_DELETION
+    const subToken = notifToken ?? userToken ?? appToken;
     const subRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/subscription`, {
       method:  "POST",
-      headers: { Authorization: `Bearer ${bearerToken}`, "Content-Type": "application/json" },
+      headers: { Authorization: `Bearer ${subToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         topicId:        "MARKETPLACE_ACCOUNT_DELETION",
         destinationId,
