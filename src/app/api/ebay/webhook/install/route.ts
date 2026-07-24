@@ -27,7 +27,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     .digest("hex");
 
   const results: Record<string, string> = {};
-  const debug = { endpointUrl, tokenPrefix: token.slice(0, 8) + "...", exampleHash };
+  const debug: Record<string, string> = { endpointUrl, tokenPrefix: token.slice(0, 8) + "...", exampleHash };
 
   // ── 1. Platform Notifications (System B) ─────────────────────────────────
   try {
@@ -43,27 +43,55 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   // ── 2. Commerce Notification API — MARKETPLACE_ACCOUNT_DELETION (System A) ─
   try {
-    const appToken = await getAppToken(config);
-
     if (!token) throw new Error("eBay credentials not configured");
     const verificationToken = token;
 
-    // Create or update destination
-    let destinationId = config.commerce_notification_destination_id ?? null;
+    // Try user access token first (has broader scope); fall back to app token
+    const userToken  = config.access_token ?? null;
+    const appToken   = await getAppToken(config);
+    const bearerToken = userToken ?? appToken;
+
+    // Clear any previously stored destination ID so we always try fresh
+    const storedDestId = config.commerce_notification_destination_id ?? null;
+
+    // List existing destinations to avoid conflicts and detect stale state
+    let destinationId: string | null = null;
+    const listRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+      headers: { Authorization: `Bearer ${bearerToken}` },
+    });
+    if (listRes.ok) {
+      const listData  = await listRes.json();
+      const existing  = (listData.destinations ?? []) as { destinationId: string; endpoint?: { endpointUrl?: string } }[];
+      // Reuse destination if one already points to our URL
+      const match = existing.find((d) => d.endpoint?.endpointUrl === endpointUrl);
+      if (match) {
+        destinationId = match.destinationId;
+        debug.destinationReused = destinationId;
+      }
+      debug.existingDestinations = String(existing.length);
+    }
 
     if (!destinationId) {
-      const destRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
-        method: "POST",
-        headers: {
-          Authorization:  `Bearer ${appToken}`,
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          name:    "GodlyComics Webhook",
-          status:  "ENABLED",
-          endpoint: { endpointUrl, verificationToken },
-        }),
-      });
+      // Try user token first, fall back to app token if 401
+      const tryCreate = async (authToken: string) =>
+        fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+          method:  "POST",
+          headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name:    "GodlyComics Webhook",
+            status:  "ENABLED",
+            endpoint: { endpointUrl, verificationToken },
+          }),
+        });
+
+      let destRes = userToken ? await tryCreate(userToken) : null;
+      debug.userTokenTried = String(!!userToken);
+
+      if (!destRes?.ok) {
+        // Fallback: app token
+        destRes = await tryCreate(appToken);
+        debug.appTokenFallback = "true";
+      }
 
       if (!destRes.ok) {
         const text = await destRes.text();
@@ -71,16 +99,13 @@ export async function POST(request: NextRequest): Promise<Response> {
       }
 
       const destData = await destRes.json();
-      destinationId = destData.destinationId as string;
+      destinationId  = destData.destinationId as string;
     }
 
     // Create subscription for MARKETPLACE_ACCOUNT_DELETION
     const subRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/subscription`, {
-      method: "POST",
-      headers: {
-        Authorization:  `Bearer ${appToken}`,
-        "Content-Type": "application/json",
-      },
+      method:  "POST",
+      headers: { Authorization: `Bearer ${bearerToken}`, "Content-Type": "application/json" },
       body: JSON.stringify({
         topicId:        "MARKETPLACE_ACCOUNT_DELETION",
         destinationId,
@@ -95,13 +120,13 @@ export async function POST(request: NextRequest): Promise<Response> {
       throw new Error(`Create subscription failed ${subRes.status}: ${text}`);
     }
 
-    // Persist destination ID + subscription timestamp
     await saveEbayConfig({
       commerce_notification_destination_id: destinationId,
       commerce_notification_subscribed_at:  new Date().toISOString(),
     });
 
     results.account_deletion = "subscribed";
+    void storedDestId; // suppress unused var warning
   } catch (err) {
     results.account_deletion = `error: ${(err as Error).message}`;
     console.error("[webhook/install] Commerce notification failed:", err);
