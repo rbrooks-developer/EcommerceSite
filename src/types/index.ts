@@ -146,11 +146,6 @@ export type EbayConfig = {
   listing_sync_last_run?: string | null;
   cgc_census_url?: string | null;
   cgc_button_image_url?: string | null;
-  webhook_verification_token?: string | null;
-  platform_notifications_installed_at?: string | null;
-  commerce_notification_destination_id?: string | null;
-  commerce_notification_subscribed_at?: string | null;
-  webhook_last_hits?: Record<string, string> | null;
 };
 
 export type CategoryWithEbay = Category & {

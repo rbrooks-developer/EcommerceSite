@@ -381,44 +381,6 @@ export async function restoreEbayInventory(
   }
 }
 
-/**
- * Registers Platform Notification preferences via Trading API.
- * Sets the delivery URL and enables FixedPriceTransaction, ItemRevised, ItemClosed.
- */
-export async function setNotificationPreferences(
-  config: EbayConfig,
-  endpointUrl: string,
-): Promise<void> {
-  const xml = await tradingPost("SetNotificationPreferences", config, `<?xml version="1.0" encoding="utf-8"?>
-<SetNotificationPreferencesRequest xmlns="urn:ebay:apis:eBLBaseComponents">
-  <RequesterCredentials><eBayAuthToken>${config.access_token}</eBayAuthToken></RequesterCredentials>
-  <ApplicationDeliveryPreferences>
-    <ApplicationURL>${endpointUrl}</ApplicationURL>
-    <ApplicationEnable>Enable</ApplicationEnable>
-    <PayloadVersion>959</PayloadVersion>
-  </ApplicationDeliveryPreferences>
-  <UserDeliveryPreferenceArray>
-    <NotificationEnable>
-      <EventType>FixedPriceTransaction</EventType>
-      <EventEnable>Enable</EventEnable>
-    </NotificationEnable>
-    <NotificationEnable>
-      <EventType>ItemRevised</EventType>
-      <EventEnable>Enable</EventEnable>
-    </NotificationEnable>
-    <NotificationEnable>
-      <EventType>ItemClosed</EventType>
-      <EventEnable>Enable</EventEnable>
-    </NotificationEnable>
-    <NotificationEnable>
-      <EventType>ItemOutOfStock</EventType>
-      <EventEnable>Enable</EventEnable>
-    </NotificationEnable>
-  </UserDeliveryPreferenceArray>
-</SetNotificationPreferencesRequest>`);
-  parseAck(xml, "SetNotificationPreferencesResponse");
-}
-
 /** Fetches every active Fixed Price listing via the Trading API (paginated). */
 export async function fetchAllActiveListings(config: EbayConfig): Promise<TradingItem[]> {
   if (!config.access_token) throw new Error("No eBay access token — connect your account first");

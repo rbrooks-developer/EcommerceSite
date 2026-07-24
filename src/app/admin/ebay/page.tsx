@@ -4,7 +4,6 @@ import { EbaySettings } from "@/components/admin/EbaySettings";
 import { EbayInventorySyncSettings } from "@/components/admin/EbayInventorySyncSettings";
 import { EbayListingSyncSettings } from "@/components/admin/EbayListingSyncSettings";
 import { EbayListingSettings } from "@/components/admin/EbayListingSettings";
-import { EbayWebhookSettings } from "@/components/admin/EbayWebhookSettings";
 
 export const dynamic = "force-dynamic";
 
@@ -41,7 +40,6 @@ export default async function EbayAdminPage({
       <EbayInventorySyncSettings config={config} />
       <EbayListingSyncSettings config={config} />
       <EbayListingSettings config={config} maxSizeMb={(settings as any)?.max_image_size_mb ?? 2} />
-      <EbayWebhookSettings config={config} isConnected={!!config?.access_token} />
     </div>
   );
 }

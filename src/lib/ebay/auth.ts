@@ -1,5 +1,4 @@
 import { createServiceClient } from "@/lib/supabase/server";
-import { createHash } from "crypto";
 import type { EbayConfig } from "@/types";
 
 const EBAY_TOKEN_URL    = "https://api.ebay.com/identity/v1/oauth2/token";
@@ -56,64 +55,9 @@ export async function getEbayConfig(): Promise<EbayConfig | null> {
     listing_sync_enabled:             db.listing_sync_enabled             ?? false,
     listing_sync_last_run:            db.listing_sync_last_run            ?? null,
     price_discount_percent:           db.price_discount_percent           ?? 0,
-    cgc_census_url:                       db.cgc_census_url                       ?? null,
-    cgc_button_image_url:                 db.cgc_button_image_url                 ?? null,
-    webhook_verification_token:           db.webhook_verification_token           ?? null,
-    platform_notifications_installed_at:  db.platform_notifications_installed_at  ?? null,
-    commerce_notification_destination_id: db.commerce_notification_destination_id ?? null,
-    commerce_notification_subscribed_at:  db.commerce_notification_subscribed_at  ?? null,
-    webhook_last_hits:                    db.webhook_last_hits                    ?? null,
+    cgc_census_url:       db.cgc_census_url       ?? null,
+    cgc_button_image_url: db.cgc_button_image_url ?? null,
   };
-}
-
-/**
- * Derives a stable verification token from the eBay credentials env vars.
- * Using env vars (not DB) means it's always available instantly — no race
- * condition when eBay fires a GET challenge immediately after we register.
- */
-export function deriveWebhookVerificationToken(): string | null {
-  const certId = process.env.EBAY_CERT_ID?.trim();
-  const appId  = process.env.EBAY_APP_ID?.trim();
-  if (!certId || !appId) return null;
-  return createHash("sha256")
-    .update(`${appId}:${certId}:ebay-webhook-verification`)
-    .digest("hex"); // 64 hex chars — within eBay's 32–80 char requirement
-}
-
-/**
- * Single source of truth for the registered webhook endpoint URL.
- * Must produce the EXACT same string in every context (install, challenge
- * response, test) — any mismatch makes the SHA-256 hash wrong.
- */
-export function resolveWebhookEndpointUrl(hostHeader: string): string {
-  const proto  = hostHeader.startsWith("localhost") ? "http" : "https";
-  // Strip trailing slash from env var so we never get double-slashes
-  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "")
-    || `${proto}://${hostHeader}`;
-  return `${appUrl}/api/ebay/notifications`;
-}
-
-/** Updates the webhook_last_hits map for the given event type without clobbering other fields. */
-export async function recordWebhookHit(eventType: string): Promise<void> {
-  const supabase = createServiceClient();
-  const { data } = await supabase
-    .from("site_settings")
-    .select("ebay_config")
-    .eq("id", 1)
-    .single();
-
-  const current   = (data as any)?.ebay_config ?? {};
-  const priorHits = current.webhook_last_hits ?? {};
-
-  await supabase
-    .from("site_settings")
-    .update({
-      ebay_config: {
-        ...current,
-        webhook_last_hits: { ...priorHits, [eventType]: new Date().toISOString() },
-      },
-    } as any)
-    .eq("id", 1);
 }
 
 /** Only persists token/state fields — credentials stay in env vars. */
@@ -147,17 +91,17 @@ export function buildAuthorizeUrl(config: EbayConfig, state: string): string {
   return `${EBAY_AUTH_URL}?${params.toString()}`;
 }
 
-export async function getAppToken(
-  config: EbayConfig,
-  scope = "https://api.ebay.com/oauth/api_scope",
-): Promise<string> {
+export async function getAppToken(config: EbayConfig): Promise<string> {
   const res = await fetch(EBAY_TOKEN_URL, {
     method: "POST",
     headers: {
       Authorization:  basicAuth(config.app_id, config.cert_id),
       "Content-Type": "application/x-www-form-urlencoded",
     },
-    body: new URLSearchParams({ grant_type: "client_credentials", scope }).toString(),
+    body: new URLSearchParams({
+      grant_type: "client_credentials",
+      scope:      "https://api.ebay.com/oauth/api_scope",
+    }).toString(),
   });
   if (!res.ok) {
     const text = await res.text();
