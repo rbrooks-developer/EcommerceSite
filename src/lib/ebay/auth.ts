@@ -55,9 +55,37 @@ export async function getEbayConfig(): Promise<EbayConfig | null> {
     listing_sync_enabled:             db.listing_sync_enabled             ?? false,
     listing_sync_last_run:            db.listing_sync_last_run            ?? null,
     price_discount_percent:           db.price_discount_percent           ?? 0,
-    cgc_census_url:                   db.cgc_census_url                   ?? null,
-    cgc_button_image_url:             db.cgc_button_image_url             ?? null,
+    cgc_census_url:                       db.cgc_census_url                       ?? null,
+    cgc_button_image_url:                 db.cgc_button_image_url                 ?? null,
+    webhook_verification_token:           db.webhook_verification_token           ?? null,
+    platform_notifications_installed_at:  db.platform_notifications_installed_at  ?? null,
+    commerce_notification_destination_id: db.commerce_notification_destination_id ?? null,
+    commerce_notification_subscribed_at:  db.commerce_notification_subscribed_at  ?? null,
+    webhook_last_hits:                    db.webhook_last_hits                    ?? null,
   };
+}
+
+/** Updates the webhook_last_hits map for the given event type without clobbering other fields. */
+export async function recordWebhookHit(eventType: string): Promise<void> {
+  const supabase = createServiceClient();
+  const { data } = await supabase
+    .from("site_settings")
+    .select("ebay_config")
+    .eq("id", 1)
+    .single();
+
+  const current   = (data as any)?.ebay_config ?? {};
+  const priorHits = current.webhook_last_hits ?? {};
+
+  await supabase
+    .from("site_settings")
+    .update({
+      ebay_config: {
+        ...current,
+        webhook_last_hits: { ...priorHits, [eventType]: new Date().toISOString() },
+      },
+    } as any)
+    .eq("id", 1);
 }
 
 /** Only persists token/state fields — credentials stay in env vars. */
