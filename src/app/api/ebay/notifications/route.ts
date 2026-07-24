@@ -136,6 +136,7 @@ async function handleSoapNotification(request: NextRequest): Promise<void> {
       await handleItemRevised(doc, itemId);
       break;
     case "ItemClosed":
+    case "ItemOutOfStock":
       await handleItemClosed(itemId);
       break;
     default:

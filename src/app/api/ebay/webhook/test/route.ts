@@ -9,6 +9,7 @@ type EventType =
   | "FixedPriceTransaction"
   | "ItemRevised"
   | "ItemClosed"
+  | "ItemOutOfStock"
   | "MARKETPLACE_ACCOUNT_DELETION"
   | "challenge";
 
@@ -31,7 +32,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     return testCommerceNotification(notifUrl);
   }
 
-  return testPlatformNotification(notifUrl, event as "FixedPriceTransaction" | "ItemRevised" | "ItemClosed");
+  return testPlatformNotification(notifUrl, event as "FixedPriceTransaction" | "ItemRevised" | "ItemClosed" | "ItemOutOfStock");
 }
 
 // ── Challenge test ────────────────────────────────────────────────────────────
@@ -98,7 +99,7 @@ async function testCommerceNotification(notifUrl: string): Promise<Response> {
 
 async function testPlatformNotification(
   notifUrl: string,
-  event: "FixedPriceTransaction" | "ItemRevised" | "ItemClosed",
+  event: "FixedPriceTransaction" | "ItemRevised" | "ItemClosed" | "ItemOutOfStock",
 ): Promise<Response> {
   const xml = buildSoapPayload(event);
 
@@ -122,7 +123,9 @@ function buildSoapPayload(event: string): string {
   const statusBlock =
     event === "ItemClosed"
       ? `<SellingStatus><ListingStatus>Ended</ListingStatus></SellingStatus>`
-      : `<SellingStatus><ListingStatus>Active</ListingStatus></SellingStatus>`;
+      : event === "ItemOutOfStock"
+        ? `<SellingStatus><ListingStatus>Active</ListingStatus><QuantitySold>1</QuantitySold></SellingStatus>`
+        : `<SellingStatus><ListingStatus>Active</ListingStatus></SellingStatus>`;
 
   const priceBlock =
     event === "ItemRevised"

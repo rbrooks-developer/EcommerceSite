@@ -34,6 +34,12 @@ const EVENT_ROWS: EventRow[] = [
     description: "Fires when a listing ends. Zeros inventory and unpublishes the product.",
   },
   {
+    key:         "ItemOutOfStock",
+    label:       "ItemOutOfStock",
+    system:      "Platform Notifications",
+    description: "Fires when quantity reaches 0. Zeros inventory and unpublishes the product.",
+  },
+  {
     key:         "MARKETPLACE_ACCOUNT_DELETION",
     label:       "MARKETPLACE_ACCOUNT_DELETION",
     system:      "Commerce Notification API",

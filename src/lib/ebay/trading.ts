@@ -410,6 +410,10 @@ export async function setNotificationPreferences(
       <EventType>ItemClosed</EventType>
       <EventEnable>Enable</EventEnable>
     </NotificationEnable>
+    <NotificationEnable>
+      <EventType>ItemOutOfStock</EventType>
+      <EventEnable>Enable</EventEnable>
+    </NotificationEnable>
   </UserDeliveryPreferenceArray>
 </SetNotificationPreferencesRequest>`);
   parseAck(xml, "SetNotificationPreferencesResponse");
