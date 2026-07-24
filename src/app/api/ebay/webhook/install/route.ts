@@ -100,6 +100,21 @@ export async function POST(request: NextRequest): Promise<Response> {
     }
 
     if (!destinationId) {
+      // ── Diagnostic: check topic access and probe what eBay says is missing ────
+      const topicRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/topic/MARKETPLACE_ACCOUNT_DELETION`, {
+        headers: { Authorization: `Bearer ${appToken}` },
+      });
+      debug.topicAccess = `${topicRes.status}: ${(await topicRes.text()).slice(0, 200)}`;
+
+      // Probe with no endpoint fields at all — if eBay complains "missing endpoint"
+      // (vs 195017 again), we learn whether the error is about the URL value or just parsing.
+      const statusOnlyRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+        method:  "POST",
+        headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
+        body:    JSON.stringify({ name: "GodlyComics Webhook", status: "DISABLED" }),
+      });
+      debug.statusOnlyProbe = `${statusOnlyRes.status}: ${(await statusOnlyRes.text()).slice(0, 200)}`;
+
       // Probe multiple payload shapes — eBay is rejecting BOTH ENABLED and DISABLED,
       // meaning the request body itself is wrong (not the live challenge). Try four
       // combinations of (field name) × (payloadVersion presence) with DISABLED status
@@ -121,6 +136,15 @@ export async function POST(request: NextRequest): Promise<Response> {
         {
           label: "endpoint_nopv",
           body: { name: "GodlyComics Webhook", status: "DISABLED", endpoint: { endpointUrl, verificationToken } },
+        },
+        // Try flat structure and alternate outer key names
+        {
+          label: "flat",
+          body: { name: "GodlyComics Webhook", status: "DISABLED", endpointUrl, verificationToken },
+        },
+        {
+          label: "notificationEndpoint",
+          body: { name: "GodlyComics Webhook", status: "DISABLED", notificationEndpoint: { endpointUrl, verificationToken } },
         },
       ];
 
