@@ -178,15 +178,15 @@ export function EbayWebhookSettings({ config, isConnected }: Props) {
       {/* Event table */}
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
-          <thead>
-            <tr className="border-b border-gray-200 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
+          <thead className="border-b border-gray-200 dark:border-gray-700">
+            <tr className="text-left text-xs font-medium text-gray-500 uppercase tracking-wide">
               <th className="pb-2 pr-4">Event</th>
               <th className="pb-2 pr-4">System</th>
               <th className="pb-2 pr-4">Last received</th>
               <th className="pb-2">Test</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-100">
+          <tbody className="divide-y divide-gray-100 dark:divide-gray-700">
             {EVENT_ROWS.map((row) => {
               const hit    = lastHits[row.key] ?? null;
               const result = testResults[row.key];

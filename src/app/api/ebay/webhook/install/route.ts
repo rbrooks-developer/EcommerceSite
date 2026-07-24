@@ -19,10 +19,12 @@ export async function POST(request: NextRequest): Promise<Response> {
 
   const host = request.headers.get("host") ?? "";
   const proto = host.startsWith("localhost") ? "http" : "https";
-  const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? `${proto}://${host}`;
+  // Use || not ?? so an empty-string env var still falls back to the host header
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? "").trim().replace(/\/$/, "") || `${proto}://${host}`;
   const endpointUrl = `${appUrl}/api/ebay/notifications`;
 
   const results: Record<string, string> = {};
+  const debug: Record<string, string> = { endpointUrl };
 
   // ── 1. Platform Notifications (System B) ─────────────────────────────────
   try {
@@ -61,14 +63,8 @@ export async function POST(request: NextRequest): Promise<Response> {
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          name:           "GodlyComics Webhook",
-          status:         "ENABLED",
-          payloadVersion: "1.0",
-          endpoint: {
-            notificationContentType: "APPLICATION_JSON",
-            endpointUrl,
-            verificationToken,
-          },
+          name:     "GodlyComics Webhook",
+          endpoint: { endpointUrl, verificationToken },
         }),
       });
 
@@ -115,5 +111,5 @@ export async function POST(request: NextRequest): Promise<Response> {
   }
 
   const hasError = Object.values(results).some((v) => v.startsWith("error:"));
-  return Response.json({ results }, { status: hasError ? 207 : 200 });
+  return Response.json({ results, debug }, { status: hasError ? 207 : 200 });
 }
