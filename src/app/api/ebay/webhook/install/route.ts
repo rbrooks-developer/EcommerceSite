@@ -47,12 +47,17 @@ export async function POST(request: NextRequest): Promise<Response> {
     const verificationToken = token;
 
     // Self-test: verify our challenge endpoint works before calling eBay.
-    // eBay fires a live GET challenge when creating a destination with status ENABLED,
-    // so if our endpoint is broken this test will show exactly why.
+    // Also detect URL redirects — eBay may not follow redirects, causing 195017.
     const selfTestCode = "self_test_" + Date.now();
     try {
       const stRes = await fetch(`${endpointUrl}?challenge_code=${encodeURIComponent(selfTestCode)}`);
-      if (stRes.ok) {
+      // response.url is the final URL after any redirects
+      const finalUrl = stRes.url.split("?")[0];
+      const expectedBase = endpointUrl.split("?")[0];
+      if (finalUrl && finalUrl !== expectedBase) {
+        // A redirect was followed — eBay may not follow it, causing 195017
+        debug.challengeSelfTest = `REDIRECTED to ${finalUrl}`;
+      } else if (stRes.ok) {
         const stBody  = await stRes.json() as { challengeResponse?: string };
         const returned = stBody.challengeResponse ?? "";
         const expected = createHash("sha256")
@@ -119,6 +124,32 @@ export async function POST(request: NextRequest): Promise<Response> {
 
       if (!destRes.ok) {
         const text = await destRes.text();
+        // Diagnostic: try DISABLED status — if this succeeds, the live challenge
+        // verification is failing (eBay can't reach or get wrong hash from our endpoint).
+        // DISABLED skips the challenge so eBay accepts the URL without verification.
+        const disabledRes = await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination`, {
+          method:  "POST",
+          headers: { Authorization: `Bearer ${appToken}`, "Content-Type": "application/json" },
+          body: JSON.stringify({
+            name:           "GodlyComics Webhook",
+            status:         "DISABLED",
+            payloadVersion: "1.0",
+            deliveryConfig: { endpointUrl, verificationToken },
+          }),
+        });
+        if (disabledRes.ok) {
+          const disabledData = await disabledRes.json() as { destinationId?: string };
+          debug.disabledSucceeded = disabledData.destinationId ?? "no-id";
+          // Clean up the disabled destination so we don't leave orphans
+          if (disabledData.destinationId) {
+            await fetch(`${COMMERCE_NOTIFICATION_BASE}/destination/${disabledData.destinationId}`, {
+              method:  "DELETE",
+              headers: { Authorization: `Bearer ${appToken}` },
+            });
+          }
+        } else {
+          debug.disabledAlsoFailed = String(disabledRes.status);
+        }
         throw new Error(`Create destination failed ${destRes.status}: ${text}`);
       }
 
