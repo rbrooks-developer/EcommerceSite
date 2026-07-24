@@ -1,7 +1,6 @@
 import { NextRequest } from "next/server";
-import { randomBytes } from "crypto";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { getValidEbayConfig, saveEbayConfig, getAppToken } from "@/lib/ebay/auth";
+import { getValidEbayConfig, saveEbayConfig, getAppToken, deriveWebhookVerificationToken } from "@/lib/ebay/auth";
 import { setNotificationPreferences } from "@/lib/ebay/trading";
 
 export const dynamic = "force-dynamic";
@@ -42,15 +41,10 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const appToken = await getAppToken(config);
 
-    // Generate or reuse verification token — must be saved to DB BEFORE calling
-    // eBay's create-destination API, because eBay immediately fires a GET challenge
-    // at our endpoint to verify it, and the handler reads the token from DB.
-    const verificationToken = config.webhook_verification_token
-      ?? randomBytes(32).toString("hex");
-
-    if (!config.webhook_verification_token) {
-      await saveEbayConfig({ webhook_verification_token: verificationToken });
-    }
+    // Token is derived from credentials (not stored in DB) so it's always
+    // instantly available when eBay fires the GET challenge during destination creation.
+    const verificationToken = deriveWebhookVerificationToken();
+    if (!verificationToken) throw new Error("eBay credentials not configured");
 
     // Create or update destination
     let destinationId = config.commerce_notification_destination_id ?? null;

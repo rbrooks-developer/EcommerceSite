@@ -1,6 +1,6 @@
 import { NextRequest } from "next/server";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
-import { getEbayConfig } from "@/lib/ebay/auth";
+import { deriveWebhookVerificationToken } from "@/lib/ebay/auth";
 import { createHash } from "crypto";
 
 export const dynamic = "force-dynamic";
@@ -48,11 +48,9 @@ async function testChallenge(notifUrl: string, appUrl: string): Promise<Response
   const body = await res.json();
   const returned: string = body?.challengeResponse ?? "";
 
-  // Verify the hash ourselves
-  const config = await getEbayConfig();
-  const token = config?.webhook_verification_token;
+  const token = deriveWebhookVerificationToken();
   if (!token) {
-    return Response.json({ success: false, error: "No verification token stored — install webhooks first" });
+    return Response.json({ success: false, error: "eBay credentials not configured" });
   }
 
   const expected = createHash("sha256")

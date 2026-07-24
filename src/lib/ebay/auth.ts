@@ -1,4 +1,5 @@
 import { createServiceClient } from "@/lib/supabase/server";
+import { createHash } from "crypto";
 import type { EbayConfig } from "@/types";
 
 const EBAY_TOKEN_URL    = "https://api.ebay.com/identity/v1/oauth2/token";
@@ -63,6 +64,20 @@ export async function getEbayConfig(): Promise<EbayConfig | null> {
     commerce_notification_subscribed_at:  db.commerce_notification_subscribed_at  ?? null,
     webhook_last_hits:                    db.webhook_last_hits                    ?? null,
   };
+}
+
+/**
+ * Derives a stable verification token from the eBay credentials env vars.
+ * Using env vars (not DB) means it's always available instantly — no race
+ * condition when eBay fires a GET challenge immediately after we register.
+ */
+export function deriveWebhookVerificationToken(): string | null {
+  const certId = process.env.EBAY_CERT_ID?.trim();
+  const appId  = process.env.EBAY_APP_ID?.trim();
+  if (!certId || !appId) return null;
+  return createHash("sha256")
+    .update(`${appId}:${certId}:ebay-webhook-verification`)
+    .digest("hex"); // 64 hex chars — within eBay's 32–80 char requirement
 }
 
 /** Updates the webhook_last_hits map for the given event type without clobbering other fields. */

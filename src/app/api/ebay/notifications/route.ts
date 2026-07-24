@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { createHash } from "crypto";
 import { XMLParser } from "fast-xml-parser";
-import { getEbayConfig, recordWebhookHit } from "@/lib/ebay/auth";
+import { deriveWebhookVerificationToken, recordWebhookHit } from "@/lib/ebay/auth";
 import { createServiceClient } from "@/lib/supabase/server";
 import { revalidateTag } from "next/cache";
 
@@ -17,12 +17,11 @@ export async function GET(request: NextRequest): Promise<Response> {
     return new Response("OK", { status: 200 });
   }
 
-  const config = await getEbayConfig();
-  const token = config?.webhook_verification_token;
+  const token = deriveWebhookVerificationToken();
 
   if (!token) {
-    console.error("[ebay/notifications] No verification token — cannot respond to challenge");
-    return new Response("Verification token not configured", { status: 500 });
+    console.error("[ebay/notifications] eBay credentials not configured — cannot respond to challenge");
+    return new Response("eBay credentials not configured", { status: 500 });
   }
 
   const endpointUrl = resolveEndpointUrl(request);

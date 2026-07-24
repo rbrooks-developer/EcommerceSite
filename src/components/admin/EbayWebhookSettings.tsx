@@ -264,7 +264,7 @@ export function EbayWebhookSettings({ config, isConnected }: Props) {
           <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => handleTest("challenge")}
-              disabled={testingEvent === "challenge" || !config?.webhook_verification_token}
+              disabled={testingEvent === "challenge" || !isConnected}
               className="inline-flex items-center gap-1.5 rounded border border-gray-300 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
             >
               {testingEvent === "challenge" ? (
@@ -295,26 +295,14 @@ export function EbayWebhookSettings({ config, isConnected }: Props) {
             )}
           </div>
         )}
-        {!config?.webhook_verification_token && (
+        {!isConnected && (
           <div className="mt-2 flex items-start gap-2 text-xs text-amber-700">
             <AlertTriangle className="h-3.5 w-3.5 shrink-0 mt-0.5" />
-            Install webhooks first to generate a verification token.
+            Connect your eBay account to enable challenge testing.
           </div>
         )}
       </div>
 
-      {/* Verification token display */}
-      {config?.webhook_verification_token && (
-        <div className="rounded-lg bg-gray-50 border border-gray-200 px-4 py-3 space-y-1">
-          <p className="text-xs font-medium text-gray-700">Verification Token</p>
-          <p className="font-mono text-xs text-gray-600 break-all">
-            {config.webhook_verification_token}
-          </p>
-          <p className="text-xs text-gray-400">
-            Stored in your site settings. Re-installing webhooks regenerates this token.
-          </p>
-        </div>
-      )}
 
     </section>
   );
