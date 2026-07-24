@@ -78,9 +78,10 @@ export async function POST(request: NextRequest): Promise<Response> {
           method:  "POST",
           headers: { Authorization: `Bearer ${authToken}`, "Content-Type": "application/json" },
           body: JSON.stringify({
-            name:    "GodlyComics Webhook",
-            status:  "ENABLED",
-            endpoint: { endpointUrl, verificationToken },
+            name:           "GodlyComics Webhook",
+            status:         "ENABLED",
+            payloadVersion: "1.0",
+            deliveryConfig: { endpointUrl, verificationToken },
           }),
         });
 
