@@ -228,7 +228,9 @@ export function EbayWebhookSettings({ config, isConnected }: Props) {
                         result.success ? (
                           <CheckCircle className="h-4 w-4 text-green-500 shrink-0" />
                         ) : (
-                          <XCircle className="h-4 w-4 text-red-500 shrink-0" title={result.error ?? "Failed"} />
+                          <span title={result.error ?? "Failed"}>
+                            <XCircle className="h-4 w-4 text-red-500 shrink-0" />
+                          </span>
                         )
                       )}
                     </div>

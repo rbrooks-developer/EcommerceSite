@@ -172,7 +172,7 @@ async function handleFixedPriceTransaction(doc: unknown, itemId: string): Promis
   if (newInventory === 0) updates.is_published = false;
 
   await supabase.from("products").update(updates as any).eq("id", product.id);
-  revalidateTag("products");
+  revalidateTag("products", "default");
 
   console.log(`[ebay/notifications] FixedPriceTransaction: ItemID ${itemId} inventory ${product.inventory} → ${newInventory}`);
 }
@@ -197,7 +197,7 @@ async function handleItemRevised(doc: unknown, itemId: string): Promise<void> {
     .update(updates as any)
     .eq("ebay_listing_id", itemId);
 
-  if (!error) revalidateTag("products");
+  if (!error) revalidateTag("products", "default");
   console.log(`[ebay/notifications] ItemRevised: ItemID ${itemId}`, updates);
 }
 
@@ -210,7 +210,7 @@ async function handleItemClosed(itemId: string): Promise<void> {
     .update({ inventory: 0, is_published: false, updated_at: new Date().toISOString() } as any)
     .eq("ebay_listing_id", itemId);
 
-  if (!error) revalidateTag("products");
+  if (!error) revalidateTag("products", "default");
   console.log(`[ebay/notifications] ItemClosed: ItemID ${itemId} → inventory 0, unpublished`);
 }
 
