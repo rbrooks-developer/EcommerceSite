@@ -40,9 +40,15 @@ export async function POST(request: NextRequest): Promise<Response> {
   try {
     const appToken = await getAppToken(config);
 
-    // Generate or reuse verification token
+    // Generate or reuse verification token — must be saved to DB BEFORE calling
+    // eBay's create-destination API, because eBay immediately fires a GET challenge
+    // at our endpoint to verify it, and the handler reads the token from DB.
     const verificationToken = config.webhook_verification_token
       ?? randomBytes(32).toString("hex");
+
+    if (!config.webhook_verification_token) {
+      await saveEbayConfig({ webhook_verification_token: verificationToken });
+    }
 
     // Create or update destination
     let destinationId = config.commerce_notification_destination_id ?? null;
@@ -96,9 +102,8 @@ export async function POST(request: NextRequest): Promise<Response> {
       throw new Error(`Create subscription failed ${subRes.status}: ${text}`);
     }
 
-    // Persist token + destination ID
+    // Persist destination ID + subscription timestamp
     await saveEbayConfig({
-      webhook_verification_token:           verificationToken,
       commerce_notification_destination_id: destinationId,
       commerce_notification_subscribed_at:  new Date().toISOString(),
     });
