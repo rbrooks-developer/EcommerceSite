@@ -46,13 +46,32 @@ export async function POST(request: NextRequest): Promise<Response> {
     if (!token) throw new Error("eBay credentials not configured");
     const verificationToken = token;
 
+    // Self-test: verify our challenge endpoint works before calling eBay.
+    // eBay fires a live GET challenge when creating a destination with status ENABLED,
+    // so if our endpoint is broken this test will show exactly why.
+    const selfTestCode = "self_test_" + Date.now();
+    try {
+      const stRes = await fetch(`${endpointUrl}?challenge_code=${encodeURIComponent(selfTestCode)}`);
+      if (stRes.ok) {
+        const stBody  = await stRes.json() as { challengeResponse?: string };
+        const returned = stBody.challengeResponse ?? "";
+        const expected = createHash("sha256")
+          .update(selfTestCode + verificationToken + endpointUrl)
+          .digest("hex");
+        debug.challengeSelfTest = returned === expected
+          ? "PASS"
+          : `FAIL returned=${returned.slice(0, 12)}… expected=${expected.slice(0, 12)}…`;
+      } else {
+        debug.challengeSelfTest = `HTTP ${stRes.status}`;
+      }
+    } catch (e) {
+      debug.challengeSelfTest = `error: ${(e as Error).message}`;
+    }
+
     // Try user access token first (has broader scope); fall back to app token
     const userToken  = config.access_token ?? null;
     const appToken   = await getAppToken(config);
     const bearerToken = userToken ?? appToken;
-
-    // Clear any previously stored destination ID so we always try fresh
-    const storedDestId = config.commerce_notification_destination_id ?? null;
 
     // List existing destinations to avoid conflicts and detect stale state
     let destinationId: string | null = null;
@@ -60,15 +79,19 @@ export async function POST(request: NextRequest): Promise<Response> {
       headers: { Authorization: `Bearer ${bearerToken}` },
     });
     if (listRes.ok) {
-      const listData  = await listRes.json();
-      const existing  = (listData.destinations ?? []) as { destinationId: string; endpoint?: { endpointUrl?: string } }[];
-      // Reuse destination if one already points to our URL
-      const match = existing.find((d) => d.endpoint?.endpointUrl === endpointUrl);
+      const listData  = await listRes.json() as { destinations?: { destinationId: string; deliveryConfig?: { endpointUrl?: string }; endpoint?: { endpointUrl?: string } }[] };
+      const existing  = listData.destinations ?? [];
+      // Reuse destination if one already points to our URL (check both field names)
+      const match = existing.find(
+        (d) => d.deliveryConfig?.endpointUrl === endpointUrl || d.endpoint?.endpointUrl === endpointUrl,
+      );
       if (match) {
         destinationId = match.destinationId;
         debug.destinationReused = destinationId;
       }
       debug.existingDestinations = String(existing.length);
+    } else {
+      debug.listError = `${listRes.status} ${await listRes.text()}`;
     }
 
     if (!destinationId) {
@@ -99,8 +122,9 @@ export async function POST(request: NextRequest): Promise<Response> {
         throw new Error(`Create destination failed ${destRes.status}: ${text}`);
       }
 
-      const destData = await destRes.json();
-      destinationId  = destData.destinationId as string;
+      const destData = await destRes.json() as { destinationId?: string };
+      destinationId  = destData.destinationId ?? null;
+      if (!destinationId) throw new Error("eBay returned no destinationId");
     }
 
     // Create subscription for MARKETPLACE_ACCOUNT_DELETION
@@ -127,7 +151,6 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     results.account_deletion = "subscribed";
-    void storedDestId; // suppress unused var warning
   } catch (err) {
     results.account_deletion = `error: ${(err as Error).message}`;
     console.error("[webhook/install] Commerce notification failed:", err);
