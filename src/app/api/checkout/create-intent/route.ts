@@ -203,8 +203,8 @@ export async function POST(request: NextRequest) {
   }
 
   // Persist order_items and PI id in parallel (both needed for fulfillment + refund webhook)
-  await Promise.all([
-    supabase.from("order_items").insert(
+  const [itemsResult, piResult] = await Promise.all([
+    sb.from("order_items").insert(
       items.map((item) => ({
         order_id: orderId,
         product_id: item.productId,
@@ -212,8 +212,10 @@ export async function POST(request: NextRequest) {
         price: resolvePrice(item),
       }))
     ),
-    supabase.from("orders").update({ stripe_payment_intent_id: intent.id }).eq("id", orderId),
+    sb.from("orders").update({ stripe_payment_intent_id: intent.id }).eq("id", orderId),
   ]);
+  if (itemsResult.error) console.error("[create-intent] order_items insert failed:", itemsResult.error.message);
+  if (piResult.error) console.error("[create-intent] stripe_payment_intent_id update failed:", piResult.error.message);
 
   return Response.json({ clientSecret: intent.client_secret, orderId, totalPrice });
 }
