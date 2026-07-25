@@ -16,6 +16,7 @@ interface CartContextValue {
   reloadCart: () => Promise<void>;
   itemCount: number;
   subtotal: number;
+  loaded: boolean;
 }
 
 const CartContext = createContext<CartContextValue | null>(null);
@@ -181,7 +182,7 @@ export function CartProvider({ userId, children }: { userId?: string | null; chi
   const subtotal  = items.reduce((sum, i) => sum + i.price * i.quantity, 0);
 
   return (
-    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, reloadCart, itemCount, subtotal }}>
+    <CartContext.Provider value={{ items, addItem, removeItem, updateQuantity, clearCart, reloadCart, itemCount, subtotal, loaded }}>
       {children}
     </CartContext.Provider>
   );

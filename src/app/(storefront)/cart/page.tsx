@@ -11,7 +11,7 @@ import { Trash2 } from "lucide-react";
 
 export default function CartPage() {
   const router = useRouter();
-  const { items, removeItem, updateQuantity, subtotal, itemCount, reloadCart } = useCart();
+  const { items, removeItem, updateQuantity, subtotal, itemCount, reloadCart, loaded } = useCart();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [cartIssues, setCartIssues] = useState<string[]>([]);
 
@@ -30,6 +30,30 @@ export default function CartPage() {
       return;
     }
     router.push("/checkout");
+  }
+
+  if (!loaded) {
+    return (
+      <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 py-8">
+        <div className="h-8 w-32 rounded mb-8 animate-pulse" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, var(--site-bg))" }} />
+        <div className="flex flex-col lg:flex-row gap-8">
+          <div className="flex-1 space-y-4">
+            {[1, 2].map(n => (
+              <div key={n} className="flex gap-4 rounded-lg p-4" style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 20%, transparent)" }}>
+                <div className="h-20 w-20 shrink-0 rounded-md animate-pulse" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, var(--site-bg))" }} />
+                <div className="flex-1 space-y-2 py-1">
+                  <div className="h-4 w-3/4 rounded animate-pulse" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 12%, var(--site-bg))" }} />
+                  <div className="h-3 w-1/4 rounded animate-pulse" style={{ backgroundColor: "color-mix(in srgb, var(--site-fg) 8%, var(--site-bg))" }} />
+                </div>
+              </div>
+            ))}
+          </div>
+          <div className="lg:w-72 shrink-0">
+            <div className="rounded-lg p-6 h-48 animate-pulse" style={{ border: "1px solid color-mix(in srgb, var(--site-fg) 20%, transparent)", backgroundColor: "color-mix(in srgb, var(--site-fg) 5%, var(--site-bg))" }} />
+          </div>
+        </div>
+      </div>
+    );
   }
 
   if (itemCount === 0) {

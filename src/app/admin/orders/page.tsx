@@ -13,6 +13,7 @@ export default async function OrdersPage() {
   const { data: raw } = await supabase
     .from("orders")
     .select("id, status, total_price, shipping_name, created_at, tracking_number, shipping_label_url")
+    .neq("status", "pending")
     .order("created_at", { ascending: false });
 
   const orders = (raw ?? []) as OrderRow[];
