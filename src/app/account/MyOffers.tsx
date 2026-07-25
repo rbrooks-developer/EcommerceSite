@@ -139,7 +139,7 @@ function OfferCard({ offer, handlers }: { offer: OfferRow; handlers: CardHandler
               <p className="text-xs" style={{ opacity: 0.5 }}>You've used all {MAX_OFFERS} offer slots for this product — you can only accept or decline.</p>
             ) : (<>
             <div className="flex items-center justify-between">
-              <p className="text-xs" style={{ opacity: 0.6 }}>Or send your own counter price:</p>
+              <p className="text-xs" style={{ opacity: 0.6 }}>Or send your own counter price <span className="font-semibold" style={{ opacity: 1 }}>per item</span>:</p>
               <p className="text-xs" style={{ opacity: 0.5 }}>{remainingLabel} for this product</p>
             </div>
             <div className="flex gap-2">
@@ -167,6 +167,18 @@ function OfferCard({ offer, handlers }: { offer: OfferRow; handlers: CardHandler
                 {busy === offer.id + ":counter" ? "Sending…" : "Counter"}
               </button>
             </div>
+            {(() => {
+              const p = parseFloat(counterInputs[offer.id] ?? "");
+              if (!isNaN(p) && p > 0 && offer.quantity > 1) {
+                return (
+                  <p className="text-xs" style={{ opacity: 0.6 }}>
+                    Total: <span className="font-semibold">{formatPrice(p * offer.quantity * 100)}</span>
+                    <span style={{ opacity: 0.7 }}> ({offer.quantity} × {formatPrice(p * 100)})</span>
+                  </p>
+                );
+              }
+              return null;
+            })()}
             {counterErrors[offer.id] && (
               <p className="text-xs" style={{ color: "#ef4444", WebkitTextFillColor: "#ef4444" }}>{counterErrors[offer.id]}</p>
             )}
