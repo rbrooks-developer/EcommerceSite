@@ -79,6 +79,27 @@ export default async function ProductsPage({
 
   const heading = selectedCat?.name ?? "All Products";
 
+  // Build breadcrumb chain: walk parent_id up to root
+  const breadcrumbs: { label: string; href?: string }[] = [{ label: "Home", href: "/" }];
+  if (selectedCat) {
+    const chain: CategoryRow[] = [];
+    let cur: CategoryRow | undefined = selectedCat;
+    while (cur) {
+      chain.unshift(cur);
+      cur = cur.parent_id ? categories.find((c) => c.id === cur!.parent_id) : undefined;
+    }
+    for (let i = 0; i < chain.length; i++) {
+      const cat = chain[i];
+      breadcrumbs.push(
+        i < chain.length - 1
+          ? { label: cat.name, href: `/products?category=${cat.slug}` }
+          : { label: cat.name }
+      );
+    }
+  } else {
+    breadcrumbs.push({ label: "All Products" });
+  }
+
   let favoriteIds = new Set<string>();
   if (user) {
     const { data: favRows } = await supabase
@@ -94,7 +115,7 @@ export default async function ProductsPage({
 
   return (
     <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-      <Breadcrumbs crumbs={[{ label: "Home", href: "/" }, { label: "All Products" }]} />
+      <Breadcrumbs crumbs={breadcrumbs} />
       <div className="flex flex-col gap-8 md:flex-row mt-4">
         {categories.length > 0 && (
           <aside className="md:w-52 shrink-0 md:sticky md:top-20 md:self-start md:max-h-[calc(100vh-5rem)] md:overflow-y-auto" style={{ zIndex: 46 }}>

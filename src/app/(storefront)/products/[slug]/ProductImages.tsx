@@ -103,8 +103,6 @@ export function ProductImages({ images, name }: { images: string[]; name: string
             className="object-contain p-4"
             sizes="50vw"
             priority
-            placeholder="blur"
-            blurDataURL={BLUR_URL}
           />
         </div>
       </div>
@@ -126,8 +124,6 @@ export function ProductImages({ images, name }: { images: string[]; name: string
                 fill
                 className="object-cover"
                 sizes="64px"
-                placeholder="blur"
-                blurDataURL={BLUR_URL}
               />
             </button>
           ))}
