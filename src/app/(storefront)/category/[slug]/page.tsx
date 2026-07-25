@@ -89,12 +89,34 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
   const hotCartCounts = await getHotCartCounts(products.map((p) => p.id), user?.id ?? null);
 
   const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "";
+
+  // Build full ancestor chain for breadcrumbs
+  const chain: CategoryRow[] = [];
+  let cur: CategoryRow | undefined = category;
+  while (cur) {
+    chain.unshift(cur);
+    cur = cur.parent_id ? categories.find((c) => c.id === cur!.parent_id) : undefined;
+  }
+  const breadcrumbs = [
+    { label: "Home", href: "/" },
+    ...chain.map((cat, i) =>
+      i < chain.length - 1
+        ? { label: cat.name, href: `/category/${cat.slug}` }
+        : { label: cat.name }
+    ),
+  ];
+
   const breadcrumbLd = {
     "@context": "https://schema.org",
     "@type": "BreadcrumbList",
     itemListElement: [
       { "@type": "ListItem", position: 1, name: "Home", item: appUrl || "/" },
-      { "@type": "ListItem", position: 2, name: category.name, item: `${appUrl}/category/${category.slug}` },
+      ...chain.map((cat, i) => ({
+        "@type": "ListItem",
+        position: i + 2,
+        name: cat.name,
+        item: `${appUrl}/category/${cat.slug}`,
+      })),
     ],
   };
 
@@ -102,10 +124,7 @@ export default async function CategoryPage({ params }: { params: Promise<{ slug:
     <>
       <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbLd).replace(/</g, "\\u003c") }} />
       <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 py-8">
-        <Breadcrumbs crumbs={[
-          { label: "Home", href: "/" },
-          { label: category.name },
-        ]} />
+        <Breadcrumbs crumbs={breadcrumbs} />
 
         <div className="flex flex-col gap-8 md:flex-row mt-4">
           {categories.length > 0 && (
