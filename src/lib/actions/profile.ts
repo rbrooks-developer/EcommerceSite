@@ -1,6 +1,6 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { revalidatePath, refresh } from "next/cache";
 import { z } from "zod";
 
@@ -33,6 +33,37 @@ export async function updateProfile(_prev: unknown, formData: FormData) {
   revalidatePath("/account");
   refresh();
   return { success: true };
+}
+
+export async function uploadAvatarAction(formData: FormData): Promise<{ error?: string; url?: string }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { error: "Not authenticated" };
+
+  const file = formData.get("file") as File | null;
+  if (!file) return { error: "No file provided" };
+
+  const sb = createServiceClient();
+  const path = `avatars/${user.id}-${Date.now()}.png`;
+  const arrayBuffer = await file.arrayBuffer();
+
+  const { error: uploadErr } = await sb.storage
+    .from("product-images")
+    .upload(path, Buffer.from(arrayBuffer), { contentType: "image/png", upsert: true });
+  if (uploadErr) return { error: uploadErr.message };
+
+  const { data } = sb.storage.from("product-images").getPublicUrl(path);
+
+  const { error: profileErr } = await sb
+    .from("profiles")
+    .update({ avatar_url: data.publicUrl, updated_at: new Date().toISOString() } as any)
+    .eq("id", user.id);
+  if (profileErr) return { error: profileErr.message };
+
+  revalidatePath("/account");
+  revalidatePath("/", "layout");
+  refresh();
+  return { url: data.publicUrl };
 }
 
 export async function saveAvatarUrl(avatarUrl: string | null): Promise<{ error?: string; success?: true }> {

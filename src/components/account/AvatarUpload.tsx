@@ -4,8 +4,7 @@ import { useState, useCallback, useRef } from "react";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
 import { imgUrl } from "@/lib/utils";
-import { createClient } from "@/lib/supabase/client";
-import { saveAvatarUrl } from "@/lib/actions/profile";
+import { uploadAvatarAction, saveAvatarUrl } from "@/lib/actions/profile";
 import { Camera, X, Trash2 } from "lucide-react";
 import { Spinner } from "@/components/ui/spinner";
 
@@ -92,14 +91,11 @@ export function AvatarUpload({ currentUrl, maxSizeMb = 2 }: AvatarUploadProps) {
     setError(null);
     try {
       const blob = await getCroppedBlob(imageSrc, croppedArea);
-      const supabase = createClient();
-      const path = `avatars/${Date.now()}-${Math.random().toString(36).slice(2)}.png`;
-      const { error: uploadErr } = await supabase.storage.from("product-images").upload(path, blob, { contentType: "image/png" });
-      if (uploadErr) throw new Error(uploadErr.message);
-      const { data } = supabase.storage.from("product-images").getPublicUrl(path);
-      const result = await saveAvatarUrl(data.publicUrl);
+      const formData = new FormData();
+      formData.append("file", new File([blob], "avatar.png", { type: "image/png" }));
+      const result = await uploadAvatarAction(formData);
       if (result.error) throw new Error(result.error);
-      setAvatarUrl(data.publicUrl);
+      setAvatarUrl(result.url!);
       setImageSrc(null);
     } catch (err) {
       setError((err as Error).message);
