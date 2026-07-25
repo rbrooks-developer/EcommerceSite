@@ -5,8 +5,6 @@ import { FavoriteButton } from "@/components/storefront/FavoriteButton";
 import { HotBadge } from "@/components/storefront/HotBadge";
 import type { Product } from "@/types";
 
-// 1×1 gray GIF — blurred by next/image to fill the container while the real image loads
-const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
 
 export function ProductCard({
   product,
@@ -37,8 +35,7 @@ export function ProductCard({
             fill
             className="object-contain p-2"
             sizes="(max-width: 768px) 100vw, (max-width: 1024px) 50vw, 25vw"
-            placeholder="blur"
-            blurDataURL={BLUR_URL}
+
           />
         ) : (
           <div className="absolute inset-0 flex items-center justify-center" style={{ opacity: 0.25 }}>

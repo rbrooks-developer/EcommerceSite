@@ -7,7 +7,6 @@ import Lightbox from "yet-another-react-lightbox";
 import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
-const BLUR_URL = "data:image/gif;base64,R0lGODlhAQABAIAAAMLCwgAAACH5BAAAAAAALAAAAAABAAEAAAICRAEAOw==";
 
 export function ProductImages({ images, name }: { images: string[]; name: string }) {
   const [selected, setSelected] = useState(0);
@@ -73,8 +72,7 @@ export function ProductImages({ images, name }: { images: string[]; name: string
           className="object-contain p-4"
           sizes="100vw"
           priority
-          placeholder="blur"
-          blurDataURL={BLUR_URL}
+
         />
         <div className="absolute bottom-2 right-2 rounded-full bg-black/40 p-1.5 text-white pointer-events-none">
           <svg className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2}>
