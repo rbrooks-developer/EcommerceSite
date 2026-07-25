@@ -8,7 +8,7 @@ async function getStats() {
   const [products, categories, orders] = await Promise.all([
     supabase.from("products").select("id, is_published, price, inventory", { count: "exact" }),
     supabase.from("categories").select("id", { count: "exact" }),
-    supabase.from("orders").select("id, total_price, refunded_amount, status", { count: "exact" }),
+    supabase.from("orders").select("id, total_price, refunded_amount, status", { count: "exact" }).neq("status", "pending"),
   ]);
 
   const orderRows = (orders.data ?? []) as Pick<Order, "id" | "total_price" | "refunded_amount" | "status">[];
