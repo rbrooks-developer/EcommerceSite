@@ -323,7 +323,7 @@ export async function userCounterBack(offerId: string, newOfferPrice: number) {
   // Verify the offer belongs to this user and is in countered state
   const { data: offer, error: fetchErr } = await sb
     .from("product_offers")
-    .select("id, user_id, product_id, status")
+    .select("id, user_id, product_id, quantity, status")
     .eq("id", offerId)
     .eq("user_id", user.id)
     .eq("status", "countered")
@@ -332,10 +332,10 @@ export async function userCounterBack(offerId: string, newOfferPrice: number) {
   if (fetchErr) { console.error("userCounterBack fetch:", fetchErr.message); return { error: "Failed to load offer" }; }
   if (!offer) return { error: "Offer not found or already responded to" };
 
-  // Fetch list price separately for validation
+  // Fetch product for validation and email
   const { data: product } = await sb
     .from("products")
-    .select("price")
+    .select("price, name")
     .eq("id", (offer as any).product_id)
     .maybeSingle();
 
@@ -366,6 +366,26 @@ export async function userCounterBack(offerId: string, newOfferPrice: number) {
     .eq("user_id", user.id);
 
   if (updateErr) { console.error("userCounterBack update:", updateErr.message); return { error: "Failed to submit counter offer" }; }
+
+  // Notify admin of the customer's counter
+  const { data: profileRow } = await sb.from("profiles").select("email").eq("id", user.id).maybeSingle();
+  const customerEmail = (profileRow as { email: string } | null)?.email ?? user.email ?? "";
+  const settings2     = await getSettings();
+  const adminEmail2   = (settings2?.contact_info as any)?.email as string | null | undefined;
+  const notifyTo2     = adminEmail2 || FROM_EMAIL;
+  const displayName2  = await getDisplayName();
+  const appUrl2       = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  const productName   = (product as any)?.name ?? "Product";
+  const qty           = (offer as any)?.quantity ?? 1;
+  sendOfferReceived({
+    to: notifyTo2,
+    productName,
+    quantity: qty,
+    offerPrice: newOfferPrice,
+    displayName: displayName2,
+    customerEmail,
+    appUrl: appUrl2,
+  }).catch(err => console.error("userCounterBack admin email:", err));
 
   revalidatePath("/account");
   revalidatePath("/admin/offers");
