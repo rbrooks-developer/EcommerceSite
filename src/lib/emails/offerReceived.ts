@@ -6,11 +6,14 @@ interface Options {
   quantity: number;
   offerPrice: number;
   displayName: string;
+  customerEmail: string;
+  appUrl: string;
 }
 
 export async function sendOfferReceived(opts: Options) {
   const fromField = `${opts.displayName} <${FROM_EMAIL}>`;
   const total = (opts.offerPrice * opts.quantity).toFixed(2);
+  const offersUrl = `${opts.appUrl}/admin/offers`;
 
   const html = `
 <!DOCTYPE html><html><head><meta charset="utf-8"></head>
@@ -20,18 +23,21 @@ export async function sendOfferReceived(opts: Options) {
       <h1 style="color:#fff;margin:0;font-size:20px">${opts.displayName}</h1>
     </div>
     <div style="padding:32px 24px">
-      <h2 style="margin:0 0 8px;font-size:18px;color:#111827">Offer Received</h2>
-      <p style="color:#6b7280;margin:0 0 24px;font-size:14px">We've received your offer and will review it shortly.</p>
+      <h2 style="margin:0 0 8px;font-size:18px;color:#111827">New Offer Received</h2>
+      <p style="color:#6b7280;margin:0 0 24px;font-size:14px">A customer has submitted an offer. Review it in your admin panel.</p>
       <table style="width:100%;border-collapse:collapse;font-size:14px;background:#f9fafb;border-radius:6px;overflow:hidden">
-        <tr><td style="padding:10px 14px;color:#6b7280">Product</td><td style="padding:10px 14px;font-weight:500;color:#111827">${opts.productName}</td></tr>
-        <tr style="background:#fff"><td style="padding:10px 14px;color:#6b7280">Quantity</td><td style="padding:10px 14px;font-weight:500;color:#111827">${opts.quantity}</td></tr>
-        <tr><td style="padding:10px 14px;color:#6b7280">Offer price</td><td style="padding:10px 14px;font-weight:500;color:#111827">$${opts.offerPrice.toFixed(2)} each</td></tr>
-        <tr style="background:#fff"><td style="padding:10px 14px;color:#6b7280">Total offer</td><td style="padding:10px 14px;font-weight:600;color:#111827">$${total}</td></tr>
+        <tr><td style="padding:10px 14px;color:#6b7280">Customer</td><td style="padding:10px 14px;font-weight:500;color:#111827">${opts.customerEmail}</td></tr>
+        <tr style="background:#fff"><td style="padding:10px 14px;color:#6b7280">Product</td><td style="padding:10px 14px;font-weight:500;color:#111827">${opts.productName}</td></tr>
+        <tr><td style="padding:10px 14px;color:#6b7280">Quantity</td><td style="padding:10px 14px;font-weight:500;color:#111827">${opts.quantity}</td></tr>
+        <tr style="background:#fff"><td style="padding:10px 14px;color:#6b7280">Offer price</td><td style="padding:10px 14px;font-weight:500;color:#111827">$${opts.offerPrice.toFixed(2)} each</td></tr>
+        <tr><td style="padding:10px 14px;color:#6b7280">Total offer</td><td style="padding:10px 14px;font-weight:600;color:#111827">$${total}</td></tr>
       </table>
-      <p style="margin:24px 0 0;font-size:13px;color:#9ca3af;text-align:center">You'll receive another email once your offer has been reviewed.</p>
+      <div style="margin-top:24px;text-align:center">
+        <a href="${offersUrl}" style="display:inline-block;background:#111827;color:#fff;text-decoration:none;padding:12px 24px;border-radius:6px;font-size:14px;font-weight:500">Review Offers</a>
+      </div>
     </div>
   </div>
 </body></html>`;
 
-  return getResendClient().emails.send({ from: fromField, to: opts.to, subject: `Offer Received – ${opts.productName}`, html });
+  return getResendClient().emails.send({ from: fromField, to: opts.to, subject: `New Offer – ${opts.productName}`, html });
 }

@@ -7,6 +7,7 @@ import { sendOfferApproved } from "@/lib/emails/offerApproved";
 import { sendOfferDeclined } from "@/lib/emails/offerDeclined";
 import { sendOfferCountered } from "@/lib/emails/offerCountered";
 import { getSettings } from "@/lib/data/settings";
+import { FROM_EMAIL } from "@/lib/resend/client";
 import { requireAdmin } from "@/lib/auth/requireAdmin";
 import type { HomepageConfig, FooterConfig } from "@/types";
 
@@ -81,14 +82,16 @@ export async function submitOffer(productId: string, quantity: number, offerPric
     return { error: "Failed to submit offer. Please try again." };
   }
 
-  // Send receipt email
+  // Notify admin of new offer
   const { data: profile } = await supabase.from("profiles").select("email").eq("id", user.id).maybeSingle();
-  const customerEmail = (profile as { email: string } | null)?.email ?? user.email ?? null;
-  if (customerEmail) {
-    const displayName = await getDisplayName();
-    sendOfferReceived({ to: customerEmail, productName: product.name, quantity, offerPrice, displayName })
-      .catch(err => console.error("offerReceived email:", err));
-  }
+  const customerEmail = (profile as { email: string } | null)?.email ?? user.email ?? "";
+  const settings = await getSettings();
+  const adminEmail = (settings?.contact_info as any)?.email as string | null | undefined;
+  const notifyTo   = adminEmail || FROM_EMAIL;
+  const displayName = await getDisplayName();
+  const appUrl      = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
+  sendOfferReceived({ to: notifyTo, productName: product.name, quantity, offerPrice, displayName, customerEmail, appUrl })
+    .catch(err => console.error("offerReceived email:", err));
 
   revalidatePath(`/products/${product.id}`);
   revalidatePath("/account");
