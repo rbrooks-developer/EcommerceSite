@@ -7,8 +7,29 @@ const rateMap = new Map<string, { count: number; resetAt: number }>();
 
 const AUTH_PATHS = ["/login", "/register", "/forgot-password", "/reset-password"];
 
+const ALLOWED_API_SEGMENTS = new Set([
+  "auth",
+  "ebay",
+  "admin",
+  "shipping",
+  "cron",
+  "webhooks",
+  "checkout",
+  "img",
+  "manifest",
+  "favicon",
+]);
+
 export async function proxy(request: NextRequest) {
   const { pathname } = request.nextUrl;
+
+  // Block bot traffic to non-existent API paths
+  if (pathname.startsWith("/api/")) {
+    const segment = pathname.split("/")[2];
+    if (!ALLOWED_API_SEGMENTS.has(segment)) {
+      return new Response(null, { status: 404 });
+    }
+  }
 
   // Rate limit POST submissions to auth pages
   if (request.method === "POST" && AUTH_PATHS.includes(pathname)) {
