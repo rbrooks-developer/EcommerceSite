@@ -265,23 +265,6 @@ export async function acceptCounter(offerId: string) {
 
   if (error) return { error: "Failed to accept counter offer" };
 
-  // Send approval email at the accepted counter price
-  const { data: profile } = await sb.from("profiles").select("email").eq("id", user.id).maybeSingle();
-  const customerEmail = (profile as { email: string } | null)?.email ?? user.email;
-  if (customerEmail) {
-    const displayName = await getDisplayName();
-    const appUrl = process.env.NEXT_PUBLIC_APP_URL ?? "http://localhost:3000";
-    sendOfferApproved({
-      to: customerEmail,
-      productName: (offer as any).products?.name ?? "Product",
-      quantity: (offer as any).quantity ?? 1,
-      offerPrice: Number((offer as any).counter_price),
-      expiresAt,
-      displayName,
-      appUrl,
-    }).catch(err => console.error("acceptCounter approval email:", err));
-  }
-
   revalidatePath("/account");
   refresh();
   return { success: true };
