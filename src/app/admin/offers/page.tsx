@@ -90,7 +90,7 @@ export default async function AdminOffersPage() {
                 {/* Status / actions */}
                 <div className="shrink-0 flex items-center gap-2">
                   {offer.status === "pending" ? (
-                    <OfferActions offerId={offer.id} listPrice={Number(offer.products?.price ?? 0)} />
+                    <OfferActions offerId={offer.id} listPrice={Number(offer.products?.price ?? 0)} quantity={offer.quantity} />
                   ) : offer.status === "countered" ? (
                     <span className="inline-block text-xs font-semibold rounded-full px-2.5 py-1 bg-blue-100 text-blue-700">
                       Countered at {formatPrice(Number(offer.counter_price) * 100)}

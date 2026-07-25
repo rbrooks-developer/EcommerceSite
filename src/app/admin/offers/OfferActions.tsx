@@ -4,7 +4,7 @@ import { useState } from "react";
 import { approveOffer, declineOffer, counterOffer } from "@/lib/actions/offers";
 import { useRouter } from "next/navigation";
 
-export function OfferActions({ offerId, listPrice }: { offerId: string; listPrice: number }) {
+export function OfferActions({ offerId, listPrice, quantity = 1 }: { offerId: string; listPrice: number; quantity?: number }) {
   const router = useRouter();
   const [mode, setMode] = useState<"idle" | "declining" | "countering">("idle");
   const [reason, setReason] = useState("");
@@ -58,8 +58,11 @@ export function OfferActions({ offerId, listPrice }: { offerId: string; listPric
   }
 
   if (mode === "countering") {
+    const parsedPrice = parseFloat(counterPrice);
+    const total = !isNaN(parsedPrice) && parsedPrice > 0 ? parsedPrice * quantity : null;
     return (
       <div className="space-y-2 min-w-[200px]">
+        <p className="text-xs font-medium text-gray-500">Counter price <span className="text-gray-900 font-semibold">per item</span></p>
         <div className="relative">
           <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-xs text-gray-400">$</span>
           <input
@@ -74,6 +77,12 @@ export function OfferActions({ offerId, listPrice }: { offerId: string; listPric
             className="w-full rounded border border-gray-300 pl-6 pr-3 py-1.5 text-xs text-gray-700 focus:outline-none focus:ring-2 focus:ring-blue-400"
           />
         </div>
+        {total !== null && (
+          <p className="text-xs text-gray-500">
+            Total: <span className="font-semibold text-gray-800">${total.toFixed(2)}</span>
+            <span className="text-gray-400"> ({quantity} × ${parsedPrice.toFixed(2)})</span>
+          </p>
+        )}
         {err && <p className="text-xs text-red-600">{err}</p>}
         <div className="flex gap-2">
           <button onClick={handleCounter} disabled={busy} className="flex-1 rounded-md bg-blue-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-blue-700 disabled:opacity-50 transition-colors">
