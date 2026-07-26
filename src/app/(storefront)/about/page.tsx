@@ -2,7 +2,7 @@ import Image from "next/image";
 import { getSettings } from "@/lib/data/settings";
 import type { HomepageConfig, AboutConfig } from "@/types";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata() {
   const settings = await getSettings();

@@ -56,6 +56,21 @@ export async function proxy(request: NextRequest) {
     }
   }
 
+  // Only call Supabase when the path needs auth OR the user has an active session
+  // (session cookie present = token may need refreshing).
+  // Anonymous visitors hitting public pages skip the network round-trip entirely.
+  const authOnlyPaths = ["/login", "/register", "/forgot-password"];
+  const needsAuthCheck =
+    pathname.startsWith("/admin") ||
+    pathname.startsWith("/checkout") ||
+    pathname.startsWith("/account") ||
+    authOnlyPaths.includes(pathname) ||
+    request.cookies.getAll().some((c) => c.name.includes("auth-token"));
+
+  if (!needsAuthCheck) {
+    return NextResponse.next({ request });
+  }
+
   let supabaseResponse = NextResponse.next({ request });
 
   const supabase = createServerClient(
@@ -110,7 +125,6 @@ export async function proxy(request: NextRequest) {
   }
 
   // Redirect logged-in users away from auth pages (except reset-password — always accessible)
-  const authOnlyPaths = ["/login", "/register", "/forgot-password"];
   if (authOnlyPaths.includes(pathname) && user) {
     return NextResponse.redirect(new URL("/", request.url));
   }

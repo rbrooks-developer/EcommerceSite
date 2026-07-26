@@ -2,7 +2,7 @@ import { getSettings } from "@/lib/data/settings";
 import type { ContactConfig, FooterConfig, ContactInfo } from "@/types";
 import { ContactForm } from "./ContactForm";
 
-export const dynamic = "force-dynamic";
+export const revalidate = 3600;
 
 export async function generateMetadata() {
   const settings = await getSettings();
