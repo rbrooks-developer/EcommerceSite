@@ -63,7 +63,8 @@ export default async function HomePage() {
     ? featuredCategoryIds.map((id) => allCategories.find((c) => c.id === id)).filter((c) => c !== undefined)
     : [];
 
-  const heroTemplate = homepage?.hero_template ?? "founder-and-creator";
+  const heroTemplate  = homepage?.hero_template       ?? "founder-and-creator";
+  const customCursor  = homepage?.custom_cursor_enabled ?? false;
 
   return (
     <div>
@@ -81,6 +82,7 @@ export default async function HomePage() {
           displayName={displayName}
           tagline={tagline}
           goldGradient={goldGradient}
+          customCursor={customCursor}
         />
       )}
 

@@ -1,6 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { imgUrl } from "@/lib/utils";
+import { HeroFogReveal } from "@/components/storefront/HeroFogReveal";
 
 interface Props {
   bgColor: string;
@@ -12,9 +13,10 @@ interface Props {
   displayName: string;
   tagline: string;
   goldGradient: string;
+  customCursor?: boolean;
 }
 
-export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, logoSpin, siteTitle, displayName, tagline, goldGradient }: Props) {
+export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, logoSpin, siteTitle, displayName, tagline, goldGradient, customCursor }: Props) {
   return (
     <section
       aria-labelledby="hero-heading"
@@ -95,6 +97,9 @@ export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, log
         style={{ background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
         aria-hidden="true"
       />
+
+      {/* Fog reveal — sits above everything; cursor cuts a clear circle through the fog */}
+      {customCursor && <HeroFogReveal bgColor={bgColor} />}
     </section>
   );
 }
