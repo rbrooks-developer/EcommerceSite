@@ -152,6 +152,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [fontFamily, setFontFamily] = useState(homepage?.font_family ?? "default");
   const [heroFont, setHeroFont] = useState(homepage?.hero_font ?? "Playfair Display");
   const [fontGradient, setFontGradient] = useState(homepage?.font_gradient_enabled ?? false);
+  const [customCursor, setCustomCursor] = useState(homepage?.custom_cursor_enabled ?? false);
   const [checkoutSectionColor, setCheckoutSectionColor] = useState(homepage?.checkout_section_color ?? "#1a1a1a");
   const [checkoutTextboxColor, setCheckoutTextboxColor] = useState(homepage?.checkout_textbox_color ?? "#2a2a2a");
   const [striationUrl, setStriationUrl] = useState<string[]>(homepage?.striation_image_url ? [homepage.striation_image_url] : []);
@@ -289,6 +290,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         font_color: fontColor,
         font_family: fontFamily,
         font_gradient_enabled: fontGradient,
+        custom_cursor_enabled: customCursor,
         hero_display_name: g("hero_display_name") || undefined,
         hero_tagline: g("hero_tagline") || undefined,
         hero_font: heroFont || "Playfair Display",
@@ -486,6 +488,21 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           <div>
             <p className="text-sm font-medium text-gray-900">Gradient text color</p>
             <p className="text-xs text-gray-500">Apply a light-to-dark gradient to headings and text using the font color as the base</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            role="switch"
+            aria-checked={customCursor}
+            onClick={() => setCustomCursor((v) => !v)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-gray-900 focus:ring-offset-2 ${customCursor ? "bg-gray-900 dark:bg-emerald-500" : "bg-gray-200 dark:bg-gray-600"}`}
+          >
+            <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform ${customCursor ? "translate-x-5" : "translate-x-0"}`} />
+          </button>
+          <div>
+            <p className="text-sm font-medium text-gray-900">Custom cursor</p>
+            <p className="text-xs text-gray-500">Replace the default cursor with an animated dot and ring effect (desktop only)</p>
           </div>
         </div>
         <div>

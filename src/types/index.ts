@@ -89,6 +89,7 @@ export type HomepageConfig = {
   striation_position?: string;
   hero_template?: string;
   carousel?: CarouselConfig;
+  custom_cursor_enabled?: boolean;
 };
 
 export type CarouselImage = {

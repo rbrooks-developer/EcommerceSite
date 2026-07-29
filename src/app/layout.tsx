@@ -5,6 +5,7 @@ import { getSettings } from "@/lib/data/settings";
 import { createClient } from "@/lib/supabase/server";
 import { TawkChat } from "@/components/storefront/TawkChat";
 import { Analytics } from "@/components/storefront/Analytics";
+import { CustomCursor } from "@/components/storefront/CustomCursor";
 import { ogImageUrl } from "@/lib/utils";
 import type { ChatConfig, TrackingConfig } from "@/types";
 
@@ -69,6 +70,7 @@ export default async function RootLayout({
   const fontFamily        = homepage?.font_family          ?? "default";
   const heroFont          = homepage?.hero_font             ?? "Playfair Display";
   const fontGradient      = homepage?.font_gradient_enabled ?? false;
+  const customCursor      = homepage?.custom_cursor_enabled ?? false;
   const faviconUrl        = settings?.favicon_url           ?? null;
   const chatConfig        = (settings as any)?.chat_config as ChatConfig | null;
   const trackingConfig    = (settings as any)?.tracking_config as TrackingConfig | null;
@@ -137,6 +139,7 @@ export default async function RootLayout({
           '--site-fg-gradient': siteGradient,
           ...(checkoutSectionColor  ? { '--checkout-section-bg':   checkoutSectionColor  } : {}),
           ...(checkoutTextboxColor  ? { '--checkout-input-bg':     checkoutTextboxColor  } : {}),
+          ...(customCursor          ? { cursor: "none" }           : {}),
         } as React.CSSProperties}
       >
         <script
@@ -160,6 +163,7 @@ export default async function RootLayout({
           }}
         />
         {children}
+        {customCursor && <CustomCursor />}
         {chatVisitor && (
           <TawkChat
             propertyId={chatConfig!.property_id}

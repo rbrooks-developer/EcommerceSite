@@ -75,6 +75,7 @@ export const siteSettingsSchema = z.object({
     hero_font: z.string().default("Playfair Display"),
     service_images: z.array(z.string().url()).default([]),
     font_gradient_enabled: z.boolean().default(false),
+    custom_cursor_enabled: z.boolean().default(false),
     og_image_url: z.string().url().nullable().optional(),
     checkout_section_color: hexColor.optional(),
     checkout_textbox_color: hexColor.optional(),
