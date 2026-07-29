@@ -14,9 +14,12 @@ interface Props {
   tagline: string;
   goldGradient: string;
   customCursor?: boolean;
+  fogRadius?: number;
+  fogOpacity?: number;
+  fogBlur?: number;
 }
 
-export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, logoSpin, siteTitle, displayName, tagline, goldGradient, customCursor }: Props) {
+export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, logoSpin, siteTitle, displayName, tagline, goldGradient, customCursor, fogRadius, fogOpacity, fogBlur }: Props) {
   return (
     <section
       aria-labelledby="hero-heading"
@@ -99,7 +102,7 @@ export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, log
       />
 
       {/* Fog reveal — sits above everything; cursor cuts a clear circle through the fog */}
-      {customCursor && <HeroFogReveal bgColor={bgColor} />}
+      {customCursor && <HeroFogReveal bgColor={bgColor} radius={fogRadius} opacity={fogOpacity} blur={fogBlur} />}
     </section>
   );
 }

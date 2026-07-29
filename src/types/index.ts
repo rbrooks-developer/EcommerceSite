@@ -80,6 +80,10 @@ export type HomepageConfig = {
   hero_font?: string;
   service_images?: string[];
   font_gradient_enabled?: boolean;
+  custom_cursor_enabled?: boolean;
+  cursor_fog_radius?: number;
+  cursor_fog_opacity?: number;
+  cursor_fog_blur?: number;
   og_image_url?: string | null;
   checkout_section_color?: string;
   checkout_textbox_color?: string;
@@ -89,7 +93,6 @@ export type HomepageConfig = {
   striation_position?: string;
   hero_template?: string;
   carousel?: CarouselConfig;
-  custom_cursor_enabled?: boolean;
 };
 
 export type CarouselImage = {

@@ -153,6 +153,9 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [heroFont, setHeroFont] = useState(homepage?.hero_font ?? "Playfair Display");
   const [fontGradient, setFontGradient] = useState(homepage?.font_gradient_enabled ?? false);
   const [customCursor, setCustomCursor] = useState(homepage?.custom_cursor_enabled ?? false);
+  const [fogRadius, setFogRadius] = useState(homepage?.cursor_fog_radius ?? 210);
+  const [fogOpacity, setFogOpacity] = useState(homepage?.cursor_fog_opacity ?? 80);
+  const [fogBlur, setFogBlur] = useState(homepage?.cursor_fog_blur ?? 5);
   const [checkoutSectionColor, setCheckoutSectionColor] = useState(homepage?.checkout_section_color ?? "#1a1a1a");
   const [checkoutTextboxColor, setCheckoutTextboxColor] = useState(homepage?.checkout_textbox_color ?? "#2a2a2a");
   const [striationUrl, setStriationUrl] = useState<string[]>(homepage?.striation_image_url ? [homepage.striation_image_url] : []);
@@ -291,6 +294,9 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         font_family: fontFamily,
         font_gradient_enabled: fontGradient,
         custom_cursor_enabled: customCursor,
+        cursor_fog_radius: fogRadius,
+        cursor_fog_opacity: fogOpacity,
+        cursor_fog_blur: fogBlur,
         hero_display_name: g("hero_display_name") || undefined,
         hero_tagline: g("hero_tagline") || undefined,
         hero_font: heroFont || "Playfair Display",
@@ -501,10 +507,51 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
             <span className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition-transform ${customCursor ? "translate-x-5" : "translate-x-0"}`} />
           </button>
           <div>
-            <p className="text-sm font-medium text-gray-900">Custom cursor</p>
-            <p className="text-xs text-gray-500">Replace the default cursor with an animated dot and ring effect (desktop only)</p>
+            <p className="text-sm font-medium text-gray-900">Hero fog reveal</p>
+            <p className="text-xs text-gray-500">Fog overlay on the hero that clears around your cursor, revealing the content beneath (desktop only)</p>
           </div>
         </div>
+        {customCursor && (
+          <div className="ml-14 space-y-4 rounded-md border border-gray-200 bg-gray-50 p-4">
+            <div>
+              <Label htmlFor="fog_radius">Reveal radius: {fogRadius}px</Label>
+              <input
+                id="fog_radius"
+                type="range"
+                min="50"
+                max="500"
+                step="10"
+                value={fogRadius}
+                onChange={(e) => setFogRadius(Number(e.target.value))}
+                className="mt-1 w-full accent-gray-900"
+              />
+            </div>
+            <div>
+              <Label htmlFor="fog_opacity">Fog opacity: {fogOpacity}%</Label>
+              <input
+                id="fog_opacity"
+                type="range"
+                min="0"
+                max="100"
+                value={fogOpacity}
+                onChange={(e) => setFogOpacity(Number(e.target.value))}
+                className="mt-1 w-full accent-gray-900"
+              />
+            </div>
+            <div>
+              <Label htmlFor="fog_blur">Blur strength: {fogBlur}px</Label>
+              <input
+                id="fog_blur"
+                type="range"
+                min="0"
+                max="20"
+                value={fogBlur}
+                onChange={(e) => setFogBlur(Number(e.target.value))}
+                className="mt-1 w-full accent-gray-900"
+              />
+            </div>
+          </div>
+        )}
         <div>
           <Label htmlFor="font_family">Font Family</Label>
           <select
