@@ -2,6 +2,11 @@
 
 import { useEffect, useRef, useState } from "react";
 
+// Cover div extends this many px beyond the visible hero in every direction.
+// The displacement filter only distorts pixels in that invisible buffer zone
+// (hero section overflow:hidden clips it), so the visible hero edges stay clean.
+const BUFFER = 70;
+
 interface Props {
   bgColor: string;
   fontColor: string;
@@ -10,7 +15,8 @@ interface Props {
 }
 
 export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = false }: Props) {
-  const coverRef = useRef<HTMLDivElement>(null);
+  const wrapperRef = useRef<HTMLDivElement>(null); // inset:0, used for mouse-bounds tracking
+  const coverRef = useRef<HTMLDivElement>(null);   // inset:-BUFFER, receives mask-image
   const radiusRef = useRef(radius);
   const [isTouch, setIsTouch] = useState(true);
 
@@ -21,16 +27,19 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
   }, []);
 
   useEffect(() => {
-    if (!enabled || isTouch || !coverRef.current) return;
+    if (!enabled || isTouch || !wrapperRef.current || !coverRef.current) return;
 
-    const el = coverRef.current;
+    const wrapper = wrapperRef.current;
+    const cover = coverRef.current;
+
     let targetX = -9999, targetY = -9999;
     let currentX = -9999, currentY = -9999;
     let currentR = 0;
     let rafId: number;
 
     function onMove(e: MouseEvent) {
-      const rect = el.getBoundingClientRect();
+      const rect = wrapper.getBoundingClientRect();
+      // Clamp to hero bounds on all edges
       targetX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
       targetY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
     }
@@ -49,15 +58,15 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
 
       if (currentR > 1.5) {
         const r = Math.round(currentR);
-        const x = Math.round(currentX);
-        const y = Math.round(currentY);
-        // Sharper inner edge so the displacement filter has clean material to distort
+        // Offset by BUFFER because cover div's origin is BUFFER px above/left of hero
+        const x = Math.round(currentX) + BUFFER;
+        const y = Math.round(currentY) + BUFFER;
         const mask = `radial-gradient(circle ${r}px at ${x}px ${y}px, transparent 0%, transparent 58%, rgba(0,0,0,0.35) 72%, black 86%)`;
-        el.style.maskImage = mask;
-        el.style.setProperty("-webkit-mask-image", mask);
+        cover.style.maskImage = mask;
+        cover.style.setProperty("-webkit-mask-image", mask);
       } else {
-        el.style.maskImage = "linear-gradient(black, black)";
-        el.style.setProperty("-webkit-mask-image", "linear-gradient(black, black)");
+        cover.style.maskImage = "linear-gradient(black, black)";
+        cover.style.setProperty("-webkit-mask-image", "linear-gradient(black, black)");
       }
 
       rafId = requestAnimationFrame(tick);
@@ -78,14 +87,6 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
 
   return (
     <>
-      {/*
-        The SVG just holds a <filter> resource — no mask, no circle.
-        The filter is applied to the *wrapper* div below, which means it
-        operates on the already-masked cover div's rendered output.
-        Rendering order: cover div gets its circle hole cut by mask-image,
-        then the wrapper distorts that holed image with turbulence displacement —
-        giving the water/liquid edge to the reveal hole.
-      */}
       {showReveal && (
         <svg aria-hidden="true" style={{ position: "absolute", width: 0, height: 0 }}>
           <defs>
@@ -123,8 +124,14 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
         </svg>
       )}
 
-      {/* Wrapper: applies water filter to children's composited output */}
+      {/*
+        Wrapper: normal hero bounds (inset:0), applies the water filter.
+        The filter displaces pixels in the cover div — at the circle edge that
+        creates the water/liquid look; at the outer edges the BUFFER absorbs the
+        displacement so nothing visible moves at the hero frame boundary.
+      */}
       <div
+        ref={wrapperRef}
         aria-hidden="true"
         style={{
           position: "absolute",
@@ -134,27 +141,30 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
           ...(showReveal ? { filter: "url(#water-distort)" } : {}),
         }}
       >
-        {/* Cover: paints bgColor; mask-image cuts the reveal circle (set by rAF) */}
+        {/* Cover extends BUFFER px beyond wrapper; mask-image cuts the reveal hole */}
         <div
           ref={coverRef}
           style={{
             position: "absolute",
-            inset: 0,
+            inset: showReveal ? `-${BUFFER}px` : 0,
             backgroundColor: bgColor,
           }}
-        >
-          <div
-            className="pointer-events-none absolute inset-0"
-            style={{
-              background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
-            }}
-          />
-          <div
-            className="absolute bottom-0 left-0 right-0 h-24"
-            style={{ background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
-          />
-        </div>
+        />
+        {/* Glow: soft center gradient — filter distortion on a soft gradient is imperceptible */}
+        <div
+          className="pointer-events-none absolute inset-0"
+          style={{
+            background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
+          }}
+        />
       </div>
+
+      {/* Bottom fade sits outside the filtered wrapper so the hero bottom edge stays clean */}
+      <div
+        aria-hidden="true"
+        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24"
+        style={{ zIndex: 2, background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
+      />
     </>
   );
 }
