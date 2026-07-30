@@ -39,9 +39,10 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
       const rect = el.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
-      // Reset to off-screen when cursor leaves the hero
-      if (x >= 0 && y >= 0 && x <= rect.width && y <= rect.height) {
-        targetX = x;
+      if (y >= 0 && y <= rect.height) {
+        // Clamp x to hero bounds so both left and right edges hold the circle
+        // instead of the right edge (scrollbar gap) collapsing it
+        targetX = Math.max(0, Math.min(rect.width, x));
         targetY = y;
       } else {
         targetX = -9999;
