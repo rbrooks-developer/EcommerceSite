@@ -29,6 +29,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
   const striationOpacity = homepage?.striation_opacity ?? 30;
   const striationBlendMode = (homepage?.striation_blend_mode ?? "screen") as React.CSSProperties["mixBlendMode"];
   const striationPosition = homepage?.striation_position ?? "full";
+  const revealActive = !!(homepage?.custom_cursor_enabled && homepage?.cursor_reveal_image_url);
 
   return (
     <CartProvider userId={user?.id}>
@@ -89,6 +90,7 @@ export default async function StorefrontLayout({ children }: { children: React.R
         striationOpacity={striationOpacity}
         striationBlendMode={striationBlendMode}
         striationPosition={striationPosition}
+        glassEffect={revealActive}
       />
       <PromoBanner banner={(settings as any)?.promo_banner as PromoBannerType | null} />
       <main className="flex-1">{children}</main>

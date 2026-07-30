@@ -23,6 +23,7 @@ interface HeaderProps {
   striationOpacity?: number;
   striationBlendMode?: React.CSSProperties["mixBlendMode"];
   striationPosition?: string;
+  glassEffect?: boolean;
 }
 
 // Bare anchors like "#services" become "/#services" so they always target the homepage
@@ -40,7 +41,7 @@ function isAccountLink(link: string) {
   return n.startsWith("/account");
 }
 
-export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLoggedIn, isAdmin = false, bgColor = "#ffffff", fontColor = "#111827", approvedOffersCount = 0, avatarUrl, striationImageUrl, striationOpacity = 30, striationBlendMode = "screen", striationPosition = "full" }: HeaderProps) {
+export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLoggedIn, isAdmin = false, bgColor = "#ffffff", fontColor = "#111827", approvedOffersCount = 0, avatarUrl, striationImageUrl, striationOpacity = 30, striationBlendMode = "screen", striationPosition = "full", glassEffect = false }: HeaderProps) {
   const [menuOpen, setMenuOpen] = useState(false);
   const { itemCount } = useCart();
   const navItems = navConfig?.items ?? [];
@@ -48,7 +49,11 @@ export function Header({ siteTitle, logoUrl, logoSpin = false, navConfig, isLogg
   return (
     <header
       className="sticky top-0 z-50"
-      style={{ backgroundColor: bgColor, color: fontColor }}
+      style={{
+        backgroundColor: glassEffect ? `${bgColor}99` : bgColor,
+        color: fontColor,
+        ...(glassEffect ? { backdropFilter: "blur(16px)", WebkitBackdropFilter: "blur(16px)" } : {}),
+      }}
     >
       {striationImageUrl && (
         <div
