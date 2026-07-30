@@ -37,17 +37,16 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
 
     function onMove(e: MouseEvent) {
       const rect = el.getBoundingClientRect();
-      const x = e.clientX - rect.left;
-      const y = e.clientY - rect.top;
-      if (y >= 0 && y <= rect.height) {
-        // Clamp x to hero bounds so both left and right edges hold the circle
-        // instead of the right edge (scrollbar gap) collapsing it
-        targetX = Math.max(0, Math.min(rect.width, x));
-        targetY = y;
-      } else {
-        targetX = -9999;
-        targetY = -9999;
-      }
+      // Clamp to hero bounds on all edges so the circle holds at every edge
+      // rather than collapsing (scrollbar gap on right, header overlap on top, etc.)
+      targetX = Math.max(0, Math.min(rect.width, e.clientX - rect.left));
+      targetY = Math.max(0, Math.min(rect.height, e.clientY - rect.top));
+    }
+
+    function onWindowLeave() {
+      // Cursor left the browser window — close the circle
+      targetX = -9999;
+      targetY = -9999;
     }
 
     function tick() {
@@ -86,10 +85,12 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
     }
 
     window.addEventListener("mousemove", onMove, { passive: true });
+    document.addEventListener("mouseleave", onWindowLeave);
     rafId = requestAnimationFrame(tick);
 
     return () => {
       window.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseleave", onWindowLeave);
       cancelAnimationFrame(rafId);
     };
   }, [enabled, isTouch]);
