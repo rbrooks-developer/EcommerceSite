@@ -30,11 +30,8 @@ export function FoundAndCreatorHero({
       aria-labelledby="hero-heading"
       className="relative flex flex-col items-center justify-center overflow-hidden"
       style={{
-        minHeight: revealActive ? "calc(100svh + 4rem)" : "100svh",
-        backgroundColor: bgColor,
-        // Pull the section up behind the sticky header so the reveal image
-        // fills the full viewport. paddingTop keeps content below the header.
-        ...(revealActive ? { marginTop: "-4rem", paddingTop: "4rem" } : {}),
+        minHeight: "100svh",
+        backgroundColor: revealActive ? "transparent" : bgColor,
       }}
     >
       {/* Reveal image — behind the hero layer; only mounted when feature is on */}
