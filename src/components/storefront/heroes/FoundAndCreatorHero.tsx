@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import { imgUrl } from "@/lib/utils";
-import { HeroFogReveal } from "@/components/storefront/HeroFogReveal";
+import { HeroRevealLayer } from "@/components/storefront/HeroFogReveal";
 
 interface Props {
   bgColor: string;
@@ -15,27 +15,44 @@ interface Props {
   goldGradient: string;
   customCursor?: boolean;
   fogRadius?: number;
-  fogOpacity?: number;
-  fogBlur?: number;
+  revealImageUrl?: string | null;
 }
 
-export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, logoSpin, siteTitle, displayName, tagline, goldGradient, customCursor, fogRadius, fogOpacity, fogBlur }: Props) {
+export function FoundAndCreatorHero({
+  bgColor, fontColor, heroFont, logoUrl, logoSpin, siteTitle,
+  displayName, tagline, goldGradient,
+  customCursor, fogRadius, revealImageUrl,
+}: Props) {
+  const revealActive = !!(customCursor && revealImageUrl);
+
   return (
     <section
       aria-labelledby="hero-heading"
       className="relative flex flex-col items-center justify-center overflow-hidden"
       style={{ minHeight: "100svh", backgroundColor: bgColor }}
     >
-      {/* Radial gold glow */}
-      <div
-        className="pointer-events-none absolute inset-0"
-        style={{
-          background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
-        }}
-        aria-hidden="true"
+      {/* Reveal image — behind the hero layer; only mounted when feature is on */}
+      {revealActive && (
+        <Image
+          src={imgUrl(revealImageUrl!)}
+          fill
+          alt=""
+          sizes="100vw"
+          className="object-cover"
+          style={{ zIndex: 0 }}
+          priority
+        />
+      )}
+
+      {/* Background layer — bgColor + glow + bottom fade; maskable when reveal is active */}
+      <HeroRevealLayer
+        bgColor={bgColor}
+        fontColor={fontColor}
+        radius={fogRadius}
+        enabled={revealActive}
       />
 
-      {/* Content */}
+      {/* Content — always on top, always fully visible and clickable */}
       <div className="relative z-10 flex flex-col items-center gap-6 px-4 text-center">
         {/* Logo */}
         {logoUrl && (
@@ -93,16 +110,6 @@ export function FoundAndCreatorHero({ bgColor, fontColor, heroFont, logoUrl, log
           </Link>
         </div>
       </div>
-
-      {/* Bottom fade */}
-      <div
-        className="pointer-events-none absolute bottom-0 left-0 right-0 h-24"
-        style={{ background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
-        aria-hidden="true"
-      />
-
-      {/* Fog reveal — sits above everything; cursor cuts a clear circle through the fog */}
-      {customCursor && <HeroFogReveal bgColor={bgColor} radius={fogRadius} opacity={fogOpacity} blur={fogBlur} />}
     </section>
   );
 }

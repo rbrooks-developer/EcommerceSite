@@ -82,8 +82,7 @@ export type HomepageConfig = {
   font_gradient_enabled?: boolean;
   custom_cursor_enabled?: boolean;
   cursor_fog_radius?: number;
-  cursor_fog_opacity?: number;
-  cursor_fog_blur?: number;
+  cursor_reveal_image_url?: string | null;
   og_image_url?: string | null;
   checkout_section_color?: string;
   checkout_textbox_color?: string;

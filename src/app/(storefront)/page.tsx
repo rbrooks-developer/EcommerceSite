@@ -63,11 +63,10 @@ export default async function HomePage() {
     ? featuredCategoryIds.map((id) => allCategories.find((c) => c.id === id)).filter((c) => c !== undefined)
     : [];
 
-  const heroTemplate  = homepage?.hero_template          ?? "founder-and-creator";
-  const customCursor  = homepage?.custom_cursor_enabled  ?? false;
-  const fogRadius     = homepage?.cursor_fog_radius      ?? 210;
-  const fogOpacity    = homepage?.cursor_fog_opacity     ?? 80;
-  const fogBlur       = homepage?.cursor_fog_blur        ?? 5;
+  const heroTemplate     = homepage?.hero_template          ?? "founder-and-creator";
+  const customCursor     = homepage?.custom_cursor_enabled  ?? false;
+  const fogRadius        = homepage?.cursor_fog_radius      ?? 210;
+  const revealImageUrl   = homepage?.cursor_reveal_image_url ?? null;
 
   return (
     <div>
@@ -87,8 +86,7 @@ export default async function HomePage() {
           goldGradient={goldGradient}
           customCursor={customCursor}
           fogRadius={fogRadius}
-          fogOpacity={fogOpacity}
-          fogBlur={fogBlur}
+          revealImageUrl={revealImageUrl}
         />
       )}
 

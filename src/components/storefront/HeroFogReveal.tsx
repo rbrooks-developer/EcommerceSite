@@ -4,35 +4,37 @@ import { useEffect, useRef, useState } from "react";
 
 interface Props {
   bgColor: string;
+  fontColor: string;
   radius?: number;
-  opacity?: number;
-  blur?: number;
+  enabled?: boolean;
 }
 
-export function HeroFogReveal({ bgColor, radius = 210, opacity = 80, blur = 5 }: Props) {
-  const fogRef = useRef<HTMLDivElement>(null);
+// Renders the hero background layer (bgColor + glow + bottom fade).
+// When enabled=true, a cursor-driven mask cuts a hole to reveal what's behind.
+export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = false }: Props) {
+  const ref = useRef<HTMLDivElement>(null);
+  const radiusRef = useRef(radius);
   const [isTouch, setIsTouch] = useState(true);
 
-  // Detect touch device on the client (SSR defaults to touch = hidden)
   useEffect(() => {
-    if (!window.matchMedia("(pointer: coarse)").matches) {
-      setIsTouch(false);
-    }
+    radiusRef.current = radius;
+  }, [radius]);
+
+  useEffect(() => {
+    if (!window.matchMedia("(pointer: coarse)").matches) setIsTouch(false);
   }, []);
 
-  // Add mouse listener once we know it's a pointer device and the div is mounted
   useEffect(() => {
-    if (isTouch || !fogRef.current) return;
-    const el = fogRef.current;
+    if (!enabled || isTouch || !ref.current) return;
+    const el = ref.current;
 
     function onMove(e: MouseEvent) {
       const rect = el.getBoundingClientRect();
       const x = e.clientX - rect.left;
       const y = e.clientY - rect.top;
       const inside = x >= 0 && y >= 0 && x <= rect.width && y <= rect.height;
-      const r = el.dataset.radius ?? "210";
       const mask = inside
-        ? `radial-gradient(circle ${r}px at ${x}px ${y}px, transparent 0%, transparent 35%, black 75%)`
+        ? `radial-gradient(circle ${radiusRef.current}px at ${x}px ${y}px, transparent 0%, transparent 35%, black 75%)`
         : "linear-gradient(black, black)";
       el.style.maskImage = mask;
       el.style.setProperty("-webkit-mask-image", mask);
@@ -40,28 +42,32 @@ export function HeroFogReveal({ bgColor, radius = 210, opacity = 80, blur = 5 }:
 
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMove);
-  }, [isTouch]);
-
-  if (isTouch) return null;
-
-  const alphaHex = Math.round((opacity / 100) * 255).toString(16).padStart(2, "0");
+  }, [enabled, isTouch]);
 
   return (
     <div
-      ref={fogRef}
+      ref={ref}
       aria-hidden="true"
-      data-radius={radius}
       style={{
         position: "absolute",
         inset: 0,
-        zIndex: 15,
-        pointerEvents: "none",
-        backdropFilter: `blur(${blur}px)`,
-        WebkitBackdropFilter: `blur(${blur}px)`,
-        backgroundColor: `${bgColor}${alphaHex}`,
-        maskImage: "linear-gradient(black, black)",
+        zIndex: 1,
+        backgroundColor: bgColor,
         transform: "translateZ(0)",
       }}
-    />
+    >
+      {/* Radial glow */}
+      <div
+        className="pointer-events-none absolute inset-0"
+        style={{
+          background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
+        }}
+      />
+      {/* Bottom fade into page background */}
+      <div
+        className="absolute bottom-0 left-0 right-0 h-24"
+        style={{ background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
+      />
+    </div>
   );
 }

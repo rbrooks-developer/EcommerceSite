@@ -154,8 +154,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [fontGradient, setFontGradient] = useState(homepage?.font_gradient_enabled ?? false);
   const [customCursor, setCustomCursor] = useState(homepage?.custom_cursor_enabled ?? false);
   const [fogRadius, setFogRadius] = useState(homepage?.cursor_fog_radius ?? 210);
-  const [fogOpacity, setFogOpacity] = useState(homepage?.cursor_fog_opacity ?? 80);
-  const [fogBlur, setFogBlur] = useState(homepage?.cursor_fog_blur ?? 5);
+  const [revealImageUrl, setRevealImageUrl] = useState<string[]>(homepage?.cursor_reveal_image_url ? [homepage.cursor_reveal_image_url] : []);
   const [checkoutSectionColor, setCheckoutSectionColor] = useState(homepage?.checkout_section_color ?? "#1a1a1a");
   const [checkoutTextboxColor, setCheckoutTextboxColor] = useState(homepage?.checkout_textbox_color ?? "#2a2a2a");
   const [striationUrl, setStriationUrl] = useState<string[]>(homepage?.striation_image_url ? [homepage.striation_image_url] : []);
@@ -295,8 +294,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         font_gradient_enabled: fontGradient,
         custom_cursor_enabled: customCursor,
         cursor_fog_radius: fogRadius,
-        cursor_fog_opacity: fogOpacity,
-        cursor_fog_blur: fogBlur,
+        cursor_reveal_image_url: revealImageUrl[0] ?? null,
         hero_display_name: g("hero_display_name") || undefined,
         hero_tagline: g("hero_tagline") || undefined,
         hero_font: heroFont || "Playfair Display",
@@ -514,6 +512,17 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         {customCursor && (
           <div className="ml-14 space-y-4 rounded-md border border-gray-200 bg-gray-50 p-4">
             <div>
+              <Label>Reveal image <span className="text-gray-400 font-normal">(shown behind the hero when cursor moves over it)</span></Label>
+              <ImageUpload
+                value={revealImageUrl}
+                onChange={setRevealImageUrl}
+                max={1}
+                bucket="site-assets"
+                pathPrefix="hero-reveal"
+                maxSizeMb={maxImageSizeMb}
+              />
+            </div>
+            <div>
               <Label htmlFor="fog_radius">Reveal radius: {fogRadius}px</Label>
               <input
                 id="fog_radius"
@@ -523,30 +532,6 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
                 step="10"
                 value={fogRadius}
                 onChange={(e) => setFogRadius(Number(e.target.value))}
-                className="mt-1 w-full accent-gray-900"
-              />
-            </div>
-            <div>
-              <Label htmlFor="fog_opacity">Fog opacity: {fogOpacity}%</Label>
-              <input
-                id="fog_opacity"
-                type="range"
-                min="0"
-                max="100"
-                value={fogOpacity}
-                onChange={(e) => setFogOpacity(Number(e.target.value))}
-                className="mt-1 w-full accent-gray-900"
-              />
-            </div>
-            <div>
-              <Label htmlFor="fog_blur">Blur strength: {fogBlur}px</Label>
-              <input
-                id="fog_blur"
-                type="range"
-                min="0"
-                max="20"
-                value={fogBlur}
-                onChange={(e) => setFogBlur(Number(e.target.value))}
                 className="mt-1 w-full accent-gray-900"
               />
             </div>
