@@ -160,7 +160,7 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
         displacement artifacts at each hero boundary — same technique as
         the bottom fade that already fixed the bottom edge.
       */}
-      <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 right-0" style={{ height: "40px", zIndex: 2, background: `linear-gradient(to bottom, ${bgColor}, transparent)` }} />
+      <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 right-0" style={{ height: "60px", zIndex: 2, background: `linear-gradient(to bottom, ${bgColor} 40%, transparent)` }} />
       <div aria-hidden="true" className="pointer-events-none absolute top-0 right-0 bottom-0" style={{ width: "40px", zIndex: 2, background: `linear-gradient(to left, ${bgColor}, transparent)` }} />
       <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 bottom-0" style={{ width: "40px", zIndex: 2, background: `linear-gradient(to right, ${bgColor}, transparent)` }} />
     </>
