@@ -140,13 +140,15 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
           ref={coverRef}
           style={{ position: "absolute", inset: 0, backgroundColor: bgColor }}
         />
-        {/* Glow: soft center radial */}
-        <div
-          className="pointer-events-none absolute inset-0"
-          style={{
-            background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
-          }}
-        />
+        {/* Glow: soft center radial — hidden when reveal is active */}
+        {!showReveal && (
+          <div
+            className="pointer-events-none absolute inset-0"
+            style={{
+              background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
+            }}
+          />
+        )}
         {/* Bottom fade: inside the wrapper so it is masked by the circle hole */}
         <div
           className="pointer-events-none absolute bottom-0 left-0 right-0 h-24"
