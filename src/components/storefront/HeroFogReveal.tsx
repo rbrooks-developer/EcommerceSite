@@ -122,9 +122,8 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
 
       {/*
         Wrapper applies the water filter to the masked cover div.
-        At solid-color edges (bgColor vs bgColor) displacement is invisible.
-        The organic water effect is only visible where the mask transitions
-        from transparent to bgColor — i.e. at the reveal circle boundary.
+        At solid-color edges displacement is invisible — the organic water
+        effect only appears where the mask transitions at the reveal circle.
       */}
       <div
         aria-hidden="true"
@@ -141,21 +140,29 @@ export function HeroRevealLayer({ bgColor, fontColor, radius = 210, enabled = fa
           ref={coverRef}
           style={{ position: "absolute", inset: 0, backgroundColor: bgColor }}
         />
-        {/* Glow: soft center radial — filter distortion on a soft gradient is imperceptible */}
+        {/* Glow: soft center radial */}
         <div
           className="pointer-events-none absolute inset-0"
           style={{
             background: `radial-gradient(ellipse 60% 50% at 50% 50%, color-mix(in srgb, ${fontColor} 7%, transparent) 0%, transparent 70%)`,
           }}
         />
-        {/* Bottom fade: inside the wrapper so it is clipped by the circle mask and
-            never overlays the reveal hole; max 20px edge displacement is invisible
-            at the hero bottom since bgColor meets bgColor there */}
+        {/* Bottom fade: inside the wrapper so it is masked by the circle hole */}
         <div
           className="pointer-events-none absolute bottom-0 left-0 right-0 h-24"
           style={{ background: `linear-gradient(to bottom, transparent, ${bgColor})` }}
         />
       </div>
+
+      {/*
+        Edge fades sit OUTSIDE the filtered wrapper at z:2.
+        They are never distorted by the filter and cleanly cover the ≤20 px
+        displacement artifacts at each hero boundary — same technique as
+        the bottom fade that already fixed the bottom edge.
+      */}
+      <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 right-0" style={{ height: "40px", zIndex: 2, background: `linear-gradient(to bottom, ${bgColor}, transparent)` }} />
+      <div aria-hidden="true" className="pointer-events-none absolute top-0 right-0 bottom-0" style={{ width: "40px", zIndex: 2, background: `linear-gradient(to left, ${bgColor}, transparent)` }} />
+      <div aria-hidden="true" className="pointer-events-none absolute top-0 left-0 bottom-0" style={{ width: "40px", zIndex: 2, background: `linear-gradient(to right, ${bgColor}, transparent)` }} />
     </>
   );
 }
