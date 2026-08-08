@@ -118,7 +118,20 @@ export async function runEbayListingSync(
     if (children.length > 0 && listing.brand) {
       const brandLower = listing.brand.toLowerCase();
       const brandChild = children.find((c) => c.name.toLowerCase() === brandLower);
-      if (brandChild) categoryId = brandChild.id;
+      if (brandChild) {
+        categoryId = brandChild.id;
+      } else {
+        const { data: newCat } = await supabase
+          .from("categories")
+          .insert({ name: listing.brand, slug: slugify(listing.brand), parent_id: matchedCat.id })
+          .select("id, name, slug, parent_id, ebay_category_id")
+          .single();
+        if (newCat) {
+          children.push(newCat);
+          childrenMap.set(matchedCat.id, children);
+          categoryId = newCat.id;
+        }
+      }
     }
 
     const existing = existingByListingId.get(listing.listingId);
