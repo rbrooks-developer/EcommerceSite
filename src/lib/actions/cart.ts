@@ -80,6 +80,7 @@ export async function validateAndSyncCart(): Promise<{ valid: boolean; issues: C
 export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; issues: CartIssue[] }> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
+  console.log("[checkout-check] user:", user?.id ?? "guest");
   if (!user) return { valid: true, issues: [] };
 
   const { data: cartItems } = await supabase
@@ -87,6 +88,7 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
     .select("product_id, quantity, name")
     .eq("user_id", user.id);
 
+  console.log("[checkout-check] cartItems:", JSON.stringify(cartItems));
   if (!cartItems?.length) return { valid: true, issues: [] };
 
   const sb = createServiceClient();
@@ -96,6 +98,8 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
     .from("products")
     .select("id, inventory, is_published, ebay_listing_id")
     .in("id", productIds);
+
+  console.log("[checkout-check] products:", JSON.stringify(products));
 
   const mutableProducts = (products ?? []) as {
     id: string; inventory: number; is_published: boolean; ebay_listing_id: string | null;
@@ -108,26 +112,34 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
     .eq("id", 1)
     .single();
   const ebayCheckEnabled = (settingsRow as any)?.checkout_config?.ebay_checkout_inventory_check === true;
+  console.log("[checkout-check] ebayCheckEnabled:", ebayCheckEnabled);
 
   let anyInventoryChanged = false;
   if (ebayCheckEnabled) {
     try {
       const config = await getValidEbayConfig();
+      console.log("[checkout-check] ebayConfig:", config ? "valid" : "null");
       if (config) {
         const ebayLinked = mutableProducts.filter(p => p.ebay_listing_id);
+        console.log("[checkout-check] ebayLinked count:", ebayLinked.length, ebayLinked.map(p => ({ id: p.id, ebay_listing_id: p.ebay_listing_id, inventory: p.inventory })));
         await Promise.allSettled(ebayLinked.map(async (p) => {
           try {
             const { quantity, isActive } = await getEbayItemStatus(p.ebay_listing_id!, config);
+            console.log("[checkout-check] eBay status for", p.ebay_listing_id, "→ qty:", quantity, "active:", isActive, "dbInventory:", p.inventory);
             const liveInventory = isActive ? quantity : 0;
             if (liveInventory !== p.inventory) {
               await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
               p.inventory = liveInventory;
               anyInventoryChanged = true;
             }
-          } catch { /* ignore — use cached DB value */ }
+          } catch (err) {
+            console.log("[checkout-check] eBay check failed for", p.ebay_listing_id, String(err));
+          }
         }));
       }
-    } catch { /* eBay unreachable — fall through to DB-only validation */ }
+    } catch (err) {
+      console.log("[checkout-check] getValidEbayConfig failed:", String(err));
+    }
   }
 
   if (anyInventoryChanged) {
@@ -148,9 +160,12 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
       await sb.from("cart_items").update({ quantity: p.inventory, updated_at: new Date().toISOString() })
         .eq("user_id", user.id).eq("product_id", item.product_id);
       issues.push({ name: item.name, issue: "quantity_reduced", newQuantity: p.inventory });
+    } else {
+      console.log("[checkout-check] item OK:", item.name, "cartQty:", item.quantity, "dbInventory:", p?.inventory);
     }
   }
 
+  console.log("[checkout-check] issues:", JSON.stringify(issues), "valid:", issues.length === 0);
   return { valid: issues.length === 0, issues };
 }
 
