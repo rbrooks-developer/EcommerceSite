@@ -2,6 +2,8 @@
 
 import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { revalidatePath, revalidateTag } from "next/cache";
+import { getValidEbayConfig } from "@/lib/ebay/auth";
+import { getEbayItemStatus } from "@/lib/ebay/trading";
 
 // Use the service client for all cart mutations so RLS never blocks them.
 
@@ -107,9 +109,8 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
     .single();
   const ebayCheckEnabled = (settingsRow as any)?.checkout_config?.ebay_checkout_inventory_check === true;
 
+  let anyInventoryChanged = false;
   if (ebayCheckEnabled) {
-    const { getValidEbayConfig } = await import("@/lib/ebay/auth");
-    const { getEbayItemStatus } = await import("@/lib/ebay/trading");
     const config = await getValidEbayConfig();
 
     if (config) {
@@ -121,10 +122,17 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
           if (liveInventory !== p.inventory) {
             await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
             p.inventory = liveInventory;
+            anyInventoryChanged = true;
           }
         } catch { /* ignore — use cached DB value */ }
       }));
     }
+  }
+
+  if (anyInventoryChanged) {
+    revalidateTag("products", "default");
+    revalidatePath("/products");
+    revalidatePath("/category", "layout");
   }
 
   const productMap = Object.fromEntries(mutableProducts.map(p => [p.id, p]));
@@ -177,6 +185,7 @@ export async function addProductToCart(productId: string, quantity: number): Pro
 
   // Refresh inventory from eBay for synced items when setting is enabled
   let ebayReduced = false;
+  let inventoryChangedByEbay = false;
   if (p.ebay_listing_id) {
     try {
       const sb = createServiceClient();
@@ -188,23 +197,30 @@ export async function addProductToCart(productId: string, quantity: number): Pro
       const ebayCheckEnabled = (settingsRow as any)?.checkout_config?.ebay_cart_inventory_check === true;
 
       if (ebayCheckEnabled) {
-        const { getValidEbayConfig } = await import("@/lib/ebay/auth");
-        const { getEbayItemStatus } = await import("@/lib/ebay/trading");
         const config = await getValidEbayConfig();
         if (config) {
           const { quantity: liveQty, isActive } = await getEbayItemStatus(p.ebay_listing_id, config);
           const liveInventory = isActive ? liveQty : 0;
           if (liveInventory !== p.inventory) {
             await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
-            revalidateTag("products", "default");
-            revalidatePath("/products");
+            inventoryChangedByEbay = true;
             if (liveInventory < p.inventory) ebayReduced = true;
             p.inventory = liveInventory;
           }
-          if (p.inventory === 0) return { ok: false, error: "This item is no longer available.", inventoryUpdated: true };
         }
       }
     } catch { /* ignore — proceed with cached inventory */ }
+  }
+
+  // Bust cache outside try-catch so it always runs when inventory changed
+  if (inventoryChangedByEbay) {
+    revalidateTag("products", "default");
+    revalidatePath("/products");
+    revalidatePath("/category", "layout");
+  }
+
+  if (p.inventory === 0 && inventoryChangedByEbay) {
+    return { ok: false, error: "This item is no longer available.", inventoryUpdated: true };
   }
 
   if (!user) {
