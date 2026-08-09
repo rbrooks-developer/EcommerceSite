@@ -82,6 +82,18 @@ export default function CartPage() {
     return (
       <div className="mx-auto max-w-2xl px-4 py-16 text-center">
         <h1 className="text-2xl font-bold mb-4">Your cart is empty</h1>
+
+        {cartIssues.length > 0 && (
+          <div className="mb-6 rounded-lg px-4 py-3 text-left" style={{ backgroundColor: "color-mix(in srgb, #ef4444 10%, var(--site-bg))", border: "1px solid #fca5a5" }}>
+            <p className="text-sm font-semibold mb-1" style={{ color: "#dc2626" }}>The following items were removed — no longer in stock:</p>
+            <ul className="mt-1 space-y-0.5">
+              {cartIssues.map((msg, i) => (
+                <li key={i} className="text-sm" style={{ color: "#b91c1c" }}>{msg}</li>
+              ))}
+            </ul>
+          </div>
+        )}
+
         <p className="mb-8" style={{ opacity: 0.5 }}>Add some products to get started.</p>
         <Link
           href="/products"
