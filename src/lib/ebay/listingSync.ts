@@ -222,7 +222,34 @@ export async function runEbayListingSync(
     listings_count:     inserted + updated + unchanged,
   } as any);
 
-  if (inserted > 0 || updated > 0) {
+  // Round up any remaining decimal dimensions that predate the Math.ceil fix
+  let fixedDimensions = 0;
+  {
+    const { data: decimalProds } = await supabase
+      .from("products")
+      .select("id, length_in, width_in, height_in")
+      .not("ebay_listing_id", "is", null);
+
+    for (const p of (decimalProds ?? [])) {
+      const len = p.length_in != null ? Number(p.length_in) : null;
+      const wid = p.width_in  != null ? Number(p.width_in)  : null;
+      const hei = p.height_in != null ? Number(p.height_in) : null;
+      if (
+        (len != null && !Number.isInteger(len)) ||
+        (wid != null && !Number.isInteger(wid)) ||
+        (hei != null && !Number.isInteger(hei))
+      ) {
+        const u: Record<string, number> = {};
+        if (len != null && !Number.isInteger(len)) u.length_in = Math.ceil(len);
+        if (wid != null && !Number.isInteger(wid)) u.width_in  = Math.ceil(wid);
+        if (hei != null && !Number.isInteger(hei)) u.height_in = Math.ceil(hei);
+        const { error } = await supabase.from("products").update(u).eq("id", p.id);
+        if (!error) fixedDimensions++;
+      }
+    }
+  }
+
+  if (inserted > 0 || updated > 0 || fixedDimensions > 0) {
     revalidateTag("products", "default");
   }
 
