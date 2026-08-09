@@ -1,7 +1,7 @@
 "use server";
 
 import { createClient, createServiceClient } from "@/lib/supabase/server";
-import { revalidatePath } from "next/cache";
+import { revalidatePath, revalidateTag } from "next/cache";
 
 // Use the service client for all cart mutations so RLS never blocks them.
 
@@ -151,7 +151,8 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
 export async function addProductToCart(productId: string, quantity: number): Promise<{
   ok: boolean;
   error?: string;
-  warning?: string;  // item added but with reduced quantity
+  warning?: string;       // item added but with reduced quantity
+  inventoryUpdated?: boolean; // eBay revealed a different inventory; caller should refresh
   guestItem?: object;
 }> {
   const supabase = await createClient();
@@ -195,10 +196,11 @@ export async function addProductToCart(productId: string, quantity: number): Pro
           const liveInventory = isActive ? liveQty : 0;
           if (liveInventory !== p.inventory) {
             await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
+            revalidateTag("products", "default");
             if (liveInventory < p.inventory) ebayReduced = true;
             p.inventory = liveInventory;
           }
-          if (p.inventory === 0) return { ok: false, error: "This item is no longer available on eBay." };
+          if (p.inventory === 0) return { ok: false, error: "This item is no longer available.", inventoryUpdated: true };
         }
       }
     } catch { /* ignore — proceed with cached inventory */ }
@@ -211,6 +213,7 @@ export async function addProductToCart(productId: string, quantity: number): Pro
       // eBay revealed less stock — add what's available with a warning
       return {
         ok: true,
+        inventoryUpdated: true,
         warning: `Only ${p.inventory} available — your quantity has been adjusted.`,
         guestItem: {
           productId: p.id, slug: p.slug, name: p.name, price: Number(p.price),
@@ -245,6 +248,7 @@ export async function addProductToCart(productId: string, quantity: number): Pro
 
   let finalQty = totalQty;
   let warning: string | undefined;
+  let inventoryUpdated = false;
 
   if (totalQty > p.inventory) {
     const canAdd = p.inventory - existingQty;
@@ -254,6 +258,7 @@ export async function addProductToCart(productId: string, quantity: number): Pro
       // eBay revealed less stock — add what's available with a warning
       finalQty = p.inventory;
       warning = `Only ${canAdd} more available — your cart has been updated with the current stock.`;
+      inventoryUpdated = true;
     } else {
       return { ok: false, error: `You can only add ${canAdd} more — ${p.inventory} in stock, ${existingQty} already in cart.` };
     }
@@ -270,5 +275,5 @@ export async function addProductToCart(productId: string, quantity: number): Pro
   }, { onConflict: "user_id,product_id" });
 
   if (error) return { ok: false, error: "Failed to add to cart. Please try again." };
-  return { ok: true, warning };
+  return { ok: true, warning, ...(inventoryUpdated && { inventoryUpdated: true }) };
 }
