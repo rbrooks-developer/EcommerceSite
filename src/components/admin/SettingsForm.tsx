@@ -211,6 +211,8 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
   const [restockingFeePercent, setRestockingFeePercent] = useState(checkoutCfg?.restocking_fee_percent ?? 0);
   const [restockingFeeDisclaimer, setRestockingFeeDisclaimer] = useState(checkoutCfg?.restocking_fee_disclaimer ?? "");
   const [processingFeeFlat, setProcessingFeeFlat] = useState(checkoutCfg?.processing_fee_flat ?? 0);
+  const [ebayCartInventoryCheck, setEbayCartInventoryCheck] = useState(checkoutCfg?.ebay_cart_inventory_check ?? false);
+  const [ebayCheckoutInventoryCheck, setEbayCheckoutInventoryCheck] = useState(checkoutCfg?.ebay_checkout_inventory_check ?? false);
 
   const surchargeCfg = (defaultValues as any)?.surcharge_config as SurchargeConfig | null;
   const DEFAULT_SURCHARGE_MESSAGE = "A processing surcharge may apply to certain credit card payments. If applicable, it will be calculated and displayed in your order summary before you place your order.";
@@ -336,6 +338,8 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         restocking_fee_percent: restockingFeePercent,
         restocking_fee_disclaimer: restockingFeeDisclaimer,
         processing_fee_flat: processingFeeFlat,
+        ebay_cart_inventory_check: ebayCartInventoryCheck,
+        ebay_checkout_inventory_check: ebayCheckoutInventoryCheck,
       },
       surcharge_config: {
         surcharge_active: surchargeActive,
@@ -793,6 +797,33 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
           <ColorPicker id="checkout_textbox_color" label="Textbox Color" value={checkoutTextboxColor} onChange={setCheckoutTextboxColor} />
         </div>
         <p className="text-xs text-gray-400">Section Color = background of panels/cards. Textbox Color = background of input fields and dropdowns.</p>
+
+        <div className="space-y-3 border-t border-gray-100 pt-4">
+          <p className="text-sm font-medium text-gray-700">eBay Inventory Checks</p>
+          <p className="text-xs text-gray-500">Only applies to products synced from eBay. Requires a connected eBay account.</p>
+
+          <label className="flex items-center gap-3 w-fit cursor-pointer">
+            <input
+              type="checkbox"
+              checked={ebayCartInventoryCheck}
+              onChange={(e) => setEbayCartInventoryCheck(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-sm text-gray-700">Check eBay inventory on Add to Cart</span>
+          </label>
+          <p className="text-xs text-gray-400 -mt-1 ml-7">Calls the eBay API before adding to verify live stock. If quantity is reduced, adds what&apos;s available and notifies the customer.</p>
+
+          <label className="flex items-center gap-3 w-fit cursor-pointer">
+            <input
+              type="checkbox"
+              checked={ebayCheckoutInventoryCheck}
+              onChange={(e) => setEbayCheckoutInventoryCheck(e.target.checked)}
+              className="h-4 w-4 rounded border-gray-300 text-indigo-600 focus:ring-indigo-500"
+            />
+            <span className="text-sm text-gray-700">Check eBay inventory on Checkout</span>
+          </label>
+          <p className="text-xs text-gray-400 -mt-1 ml-7">Verifies live eBay stock for all synced cart items before proceeding to checkout. Updates quantities and notifies the customer of any changes.</p>
+        </div>
       </Section>
 
       <Section title="Background Overlay">

@@ -118,6 +118,8 @@ export const siteSettingsSchema = z.object({
     restocking_fee_percent: z.number().min(0).max(100).default(0),
     restocking_fee_disclaimer: z.string().default(""),
     processing_fee_flat: z.number().min(0).default(0),
+    ebay_cart_inventory_check: z.boolean().default(false).optional(),
+    ebay_checkout_inventory_check: z.boolean().default(false).optional(),
   }).optional(),
   surcharge_config: z.object({
     surcharge_active: z.boolean().default(false),

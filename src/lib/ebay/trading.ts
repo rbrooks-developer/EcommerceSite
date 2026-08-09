@@ -286,7 +286,7 @@ function parseAck(xml: string, responseKey: string): { doc: ReturnType<XMLParser
 }
 
 /** Returns current available quantity and whether the listing is still active. */
-async function getEbayItemStatus(
+export async function getEbayItemStatus(
   listingId: string,
   config: EbayConfig,
 ): Promise<{ quantity: number; isActive: boolean }> {

@@ -5,7 +5,7 @@ import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart/store";
-import { validateAndSyncCart } from "@/lib/actions/cart";
+import { checkEbayInventoryAndSync } from "@/lib/actions/cart";
 import { formatPrice, imgUrl } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 
@@ -18,7 +18,7 @@ export default function CartPage() {
   async function handleProceedToCheckout() {
     setCheckoutLoading(true);
     setCartIssues([]);
-    const { valid, issues } = await validateAndSyncCart();
+    const { valid, issues } = await checkEbayInventoryAndSync();
     if (!valid) {
       await reloadCart();
       setCartIssues(issues.map(i =>

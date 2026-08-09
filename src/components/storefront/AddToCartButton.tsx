@@ -15,10 +15,12 @@ export function AddToCartButton({ product, favoriteSlot }: { product: ProductPro
   const [qty, setQty] = useState(1);
   const [status, setStatus] = useState<"idle" | "loading" | "added" | "error">("idle");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [warningMsg, setWarningMsg] = useState<string | null>(null);
 
   async function handleAdd() {
     setStatus("loading");
     setErrorMsg(null);
+    setWarningMsg(null);
     const result = await addProductToCart(product.id, qty);
 
     if (!result.ok) {
@@ -29,15 +31,14 @@ export function AddToCartButton({ product, favoriteSlot }: { product: ProductPro
     }
 
     if (result.guestItem) {
-      // Guest user — validated server-side, add to local cart
       addItem(result.guestItem as any);
     } else {
-      // Logged-in — item written to DB; sync context
       await reloadCart();
     }
 
+    if (result.warning) setWarningMsg(result.warning);
     setStatus("added");
-    setTimeout(() => setStatus("idle"), 2000);
+    setTimeout(() => { setStatus("idle"); setWarningMsg(null); }, 5000);
   }
 
   if (product.inventory === 0) {
@@ -85,6 +86,9 @@ export function AddToCartButton({ product, favoriteSlot }: { product: ProductPro
 
       {errorMsg && (
         <p className="text-xs" style={{ color: "#ef4444", WebkitTextFillColor: "#ef4444" }}>{errorMsg}</p>
+      )}
+      {warningMsg && (
+        <p className="text-xs" style={{ color: "#d97706", WebkitTextFillColor: "#d97706" }}>{warningMsg}</p>
       )}
 
       <button
