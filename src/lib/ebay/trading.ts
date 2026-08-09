@@ -102,10 +102,10 @@ function parseItem(raw: any): TradingItem | null {
   const weightOzPart = parseFloat(String(raw.ShippingPackageDetails?.WeightMinor ?? 0));
   const weightOz  = Math.round(weightLbs * 16 + weightOzPart);
 
-  // Dimensions in inches — default to 0.1 if missing (DB requires > 0)
-  const lengthIn = parseFloat(String(raw.ShippingPackageDetails?.PackageLength ?? 0)) || 0.1;
-  const widthIn  = parseFloat(String(raw.ShippingPackageDetails?.PackageWidth  ?? 0)) || 0.1;
-  const heightIn = parseFloat(String(raw.ShippingPackageDetails?.PackageDepth  ?? 0)) || 0.1;
+  // Dimensions in inches — round up to nearest integer (admin form requires integers)
+  const lengthIn = Math.ceil(parseFloat(String(raw.ShippingPackageDetails?.PackageLength ?? 0)) || 1);
+  const widthIn  = Math.ceil(parseFloat(String(raw.ShippingPackageDetails?.PackageWidth  ?? 0)) || 1);
+  const heightIn = Math.ceil(parseFloat(String(raw.ShippingPackageDetails?.PackageDepth  ?? 0)) || 1);
 
   return {
     listingId, title, price, inventory, description, images,

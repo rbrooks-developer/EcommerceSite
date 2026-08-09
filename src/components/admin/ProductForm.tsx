@@ -156,15 +156,15 @@ export function ProductForm({
           </div>
           <div>
             <Label htmlFor="length_in">Length (in)</Label>
-            <Input id="length_in" name="length_in" type="number" step="0.1" min="0.1" defaultValue={defaultValues?.length_in ?? ""} placeholder="0.0" error={errors?.length_in?.[0]} />
+            <Input id="length_in" name="length_in" type="number" step="1" min="1" defaultValue={defaultValues?.length_in != null ? Math.ceil(Number(defaultValues.length_in)) : ""} placeholder="1" error={errors?.length_in?.[0]} />
           </div>
           <div>
             <Label htmlFor="width_in">Width (in)</Label>
-            <Input id="width_in" name="width_in" type="number" step="0.1" min="0.1" defaultValue={defaultValues?.width_in ?? ""} placeholder="0.0" error={errors?.width_in?.[0]} />
+            <Input id="width_in" name="width_in" type="number" step="1" min="1" defaultValue={defaultValues?.width_in != null ? Math.ceil(Number(defaultValues.width_in)) : ""} placeholder="1" error={errors?.width_in?.[0]} />
           </div>
           <div>
             <Label htmlFor="height_in">Height (in)</Label>
-            <Input id="height_in" name="height_in" type="number" step="0.1" min="0.1" defaultValue={defaultValues?.height_in ?? ""} placeholder="0.0" error={errors?.height_in?.[0]} />
+            <Input id="height_in" name="height_in" type="number" step="1" min="1" defaultValue={defaultValues?.height_in != null ? Math.ceil(Number(defaultValues.height_in)) : ""} placeholder="1" error={errors?.height_in?.[0]} />
           </div>
         </div>
       </div>
