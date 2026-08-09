@@ -1,11 +1,11 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useCart } from "@/lib/cart/store";
-import { checkEbayInventoryAndSync } from "@/lib/actions/cart";
+import { checkEbayInventoryAndSync, getProductInventories } from "@/lib/actions/cart";
 import { formatPrice, imgUrl } from "@/lib/utils";
 import { Trash2 } from "lucide-react";
 
@@ -14,22 +14,33 @@ export default function CartPage() {
   const { items, removeItem, updateQuantity, subtotal, itemCount, reloadCart, loaded } = useCart();
   const [checkoutLoading, setCheckoutLoading] = useState(false);
   const [cartIssues, setCartIssues] = useState<string[]>([]);
+  const [inventories, setInventories] = useState<Record<string, number>>({});
+
+  useEffect(() => {
+    if (!loaded || items.length === 0) return;
+    getProductInventories(items.map(i => i.productId)).then(setInventories);
+  }, [loaded, items]);
 
   async function handleProceedToCheckout() {
     setCheckoutLoading(true);
     setCartIssues([]);
-    const { valid, issues } = await checkEbayInventoryAndSync();
-    if (!valid) {
-      await reloadCart();
-      setCartIssues(issues.map(i =>
-        i.issue === "removed"
-          ? `"${i.name}" is no longer available and was removed from your cart.`
-          : `"${i.name}" quantity was reduced to ${i.newQuantity} (limited stock).`
-      ));
+    try {
+      const { valid, issues } = await checkEbayInventoryAndSync();
+      if (!valid) {
+        await reloadCart();
+        setCartIssues(issues.map(i =>
+          i.issue === "removed"
+            ? `"${i.name}" is no longer available and was removed from your cart.`
+            : `"${i.name}" quantity was reduced to ${i.newQuantity} (limited stock).`
+        ));
+        setCheckoutLoading(false);
+        return;
+      }
+      router.push("/checkout");
+    } catch {
+      setCartIssues(["Something went wrong. Please try again."]);
       setCheckoutLoading(false);
-      return;
     }
-    router.push("/checkout");
   }
 
   if (!loaded) {
@@ -124,7 +135,8 @@ export default function CartPage() {
                       <span className="w-8 text-center text-sm">{item.quantity}</span>
                       <button
                         onClick={() => updateQuantity(item.productId, item.quantity + 1)}
-                        className="w-8 h-8 flex items-center justify-center text-sm transition-opacity hover:opacity-60"
+                        disabled={(inventories[item.productId] ?? Infinity) <= item.quantity}
+                        className="w-8 h-8 flex items-center justify-center text-sm transition-opacity hover:opacity-60 disabled:opacity-25 disabled:cursor-not-allowed"
                         aria-label="Increase quantity"
                       >
                         +

@@ -111,22 +111,23 @@ export async function checkEbayInventoryAndSync(): Promise<{ valid: boolean; iss
 
   let anyInventoryChanged = false;
   if (ebayCheckEnabled) {
-    const config = await getValidEbayConfig();
-
-    if (config) {
-      const ebayLinked = mutableProducts.filter(p => p.ebay_listing_id);
-      await Promise.allSettled(ebayLinked.map(async (p) => {
-        try {
-          const { quantity, isActive } = await getEbayItemStatus(p.ebay_listing_id!, config);
-          const liveInventory = isActive ? quantity : 0;
-          if (liveInventory !== p.inventory) {
-            await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
-            p.inventory = liveInventory;
-            anyInventoryChanged = true;
-          }
-        } catch { /* ignore — use cached DB value */ }
-      }));
-    }
+    try {
+      const config = await getValidEbayConfig();
+      if (config) {
+        const ebayLinked = mutableProducts.filter(p => p.ebay_listing_id);
+        await Promise.allSettled(ebayLinked.map(async (p) => {
+          try {
+            const { quantity, isActive } = await getEbayItemStatus(p.ebay_listing_id!, config);
+            const liveInventory = isActive ? quantity : 0;
+            if (liveInventory !== p.inventory) {
+              await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
+              p.inventory = liveInventory;
+              anyInventoryChanged = true;
+            }
+          } catch { /* ignore — use cached DB value */ }
+        }));
+      }
+    } catch { /* eBay unreachable — fall through to DB-only validation */ }
   }
 
   if (anyInventoryChanged) {
@@ -293,4 +294,12 @@ export async function addProductToCart(productId: string, quantity: number): Pro
 
   if (error) return { ok: false, error: "Failed to add to cart. Please try again." };
   return { ok: true, warning, ...(inventoryUpdated && { inventoryUpdated: true }) };
+}
+
+// Returns current inventory counts for a list of product IDs (for cart UI capping).
+export async function getProductInventories(productIds: string[]): Promise<Record<string, number>> {
+  if (!productIds.length) return {};
+  const sb = createServiceClient();
+  const { data } = await sb.from("products").select("id, inventory").in("id", productIds);
+  return Object.fromEntries(((data ?? []) as { id: string; inventory: number }[]).map(p => [p.id, p.inventory]));
 }
