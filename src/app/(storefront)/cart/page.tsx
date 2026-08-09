@@ -25,17 +25,28 @@ export default function CartPage() {
     setCheckoutLoading(true);
     setCartIssues([]);
     try {
-      const { valid, issues } = await checkEbayInventoryAndSync();
-      if (!valid) {
+      const { issues } = await checkEbayInventoryAndSync();
+
+      if (issues.length > 0) {
         await reloadCart();
-        setCartIssues(issues.map(i =>
+
+        const removedIssues = issues.filter(i => i.issue === "removed");
+        // If every cart item was completely removed, stay on the cart page
+        if (removedIssues.length >= items.length) {
+          setCartIssues(removedIssues.map(i => `"${i.name}" is no longer available and was removed from your cart.`));
+          setCheckoutLoading(false);
+          return;
+        }
+
+        // Otherwise proceed to checkout and pass a toast to show there
+        const warnings = issues.map(i =>
           i.issue === "removed"
-            ? `"${i.name}" is no longer available and was removed from your cart.`
-            : `"${i.name}" quantity was reduced to ${i.newQuantity} (limited stock).`
-        ));
-        setCheckoutLoading(false);
-        return;
+            ? `"${i.name}" was removed — no longer available.`
+            : `"${i.name}" quantity was updated to ${i.newQuantity} due to limited stock.`
+        );
+        sessionStorage.setItem("checkout_warnings", JSON.stringify(warnings));
       }
+
       router.push("/checkout");
     } catch {
       setCartIssues(["Something went wrong. Please try again."]);

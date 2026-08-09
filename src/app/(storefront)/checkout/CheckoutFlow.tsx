@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { loadStripe } from "@stripe/stripe-js";
 import {
   Elements, ExpressCheckoutElement, PaymentElement,
@@ -458,6 +458,16 @@ export function CheckoutFlow({
   const [promoError, setPromoError] = useState<string | null>(null);
   const [promoLoading, setPromoLoading] = useState(false);
 
+  // Inventory warnings passed from cart page via sessionStorage
+  const [inventoryWarnings, setInventoryWarnings] = useState<string[]>([]);
+  useEffect(() => {
+    const raw = sessionStorage.getItem("checkout_warnings");
+    if (raw) {
+      try { setInventoryWarnings(JSON.parse(raw)); } catch {}
+      sessionStorage.removeItem("checkout_warnings");
+    }
+  }, []);
+
   // ── Derived totals ───────────────────────────────────────────────────────────
 
   const shippingCost = selectedRate ? parseFloat(selectedRate.rate) : 0;
@@ -841,6 +851,21 @@ export function CheckoutFlow({
           <Lock className="h-4 w-4" style={{ opacity: 0.35 }} />
           <h1 className="text-xl font-bold tracking-tight">Secure Checkout</h1>
         </div>
+
+        {inventoryWarnings.length > 0 && (
+          <div className="mb-6 rounded-lg px-4 py-3 flex items-start gap-3" style={{ backgroundColor: "color-mix(in srgb, #d97706 12%, transparent)", border: "1px solid color-mix(in srgb, #d97706 40%, transparent)" }}>
+            <div className="shrink-0 mt-0.5 text-base" style={{ color: "#d97706" }}>⚠</div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold mb-1" style={{ color: "#d97706", WebkitTextFillColor: "#d97706" }}>Your cart was updated</p>
+              <ul className="space-y-0.5">
+                {inventoryWarnings.map((msg, i) => (
+                  <li key={i} className="text-xs" style={{ opacity: 0.85 }}>{msg}</li>
+                ))}
+              </ul>
+            </div>
+            <button onClick={() => setInventoryWarnings([])} className="shrink-0 text-lg leading-none transition-opacity hover:opacity-60" style={{ color: "#d97706", WebkitTextFillColor: "#d97706" }} aria-label="Dismiss">×</button>
+          </div>
+        )}
 
         <div className="flex flex-col lg:flex-row gap-5 lg:gap-8 items-start">
 
