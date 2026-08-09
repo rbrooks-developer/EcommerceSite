@@ -8,7 +8,7 @@ import Zoom from "yet-another-react-lightbox/plugins/zoom";
 import "yet-another-react-lightbox/styles.css";
 
 
-export function ProductImages({ images, name }: { images: string[]; name: string }) {
+export function ProductImages({ images, name, outOfStock = false }: { images: string[]; name: string; outOfStock?: boolean }) {
   const [selected, setSelected] = useState(0);
   const [lightboxOpen, setLightboxOpen] = useState(false);
 
@@ -79,6 +79,11 @@ export function ProductImages({ images, name }: { images: string[]; name: string
             <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-4.35-4.35M17 11A6 6 0 1 1 5 11a6 6 0 0 1 12 0zm-3-3v2m0 4h.01" />
           </svg>
         </div>
+        {outOfStock && (
+          <div className="absolute bottom-3 left-3 pointer-events-none">
+            <span className="rounded px-3 py-1 text-sm font-semibold" style={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", WebkitTextFillColor: "#fff" }}>Out of Stock</span>
+          </div>
+        )}
       </div>
 
       {/* Desktop: hover-zoom */}
@@ -105,6 +110,11 @@ export function ProductImages({ images, name }: { images: string[]; name: string
             priority
           />
         </div>
+        {outOfStock && (
+          <div className="absolute bottom-3 left-3 pointer-events-none" style={{ zIndex: 2 }}>
+            <span className="rounded px-3 py-1 text-sm font-semibold" style={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", WebkitTextFillColor: "#fff" }}>Out of Stock</span>
+          </div>
+        )}
       </div>
 
       {images.length > 1 && (

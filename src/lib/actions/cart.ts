@@ -197,6 +197,7 @@ export async function addProductToCart(productId: string, quantity: number): Pro
           if (liveInventory !== p.inventory) {
             await sb.from("products").update({ inventory: liveInventory }).eq("id", p.id);
             revalidateTag("products", "default");
+            revalidatePath("/products");
             if (liveInventory < p.inventory) ebayReduced = true;
             p.inventory = liveInventory;
           }

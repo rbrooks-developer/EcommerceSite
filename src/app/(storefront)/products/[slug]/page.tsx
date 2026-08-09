@@ -204,15 +204,8 @@ export default async function ProductDetailPage({ params }: { params: Promise<{ 
         <div className="mx-auto max-w-7xl lg:px-8">
           <div className="flex flex-col lg:gap-8 lg:flex-row">
             {/* Image — edge-to-edge on mobile */}
-            <div className="lg:w-1/2 relative">
-              <ProductImages images={images} name={product.name} />
-              {product.inventory <= 0 && (
-                <div className="absolute bottom-4 left-4 pointer-events-none" style={{ zIndex: 10 }}>
-                  <span className="rounded px-3 py-1 text-sm font-semibold" style={{ backgroundColor: "rgba(0,0,0,0.65)", color: "#fff", WebkitTextFillColor: "#fff" }}>
-                    Out of Stock
-                  </span>
-                </div>
-              )}
+            <div className="lg:w-1/2">
+              <ProductImages images={images} name={product.name} outOfStock={product.inventory <= 0} />
             </div>
 
             {/* Info — padded on mobile, no extra padding on desktop */}
