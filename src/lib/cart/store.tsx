@@ -150,10 +150,8 @@ export function CartProvider({ userId, children }: { userId?: string | null; chi
 
   const updateQuantity = useCallback((productId: string, quantity: number) => {
     if (quantity <= 0) {
-      setItems(prev => {
-        if (userId) sb.from("cart_items").delete().eq("user_id", userId).eq("product_id", productId);
-        return prev.filter(i => i.productId !== productId);
-      });
+      setItems(prev => prev.filter(i => i.productId !== productId));
+      if (userId) removeCartItemAction(productId);
     } else {
       setItems(prev => {
         const next = prev.map(i => i.productId === productId ? { ...i, quantity } : i);
