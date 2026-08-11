@@ -19,6 +19,7 @@ interface ProductFormProps {
   defaultValues?: Partial<Product>;
   submitLabel?: string;
   maxSizeMb?: number;
+  title?: string;
 }
 
 export function ProductForm({
@@ -28,6 +29,7 @@ export function ProductForm({
   defaultValues,
   submitLabel = "Save Product",
   maxSizeMb = 2,
+  title,
 }: ProductFormProps) {
   const [state, formAction, isPending] = useActionState(action, null) as [
     { error?: Record<string, string[]> } | null,
@@ -68,8 +70,9 @@ export function ProductForm({
 
   return (
     <form action={wrappedAction} className="flex gap-8 items-start">
-      {/* Sticky left sidebar — save button (desktop only) */}
+      {/* Sticky left sidebar — title + save button (desktop only) */}
       <div className="hidden lg:flex flex-col gap-3 w-36 shrink-0 sticky top-0 -mt-4 md:-mt-6 lg:-mt-8 pt-4 md:pt-6 lg:pt-8">
+        {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
         <Button type="submit" size="lg" className="w-full bg-indigo-600 hover:bg-indigo-500" loading={isPending}>{submitLabel}</Button>
       </div>
 

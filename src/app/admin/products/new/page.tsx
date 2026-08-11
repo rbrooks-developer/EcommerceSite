@@ -21,13 +21,14 @@ export default async function NewProductPage() {
         <Link href="/admin/products" className="text-gray-400 hover:text-gray-600">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900">New Product</h1>
+        <h1 className="text-2xl font-bold text-gray-900 lg:hidden">New Product</h1>
       </div>
       <ProductForm
         action={createProduct}
         categories={categories ?? []}
         tariffCodes={tariffCodes ?? []}
         submitLabel="Create Product"
+        title="New Product"
         maxSizeMb={maxSizeMb}
       />
     </div>
