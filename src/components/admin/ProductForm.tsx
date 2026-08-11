@@ -67,7 +67,13 @@ export function ProductForm({
   };
 
   return (
-    <form action={wrappedAction} className="space-y-6 max-w-2xl">
+    <form action={wrappedAction} className="flex gap-8 items-start">
+      {/* Sticky left sidebar — save button (desktop only) */}
+      <div className="hidden lg:flex flex-col gap-3 w-36 shrink-0 sticky top-0 -mt-4 md:-mt-6 lg:-mt-8 pt-4 md:pt-6 lg:pt-8">
+        <Button type="submit" size="lg" className="w-full bg-indigo-600 hover:bg-indigo-500" loading={isPending}>{submitLabel}</Button>
+      </div>
+
+      <div className="flex-1 min-w-0 space-y-6 max-w-2xl">
       {errors?._form && (
         <div className="rounded-md bg-red-50 border border-red-200 p-3 text-sm text-red-700">
           {errors._form[0]}
@@ -220,7 +226,8 @@ export function ProductForm({
         <Label className="mb-0">Published</Label>
       </div>
 
-      <Button type="submit" size="lg" loading={isPending} className="bg-indigo-600 hover:bg-indigo-500">{submitLabel}</Button>
+      <Button type="submit" size="lg" loading={isPending} className="lg:hidden bg-indigo-600 hover:bg-indigo-500">{submitLabel}</Button>
+      </div>
     </form>
   );
 }
