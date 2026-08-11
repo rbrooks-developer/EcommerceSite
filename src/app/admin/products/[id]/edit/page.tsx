@@ -24,11 +24,11 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 lg:hidden">
         <Link href="/admin/products" className="text-gray-400 hover:text-gray-600">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 lg:hidden">Edit Product</h1>
+        <h1 className="text-2xl font-bold text-gray-900">Edit Product</h1>
       </div>
       <ProductForm
         action={boundAction}
@@ -37,6 +37,7 @@ export default async function EditProductPage({ params }: { params: Promise<{ id
         defaultValues={product}
         submitLabel="Save Changes"
         title="Edit Product"
+        backHref="/admin/products"
         maxSizeMb={maxSizeMb}
       />
     </div>

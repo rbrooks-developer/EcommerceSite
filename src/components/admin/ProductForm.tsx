@@ -5,6 +5,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { ChevronLeft } from "lucide-react";
 import { ImageUpload } from "./ImageUpload";
 import { slugify } from "@/lib/utils";
 import { CategorySelect, buildCategoryOptions } from "./CategorySelect";
@@ -20,6 +22,7 @@ interface ProductFormProps {
   submitLabel?: string;
   maxSizeMb?: number;
   title?: string;
+  backHref?: string;
 }
 
 export function ProductForm({
@@ -30,6 +33,7 @@ export function ProductForm({
   submitLabel = "Save Product",
   maxSizeMb = 2,
   title,
+  backHref,
 }: ProductFormProps) {
   const [state, formAction, isPending] = useActionState(action, null) as [
     { error?: Record<string, string[]> } | null,
@@ -70,8 +74,13 @@ export function ProductForm({
 
   return (
     <form action={wrappedAction} className="flex gap-8 items-start">
-      {/* Sticky left sidebar — title + save button (desktop only) */}
+      {/* Sticky left sidebar — back arrow, title, save button (desktop only) */}
       <div className="hidden lg:flex flex-col gap-3 w-36 shrink-0 sticky top-0 -mt-4 md:-mt-6 lg:-mt-8 pt-4 md:pt-6 lg:pt-8">
+        {backHref && (
+          <Link href={backHref} className="text-gray-400 hover:text-gray-600 self-start">
+            <ChevronLeft className="h-5 w-5" />
+          </Link>
+        )}
         {title && <h1 className="text-2xl font-bold text-gray-900">{title}</h1>}
         <Button type="submit" size="lg" className="w-full bg-indigo-600 hover:bg-indigo-500" loading={isPending}>{submitLabel}</Button>
       </div>

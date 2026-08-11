@@ -17,11 +17,11 @@ export default async function NewProductPage() {
 
   return (
     <div className="space-y-5">
-      <div className="flex items-center gap-2">
+      <div className="flex items-center gap-2 lg:hidden">
         <Link href="/admin/products" className="text-gray-400 hover:text-gray-600">
           <ChevronLeft className="h-5 w-5" />
         </Link>
-        <h1 className="text-2xl font-bold text-gray-900 lg:hidden">New Product</h1>
+        <h1 className="text-2xl font-bold text-gray-900">New Product</h1>
       </div>
       <ProductForm
         action={createProduct}
@@ -29,6 +29,7 @@ export default async function NewProductPage() {
         tariffCodes={tariffCodes ?? []}
         submitLabel="Create Product"
         title="New Product"
+        backHref="/admin/products"
         maxSizeMb={maxSizeMb}
       />
     </div>
