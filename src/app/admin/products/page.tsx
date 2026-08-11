@@ -86,7 +86,7 @@ export default async function ProductsPage({
           <DeleteAllProductsButton />
           <Link
             href="/admin/products/new"
-            className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 h-11 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+            className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 h-11 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Product

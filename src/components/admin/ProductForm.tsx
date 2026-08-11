@@ -220,7 +220,7 @@ export function ProductForm({
         <Label className="mb-0">Published</Label>
       </div>
 
-      <Button type="submit" size="lg" loading={isPending}>{submitLabel}</Button>
+      <Button type="submit" size="lg" loading={isPending} className="bg-indigo-600 hover:bg-indigo-500">{submitLabel}</Button>
     </form>
   );
 }

@@ -15,7 +15,7 @@ export default async function EmailTemplatesPage() {
         </div>
         <Link
           href="/admin/email-templates/new"
-          className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 h-11 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 h-11 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
         >
           <Plus className="h-4 w-4" />
           New Template
@@ -29,7 +29,7 @@ export default async function EmailTemplatesPage() {
           <p className="text-sm text-gray-400 mt-1">Create your first template to start sending promo emails to fans.</p>
           <Link
             href="/admin/email-templates/new"
-            className="mt-4 inline-flex items-center gap-2 rounded-md bg-gray-900 px-4 py-2 text-sm font-medium text-white hover:bg-gray-700 transition-colors"
+            className="mt-4 inline-flex items-center gap-2 rounded-md bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-500 transition-colors"
           >
             <Plus className="h-4 w-4" />
             New Template

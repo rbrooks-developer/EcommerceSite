@@ -396,7 +396,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
       {/* Sticky left column — title + save button */}
       <div className="hidden lg:flex flex-col gap-3 w-48 shrink-0 sticky top-0 -mt-4 md:-mt-6 lg:-mt-8 pt-4 md:pt-6 lg:pt-8">
         <h1 className="text-2xl font-bold text-gray-900">Site Settings</h1>
-        <Button type="submit" size="lg" className="w-full" loading={saving}>Save Settings</Button>
+        <Button type="submit" size="lg" className="w-full bg-indigo-600 hover:bg-indigo-500" loading={saving}>Save Settings</Button>
         {message && (
           <div className={`rounded-md p-3 text-sm ${message.type === "success" ? "bg-green-50 text-green-700 border border-green-200" : "bg-red-50 text-red-700 border border-red-200"}`}>
             {message.text}
@@ -1553,7 +1553,7 @@ export function SettingsForm({ defaultValues, products, categories }: Props) {
         )}
       </Section>
 
-        <Button type="submit" size="lg" className="w-full lg:hidden" loading={saving}>Save Settings</Button>
+        <Button type="submit" size="lg" className="w-full lg:hidden bg-indigo-600 hover:bg-indigo-500" loading={saving}>Save Settings</Button>
       </div>
 
     </form>
