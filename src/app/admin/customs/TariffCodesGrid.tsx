@@ -84,7 +84,7 @@ export function TariffCodesGrid({ codes }: { codes: TariffCode[] }) {
         <h2 className="text-sm font-semibold text-gray-700">Tariff Code Library</h2>
         <button
           onClick={() => { setAdding(true); setEditingId(null); }}
-          className="inline-flex items-center gap-1.5 rounded-md bg-gray-900 px-3 py-1.5 text-xs font-medium text-white hover:bg-gray-700 transition-colors"
+          className="inline-flex items-center gap-1.5 rounded-md bg-indigo-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-indigo-500 transition-colors"
         >
           <Plus className="h-3.5 w-3.5" />
           Add Code

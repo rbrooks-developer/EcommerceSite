@@ -140,14 +140,14 @@ export function EmailTemplateForm({ template }: { template?: EmailTemplate }) {
               <button
                 type="button"
                 onClick={() => setTab("editor")}
-                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${tab === "editor" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${tab === "editor" ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
               >
                 HTML Editor
               </button>
               <button
                 type="button"
                 onClick={() => setTab("preview")}
-                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${tab === "preview" ? "bg-gray-900 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
+                className={`px-3 py-1.5 text-sm rounded-md font-medium transition-colors ${tab === "preview" ? "bg-indigo-600 text-white" : "bg-gray-100 text-gray-600 hover:bg-gray-200"}`}
               >
                 Preview
               </button>
@@ -178,14 +178,14 @@ export function EmailTemplateForm({ template }: { template?: EmailTemplate }) {
               type="button"
               onClick={handleSave}
               disabled={saving}
-              className="inline-flex items-center gap-2 rounded-md bg-gray-900 px-5 py-2.5 text-sm font-medium text-white hover:bg-gray-700 disabled:opacity-50 transition-colors"
+              className="inline-flex items-center gap-2 rounded-md bg-indigo-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-indigo-500 disabled:opacity-50 transition-colors"
             >
               {saving ? "Saving…" : template ? "Save Changes" : "Create Template"}
             </button>
             <button
               type="button"
               onClick={() => router.push("/admin/email-templates")}
-              className="rounded-md border border-gray-300 px-5 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              className="rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors"
             >
               Cancel
             </button>
