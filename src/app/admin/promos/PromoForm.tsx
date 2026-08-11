@@ -238,7 +238,7 @@ export function PromoForm({ promo }: Props) {
         <button
           type="button"
           onClick={() => router.push("/admin/promos")}
-          className="text-sm text-gray-500 hover:text-gray-700 dark:text-gray-400 dark:hover:text-gray-200"
+          className="rounded-md bg-red-600 px-5 py-2.5 text-sm font-medium text-white hover:bg-red-700 transition-colors"
         >
           Cancel
         </button>
